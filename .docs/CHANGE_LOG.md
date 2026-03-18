@@ -2,6 +2,43 @@
 
 ---
 
+## [Unreleased] — 2026-03-18
+
+### Hydration 오류 수정
+
+#### 수정
+
+- `src/app/layout.tsx`: `<html suppressHydrationWarning>` — inline 스크립트의 CSS 변수 주입으로 인한 hydration 불일치 억제
+- `src/contexts/LanguageContext.tsx`: `useState` 초기값 `'en'` 고정 → `useEffect`에서 localStorage 복원 (SSR/CSR 불일치 해소)
+- `src/contexts/ContentContext.tsx`: `useState` 초기값 `defaultMultiLanguageContent` 고정 → `useEffect`에서 `loadFromStorage()` 호출. `migrateContent` 함수 모듈 수준으로 추출
+
+---
+
+## [Unreleased] — 2026-03-17 (Phase 4-a Cloudflare 기반)
+
+### Phase 4-a: Cloudflare 인프라 기반 구축
+
+#### 추가
+
+- `wrangler.json`: Cloudflare Workers 설정 — D1(`DB`), R2(`MEDIA`) 바인딩, `nodejs_compat` 플래그
+- `open-next.config.ts`: `@opennextjs/cloudflare` 어댑터 설정 (`cloudflare-node` wrapper, `edge` converter)
+- `migrations/0001_initial_schema.sql`: D1 전체 스키마 (콘텐츠 12개 + 인증 + 미디어 테이블)
+- `src/lib/db.ts`: CF Workers/Node.js 이중 환경 D1·R2 바인딩 헬퍼 (`getDB`, `getR2`, `getEnv`)
+- `src/lib/auth.ts`: D1 기반 세션 관리 (`createSession`, `validateSession`, `deleteSession`, `buildSessionCookieHeader`)
+- `src/lib/adminAuth.ts`: Route Handler 세션 인증 미들웨어 (`requireAdminSession`)
+- `src/app/api/auth/login/route.ts`: `POST` — 비밀번호 검증 → 세션 쿠키 발급
+- `src/app/api/auth/logout/route.ts`: `POST` — 세션 삭제
+- `src/app/api/auth/session/route.ts`: `GET` — 세션 유효성 확인
+
+#### 수정
+
+- `package.json`: `@opennextjs/cloudflare`, `wrangler`, `@cloudflare/workers-types` devDependencies 추가
+- `docker-compose.yml`: `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_API_TOKEN` 환경변수 추가
+- `.env.example`: Cloudflare 관련 변수 추가
+- `eslint.config.ts`: `no-require-imports` 규칙 조정 (dynamic require 허용)
+
+---
+
 ## [Unreleased] — 2026-03-17 (Phase 4)
 
 ### Phase 4: 빌드 오류 수정 + 파일 구조 정리 (완료)
