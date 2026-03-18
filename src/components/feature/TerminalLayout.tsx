@@ -1,7 +1,6 @@
 'use client';
 import { useState, ReactNode } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useContent } from '../../contexts/ContentContext';
@@ -9,8 +8,8 @@ import { createColorMixStyle } from '../../utils/colorMix';
 import { COLOR_VARS } from '../../constants/colors';
 import { TRANSITION } from '../../constants/styles';
 import { SITE_NAME, SITE_VERSION, TERMINAL_URL } from '../../constants/site';
-import CursorGlow from '../../pages/home/components/CursorGlow';
-import LiveClock from '../../pages/home/components/LiveClock';
+import CursorGlow from '../home/CursorGlow';
+import LiveClock from '../home/LiveClock';
 
 interface TerminalLayoutProps {
   children: ReactNode;

@@ -348,6 +348,104 @@ const defaultMultiLanguageContent: MultiLanguageContent = {
   ko: defaultKoContent,
 };
 
+function migrateContent(lang: ContentData, defaults: ContentData): ContentData {
+  const migrated = { ...defaults, ...lang } as ContentData & {
+    bookingInfo?: unknown;
+    artistInfo?: unknown;
+    musicalPhilosophy?: unknown;
+    designPhilosophy?: unknown;
+  };
+
+  if (!migrated.eventsInfo && migrated.bookingInfo) {
+    migrated.eventsInfo = migrated.bookingInfo as ContentData["eventsInfo"];
+  }
+  delete migrated.bookingInfo;
+
+  const bio = migrated.biography as Biography & {
+    paragraph1?: string;
+    paragraph2?: string;
+  };
+  if (!bio.paragraphs && (bio.paragraph1 || bio.paragraph2)) {
+    migrated.biography = {
+      paragraphs: [bio.paragraph1 ?? "", bio.paragraph2 ?? ""].filter(Boolean),
+    };
+  }
+  if (!migrated.biography.paragraphs) {
+    migrated.biography = { paragraphs: defaults.biography.paragraphs };
+  }
+
+  const oldArtistInfo = migrated.artistInfo as
+    | { name?: string; genre?: string; location?: string; status?: string }
+    | undefined;
+  if (oldArtistInfo && !Array.isArray(oldArtistInfo)) {
+    migrated.artistInfo = [
+      { id: "1", key: "Name", value: oldArtistInfo.name ?? "" },
+      { id: "2", key: "Genre", value: oldArtistInfo.genre ?? "" },
+      { id: "3", key: "Location", value: oldArtistInfo.location ?? "" },
+      { id: "4", key: "Status", value: oldArtistInfo.status ?? "" },
+    ];
+  }
+  if (!Array.isArray(migrated.artistInfo)) {
+    migrated.artistInfo = defaults.artistInfo;
+  }
+
+  const oldPhilosophy = migrated.musicalPhilosophy as
+    | { quote?: string; description?: string }
+    | undefined;
+  if (oldPhilosophy && !Array.isArray(oldPhilosophy)) {
+    migrated.musicalPhilosophy = [
+      { id: "1", quote: oldPhilosophy.quote ?? "", description: oldPhilosophy.description ?? "" },
+    ];
+  }
+  if (!Array.isArray(migrated.musicalPhilosophy)) {
+    migrated.musicalPhilosophy = defaults.musicalPhilosophy;
+  }
+
+  if (typeof migrated.designPhilosophy === "string") {
+    migrated.designPhilosophy = { paragraphs: [migrated.designPhilosophy] };
+  }
+  if (!migrated.designPhilosophy || !migrated.designPhilosophy.paragraphs) {
+    migrated.designPhilosophy = defaults.designPhilosophy;
+  }
+
+  if (migrated.themeColors && !migrated.themeColors.bgSidebar) {
+    migrated.themeColors = { ...migrated.themeColors, bgSidebar: migrated.themeColors.bg };
+  }
+
+  const defaultIconMap: Record<string, string> = {
+    "/about": "ri-user-line",
+    "/music": "ri-music-2-line",
+    "/events": "ri-calendar-event-line",
+    "/contact": "ri-mail-line",
+    "/link": "ri-links-line",
+  };
+  if (Array.isArray(migrated.homeSections)) {
+    migrated.homeSections = migrated.homeSections.map((section) => ({
+      ...section,
+      icon: section.icon || defaultIconMap[section.path] || "ri-arrow-right-line",
+    }));
+  } else {
+    migrated.homeSections = defaults.homeSections;
+  }
+
+  return migrated as ContentData;
+}
+
+function loadFromStorage(): MultiLanguageContent {
+  try {
+    const stored = localStorage.getItem("stann_content_multilang");
+    if (!stored) return defaultMultiLanguageContent;
+    const parsed = JSON.parse(stored);
+    if (!parsed.en || !parsed.ko) return defaultMultiLanguageContent;
+    return {
+      en: migrateContent(parsed.en, defaultEnContent),
+      ko: migrateContent(parsed.ko, defaultKoContent),
+    };
+  } catch {
+    return defaultMultiLanguageContent;
+  }
+}
+
 const ContentContext = createContext<ContentContextType | undefined>(undefined);
 
 export const ContentProvider = ({ children }: { children: ReactNode }) => {
@@ -356,132 +454,13 @@ export const ContentProvider = ({ children }: { children: ReactNode }) => {
     "en",
   );
 
-  const [allContent, setAllContent] = useState<MultiLanguageContent>(() => {
-    if (typeof window === "undefined") return defaultMultiLanguageContent; // SSR 가드
-    try {
-      const stored = localStorage.getItem("stann_content_multilang");
-      if (!stored) return defaultMultiLanguageContent;
-      const parsed = JSON.parse(stored);
-      if (!parsed.en || !parsed.ko) return defaultMultiLanguageContent;
-      const migrateContent = (
-        lang: ContentData,
-        defaults: ContentData,
-      ): ContentData => {
-        const migrated = { ...defaults, ...lang } as ContentData & {
-          bookingInfo?: unknown;
-          artistInfo?: unknown;
-          musicalPhilosophy?: unknown;
-          designPhilosophy?: unknown;
-        };
+  // 서버와 클라이언트 첫 렌더 모두 기본값으로 시작 — hydration 불일치 방지
+  const [allContent, setAllContent] = useState<MultiLanguageContent>(defaultMultiLanguageContent);
 
-        if (!migrated.eventsInfo && migrated.bookingInfo) {
-          migrated.eventsInfo =
-            migrated.bookingInfo as ContentData["eventsInfo"];
-        }
-        delete migrated.bookingInfo;
-
-        // biography 마이그레이션: 구버전 paragraph1/paragraph2 → paragraphs 배열
-        const bio = migrated.biography as Biography & {
-          paragraph1?: string;
-          paragraph2?: string;
-        };
-        if (!bio.paragraphs && (bio.paragraph1 || bio.paragraph2)) {
-          migrated.biography = {
-            paragraphs: [bio.paragraph1 ?? "", bio.paragraph2 ?? ""].filter(
-              Boolean,
-            ),
-          };
-        }
-        if (!migrated.biography.paragraphs) {
-          migrated.biography = { paragraphs: defaults.biography.paragraphs };
-        }
-
-        // artistInfo 마이그레이션: 구버전 객체 → 배열
-        const oldArtistInfo = migrated.artistInfo as
-          | {
-              name?: string;
-              genre?: string;
-              location?: string;
-              status?: string;
-            }
-          | undefined;
-        if (oldArtistInfo && !Array.isArray(oldArtistInfo)) {
-          migrated.artistInfo = [
-            { id: "1", key: "Name", value: oldArtistInfo.name ?? "" },
-            { id: "2", key: "Genre", value: oldArtistInfo.genre ?? "" },
-            { id: "3", key: "Location", value: oldArtistInfo.location ?? "" },
-            { id: "4", key: "Status", value: oldArtistInfo.status ?? "" },
-          ];
-        }
-        if (!Array.isArray(migrated.artistInfo)) {
-          migrated.artistInfo = defaults.artistInfo;
-        }
-
-        // musicalPhilosophy 마이그레이션: 구버전 객체 → 배열
-        const oldPhilosophy = migrated.musicalPhilosophy as
-          | { quote?: string; description?: string }
-          | undefined;
-        if (oldPhilosophy && !Array.isArray(oldPhilosophy)) {
-          migrated.musicalPhilosophy = [
-            {
-              id: "1",
-              quote: oldPhilosophy.quote ?? "",
-              description: oldPhilosophy.description ?? "",
-            },
-          ];
-        }
-        if (!Array.isArray(migrated.musicalPhilosophy)) {
-          migrated.musicalPhilosophy = defaults.musicalPhilosophy;
-        }
-
-        // designPhilosophy 마이그레이션: 구버전 문자열 → 객체
-        if (typeof migrated.designPhilosophy === "string") {
-          migrated.designPhilosophy = {
-            paragraphs: [migrated.designPhilosophy],
-          };
-        }
-        if (
-          !migrated.designPhilosophy ||
-          !migrated.designPhilosophy.paragraphs
-        ) {
-          migrated.designPhilosophy = defaults.designPhilosophy;
-        }
-
-        // themeColors 마이그레이션: bgSidebar 필드 없는 경우 bg 값으로 채우기
-        if (migrated.themeColors && !migrated.themeColors.bgSidebar) {
-          migrated.themeColors = { ...migrated.themeColors, bgSidebar: migrated.themeColors.bg };
-        }
-
-        // homeSections 마이그레이션: icon 필드 없는 경우 기본값으로 채우기
-        const defaultIconMap: Record<string, string> = {
-          "/about": "ri-user-line",
-          "/music": "ri-music-2-line",
-          "/events": "ri-calendar-event-line",
-          "/contact": "ri-mail-line",
-          "/link": "ri-links-line",
-        };
-        if (Array.isArray(migrated.homeSections)) {
-          migrated.homeSections = migrated.homeSections.map((section) => ({
-            ...section,
-            icon:
-              section.icon ||
-              defaultIconMap[section.path] ||
-              "ri-arrow-right-line",
-          }));
-        } else {
-          migrated.homeSections = defaults.homeSections;
-        }
-
-        return migrated as ContentData;
-      };
-      return {
-        en: migrateContent(parsed.en, defaultEnContent),
-        ko: migrateContent(parsed.ko, defaultKoContent),
-      };
-    } catch {
-      return defaultMultiLanguageContent;
-    }
-  });
+  useEffect(() => {
+    // hydration 완료 후 localStorage에서 저장된 콘텐츠 복원
+    setAllContent(loadFromStorage());
+  }, []);
 
   const content = allContent[language];
 
@@ -530,7 +509,6 @@ export const ContentProvider = ({ children }: { children: ReactNode }) => {
   );
 };
 
-// eslint-disable-next-line react-refresh/only-export-components
 export const useContent = () => {
   const context = useContext(ContentContext);
   if (!context) {

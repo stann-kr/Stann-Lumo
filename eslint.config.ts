@@ -13,6 +13,7 @@ export default [
       ecmaVersion: 2020,
       globals: {
         ...globals.browser,
+        ...globals.node,
         NodeJS: 'readonly',
         JSX: 'readonly',
       },

@@ -30,21 +30,24 @@ ContentContext (localStorage)
 ```sql
 -- 사이트 전역 설정 (단일 행)
 CREATE TABLE site_config (
-  id          INTEGER PRIMARY KEY DEFAULT 1,
-  site_name   TEXT    NOT NULL DEFAULT 'STANN LUMO',
-  tagline     TEXT    NOT NULL DEFAULT 'TECHNO / SEOUL',
-  version     TEXT    NOT NULL DEFAULT 'v1.0.0',
-  terminal_url TEXT
+  id                   INTEGER PRIMARY KEY DEFAULT 1,
+  site_name            TEXT    NOT NULL DEFAULT 'STANN LUMO',
+  tagline              TEXT    NOT NULL DEFAULT 'TECHNO / SEOUL',
+  version              TEXT    NOT NULL DEFAULT 'v1.0.0',
+  terminal_url         TEXT,
+  terminal_description TEXT  -- terminalInfo.description 저장
 );
 
 -- 테마 색상 (단일 행)
+-- 주의: primary 는 SQL 예약어 → 쿼리 시 백틱 처리 (`primary`)
 CREATE TABLE theme_colors (
-  id        INTEGER PRIMARY KEY DEFAULT 1,
-  primary   TEXT NOT NULL DEFAULT '#00ff00',
-  secondary TEXT NOT NULL DEFAULT '#ffffff',
-  accent    TEXT NOT NULL DEFAULT '#00ff00',
-  muted     TEXT NOT NULL DEFAULT '#666666',
-  bg        TEXT NOT NULL DEFAULT '#000000'
+  id         INTEGER PRIMARY KEY DEFAULT 1,
+  `primary`  TEXT NOT NULL DEFAULT '#00ff00',
+  secondary  TEXT NOT NULL DEFAULT '#ffffff',
+  accent     TEXT NOT NULL DEFAULT '#00ff00',
+  muted      TEXT NOT NULL DEFAULT '#666666',
+  bg         TEXT NOT NULL DEFAULT '#000000',
+  bg_sidebar TEXT NOT NULL DEFAULT '#000000'  -- 사이드바/모바일 헤더 별도 배경색
 );
 
 -- RA API 설정 (단일 행)
@@ -188,19 +191,15 @@ CREATE TABLE contact_info (
 ### 인증 테이블
 
 ```sql
-CREATE TABLE admin_users (
-  id            INTEGER PRIMARY KEY AUTOINCREMENT,
-  username      TEXT NOT NULL UNIQUE,
-  password_hash TEXT NOT NULL,
-  created_at    TEXT NOT NULL DEFAULT (datetime('now'))
-);
-
+-- admin_users 테이블 없음 — ADMIN_PASSWORD 환경변수 단일 비밀번호 방식 유지
+-- 세션만 D1에 저장 (HTTP-only 쿠키 기반)
 CREATE TABLE admin_sessions (
-  id         TEXT PRIMARY KEY,
-  user_id    INTEGER NOT NULL REFERENCES admin_users(id),
+  id         TEXT NOT NULL PRIMARY KEY,
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   expires_at TEXT NOT NULL
 );
+
+CREATE INDEX idx_admin_sessions_expires_at ON admin_sessions (expires_at);
 ```
 
 ### 미디어 테이블

@@ -31,8 +31,8 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
     setMobileMenuOpen(false);
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('admin_authenticated');
+  const handleLogout = async () => {
+    await fetch('/api/auth/logout', { method: 'POST' });
     router.push('/admin');
   };
 

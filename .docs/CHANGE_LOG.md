@@ -2,6 +2,33 @@
 
 ---
 
+## [Unreleased] — 2026-03-17 (Phase 4)
+
+### Phase 4: 빌드 오류 수정 + 파일 구조 정리 (완료)
+
+#### 추가
+
+- `src/app/global-error.tsx`: 루트 레이아웃 에러 바운더리 (App Router, `<html>/<body>` 포함)
+- `src/components/home/TypingText.tsx`: 터미널 타이핑 애니메이션 컴포넌트 (이동)
+- `src/components/home/CursorGlow.tsx`: 마우스 커서 글로우 효과 컴포넌트 (이동)
+- `src/components/home/LiveClock.tsx`: 서울 시간 실시간 시계 컴포넌트 (이동)
+
+#### 수정
+
+- `src/app/layout.tsx`: `export const dynamic = 'force-dynamic'` 추가 — 정적 사전 렌더링 비활성화
+- `src/app/not-found.tsx`: Server Component로 전환, `export const dynamic = 'force-dynamic'` 추가
+- `src/components/feature/TerminalLayout.tsx`: 미사용 `Link` import 제거, home 서브컴포넌트 경로 갱신
+- `src/components/feature/PageLayout.tsx`: TypingText import 경로 갱신
+- `src/lib/db.ts`: eslint-disable 주석 정비
+- `package.json`: build 스크립트에 `NODE_ENV=production` 명시 (Docker 환경 영향 차단)
+- `src/app/(public)/page.tsx` ~ `src/app/admin/(dashboard)/music/page.tsx`: `src/views/` 컴포넌트 직접 이관
+
+#### 삭제
+
+- `src/views/` (전체) — thin wrapper 이중 레이어 제거
+
+---
+
 ## [Unreleased] — 2026-03-17
 
 ### Phase 3: Next.js 15 App Router 이주 (완료)

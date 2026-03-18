@@ -1,5 +1,6 @@
-import { ReactNode, Children, isValidElement, ReactElement } from 'react';
-import TypingText from '../../pages/home/components/TypingText';
+import type { CSSProperties, ReactNode, ReactElement } from 'react';
+import { Children, isValidElement } from 'react';
+import TypingText from '../home/TypingText';
 import { createBorderMid } from '../../utils/colorMix';
 
 interface PageLayoutProps {
@@ -46,7 +47,7 @@ const PageLayout = ({
   const animatedChildren = Children.map(children, (child, index) => {
     const delay = baseDelay + index * stepDelay;
     if (isValidElement(child)) {
-      const el = child as ReactElement<{ className?: string; style?: React.CSSProperties }>;
+      const el = child as ReactElement<{ className?: string; style?: CSSProperties }>;
       return (
         <div
           key={index}
