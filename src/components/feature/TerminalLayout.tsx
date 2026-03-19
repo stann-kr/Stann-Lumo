@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect, ReactNode } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useContent } from '../../contexts/ContentContext';
@@ -29,7 +30,6 @@ const NAV_ITEMS = [
 const TerminalLayout = ({ children }: TerminalLayoutProps) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
-  const router = useRouter();
   const pathname = usePathname();
   const { t } = useTranslation();
   const { language, toggleLanguage } = useLanguage();
@@ -50,7 +50,6 @@ const TerminalLayout = ({ children }: TerminalLayoutProps) => {
     if (path === pathname) return;
     setMobileMenuOpen(false);
     setIsTransitioning(true);
-    setTimeout(() => router.push(path), 250);
   };
 
   const borderStyle = createColorMixStyle(COLOR_VARS.SECONDARY, 15);
@@ -93,9 +92,10 @@ const TerminalLayout = ({ children }: TerminalLayoutProps) => {
                       <i className="ri-external-link-line text-xs opacity-50 group-hover:opacity-100" style={{ transition: `opacity ${TRANSITION.DURATION.DEFAULT}` }}></i>
                     </a>
                   ) : (
-                    <button
+                    <Link
+                      href={item.path}
                       onClick={() => handleNavClick(item.path)}
-                      className={`w-full text-left px-4 py-3 cursor-pointer whitespace-nowrap relative group ${
+                      className={`block px-4 py-3 cursor-pointer whitespace-nowrap relative group ${
                         isActive
                           ? 'text-[var(--color-primary)] bg-[var(--color-secondary)]/10'
                           : 'text-[var(--color-secondary)]/50 hover:text-[var(--color-secondary)] hover:bg-[var(--color-secondary)]/5'
@@ -106,7 +106,7 @@ const TerminalLayout = ({ children }: TerminalLayoutProps) => {
                         <span className="absolute left-0 top-0 bottom-0 w-0.5 bg-[var(--color-secondary)]"></span>
                       )}
                       <span className="text-sm tracking-widest uppercase">{t(item.label)}</span>
-                    </button>
+                    </Link>
                   )}
                 </li>
               );
@@ -196,9 +196,10 @@ const TerminalLayout = ({ children }: TerminalLayoutProps) => {
                       <i className="ri-external-link-line text-xs opacity-50"></i>
                     </a>
                   ) : (
-                    <button
+                    <Link
+                      href={item.path}
                       onClick={() => handleNavClick(item.path)}
-                      className={`w-full text-left px-6 py-4 cursor-pointer ${
+                      className={`block px-6 py-4 cursor-pointer ${
                         isActive
                           ? 'text-[var(--color-primary)] bg-[var(--color-secondary)]/10'
                           : 'text-[var(--color-secondary)]/50 hover:text-[var(--color-secondary)] hover:bg-[var(--color-secondary)]/5'
@@ -209,7 +210,7 @@ const TerminalLayout = ({ children }: TerminalLayoutProps) => {
                       }}
                     >
                       <span className="text-sm tracking-widest uppercase">{t(item.label)}</span>
-                    </button>
+                    </Link>
                   )}
                 </li>
               );
