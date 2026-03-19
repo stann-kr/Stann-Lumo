@@ -14,10 +14,11 @@ import {
   updateHomeSections as apiUpdateHomeSections,
   updatePageMeta as apiUpdatePageMeta,
   updateTerminalInfo as apiUpdateTerminalInfo,
+  updateArtistInfo as apiUpdateArtistInfo,
   fetchDisplaySettings,
   updateDisplaySettings,
 } from '@/services/adminService';
-import type { HomeSection, TerminalInfo, PageMeta } from '@/types/content';
+import type { HomeSection, TerminalInfo, PageMeta, ArtistInfoItem } from '@/types/content';
 import type { HomeDisplaySettings } from '@/types/displaySettings';
 import { DISPLAY_SETTINGS_DEFAULTS } from '@/types/displaySettings';
 
@@ -51,6 +52,7 @@ const AdminHomePage = () => {
   const [homeSections, setHomeSections] = useState<HomeSection[]>(content.homeSections);
   const [terminalInfo, setTerminalInfo] = useState<TerminalInfo>(content.terminalInfo);
   const [pageMeta, setPageMeta] = useState<PageMeta>(content.pageMeta);
+  const [artistInfo, setArtistInfo] = useState<ArtistInfoItem[]>(content.artistInfo);
   const [displaySettings, setDisplaySettings] = useState<HomeDisplaySettings>(
     DISPLAY_SETTINGS_DEFAULTS.home
   );
@@ -63,6 +65,7 @@ const AdminHomePage = () => {
     setHomeSections(allContent[currentEditLanguage].homeSections);
     setTerminalInfo(allContent[currentEditLanguage].terminalInfo);
     setPageMeta(allContent[currentEditLanguage].pageMeta);
+    setArtistInfo(allContent[currentEditLanguage].artistInfo);
   }, [currentEditLanguage, allContent]);
 
   useEffect(() => {
@@ -108,15 +111,32 @@ const AdminHomePage = () => {
     setPageMeta(prev => ({ ...prev, home: { ...prev.home, [field]: value } }));
   };
 
+  const getArtistName = () => {
+    const nameKey = currentEditLanguage === 'ko' ? '이름' : 'Name';
+    return artistInfo.find((i) => i.key === nameKey || i.key === 'Name' || i.key === '이름')?.value ?? '';
+  };
+
+  const setArtistName = (value: string) => {
+    const nameKey = currentEditLanguage === 'ko' ? '이름' : 'Name';
+    setArtistInfo((prev) =>
+      prev.map((item) =>
+        item.key === 'Name' || item.key === '이름'
+          ? { ...item, key: nameKey, value }
+          : item,
+      ),
+    );
+  };
+
   const saveChanges = async () => {
     setIsSaving(true);
     await Promise.allSettled([
       apiUpdateHomeSections(currentEditLanguage, homeSections),
       apiUpdatePageMeta(currentEditLanguage, pageMeta),
       apiUpdateTerminalInfo(terminalInfo),
+      apiUpdateArtistInfo(currentEditLanguage, artistInfo),
       updateDisplaySettings('home', displaySettings),
     ]);
-    updateContent({ homeSections, terminalInfo, pageMeta });
+    updateContent({ homeSections, terminalInfo, pageMeta, artistInfo });
     showNotification();
     setIsSaving(false);
   };
@@ -140,6 +160,26 @@ const AdminHomePage = () => {
         />
 
         <SuccessMessage message="변경 사항이 저장되었습니다" show={showSuccess} />
+
+        {/* ARTIST INFO */}
+        <div>
+          <h2 className="text-xl font-bold text-[var(--color-secondary)] tracking-wider mb-4">
+            ARTIST INFO
+          </h2>
+          <AdminCard>
+            <div className="space-y-2">
+              <FormInput
+                label="ARTIST NAME (타이핑 애니메이션 타이틀)"
+                value={getArtistName()}
+                onChange={setArtistName}
+                placeholder="ARTIST NAME"
+              />
+              <p className="text-xs text-[var(--color-secondary)] opacity-40 tracking-wider">
+                홈 화면 상단 타이핑 애니메이션으로 표시되는 아티스트 이름. About 페이지의 Artist Info Name 필드와 연동됨.
+              </p>
+            </div>
+          </AdminCard>
+        </div>
 
         {/* DISPLAY SETTINGS */}
         <div>

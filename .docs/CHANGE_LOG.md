@@ -2,6 +2,16 @@
 
 ---
 
+## [Unreleased] — 2026-03-20 (어드민 Home 아티스트명 편집 기능 추가)
+
+### `admin/home/page.tsx` — ARTIST INFO 섹션 추가
+- `artistInfo` 상태 관리 추가 (`useState`, `useEffect` 동기화)
+- `getArtistName()` / `setArtistName()` 헬퍼 — `Name` / `이름` 키 자동 매핑 (언어별)
+- Save Changes 시 `updateArtistInfo` API 호출 포함 → About 페이지 Artist Info Name 연동
+- 홈 화면 타이핑 애니메이션 타이틀을 About 페이지 방문 없이 Home 어드민에서 직접 수정 가능
+
+---
+
 ## [Unreleased] — 2026-03-20 (ESLint react-hooks 코드 패턴 근본 수정)
 
 ### `crypto.randomUUID()` 전환 (react-hooks/purity)
