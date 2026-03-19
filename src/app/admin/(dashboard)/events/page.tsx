@@ -106,7 +106,7 @@ const AdminEventsPage = () => {
     setFetchError('');
     setFetchSuccess('');
     try {
-      const response = await fetchRAEvents(raApiConfig);
+      const response = await fetchRAEvents();
       const raPerformances = convertRAEventsToPerformances(response.events);
       const manualPerformances = performances.filter((p) => !p.raEventId);
       const merged = removeDuplicateEvents([...manualPerformances, ...raPerformances]);

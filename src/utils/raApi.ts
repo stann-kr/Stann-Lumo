@@ -109,36 +109,17 @@ export function convertRAEventToPerformance(raEvent: RAEventXML): Performance {
 }
 
 /**
- * RA API 호출
+ * RA 이벤트 조회 — 서버 사이드 프록시(/api/admin/ra-events)를 통해 호출
+ * 브라우저에서 RA API 직접 호출 시 CORS 차단됨
  */
-export async function fetchRAEvents(config: RAApiConfig): Promise<RAApiResponse> {
-  const { userId, apiKey, djId, option = '1' } = config;
-
-  if (!userId || !apiKey || !djId) {
-    throw new Error('RA API 설정이 완료되지 않았습니다. USERID, API KEY, DJID를 모두 입력해주세요.');
-  }
-
-  // RA API 엔드포인트
-  const apiUrl = 'https://www.residentadvisor.net/api/events.asmx/GetEvents';
-
-  // 쿼리 파라미터 구성
-  const params = new URLSearchParams({
-    AccessKey: `${userId}|${apiKey}`,
-    DJID: djId,
-    Option: option,
-  });
-
+export async function fetchRAEvents(_config?: RAApiConfig): Promise<RAApiResponse> {
   try {
-    // CORS 이슈로 인해 프록시 사용 (필요시)
-    const response = await fetch(`${apiUrl}?${params.toString()}`, {
-      method: 'GET',
-      headers: {
-        'Accept': 'application/xml, text/xml',
-      },
-    });
+    // 서버 프록시: DB에 저장된 설정을 사용하여 CF Workers에서 RA API 호출
+    const response = await fetch('/api/admin/ra-events', { method: 'GET' });
 
     if (!response.ok) {
-      throw new Error(`RA API 호출 실패: ${response.status} ${response.statusText}`);
+      const data = await response.json() as { error?: { message?: string } };
+      throw new Error(data?.error?.message ?? `RA API 호출 실패: ${response.status}`);
     }
 
     const xmlText = await response.text();
