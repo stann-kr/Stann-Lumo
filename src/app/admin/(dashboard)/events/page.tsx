@@ -121,10 +121,6 @@ const AdminEventsPage = () => {
       const merged = sortEventsByDate([...performances, ...newPerformances], true);
       setPerformances(merged);
 
-      // D1에 자동 저장
-      await apiUpdatePerformances(merged);
-      updateContent({ performances: merged });
-
       setFetchSuccess(
         `${newPerformances.length}개 추가됨${skipped > 0 ? ` (${skipped}개 중복 제외)` : ''}`
       );
