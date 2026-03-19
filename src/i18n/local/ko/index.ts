@@ -4,6 +4,7 @@ export default {
   nav_about: '소개',
   nav_music: '음악',
   nav_events: '이벤트',
+  nav_gallery: '갤러리',
   nav_contact: '연락',
   nav_link: '링크',
   nav_admin: '관리자',
@@ -174,6 +175,8 @@ export default {
   // Messages
   msg_saved: '변경사항이 성공적으로 저장되었습니다',
   msg_confirm_delete: '이 항목을 삭제하시겠습니까?',
+  msg_confirm_delete_item: '정말 "{{name}}"을(를) 삭제하시겠습니까?',
+  msg_confirm_delete_action: '삭제 확인',
   msg_no_items: '항목 없음',
   
   // Footer
@@ -182,4 +185,11 @@ export default {
   
   // Time
   time_seoul: '서울 시간',
+
+  // Gallery
+  gallery_label: '갤러리',
+  gallery_title: '사진',
+  gallery_subtitle: '비주얼 아카이브',
+  gallery_empty: '업로드된 사진이 없습니다',
+  gallery_lightbox_close: '닫기',
 };

@@ -4,6 +4,7 @@ export default {
   nav_about: 'About',
   nav_music: 'Music',
   nav_events: 'Events',
+  nav_gallery: 'Gallery',
   nav_contact: 'Contact',
   nav_link: 'Link',
   nav_admin: 'Admin',
@@ -174,6 +175,8 @@ export default {
   // Messages
   msg_saved: 'Changes saved successfully',
   msg_confirm_delete: 'Are you sure you want to delete this item?',
+  msg_confirm_delete_item: 'Are you sure you want to delete "{{name}}"?',
+  msg_confirm_delete_action: 'Confirm Delete',
   msg_no_items: 'No items yet',
   
   // Footer
@@ -182,4 +185,11 @@ export default {
   
   // Time
   time_seoul: 'Seoul Time',
+
+  // Gallery
+  gallery_label: 'GALLERY',
+  gallery_title: 'Photos',
+  gallery_subtitle: 'A visual archive',
+  gallery_empty: 'No photos yet',
+  gallery_lightbox_close: 'to close',
 };

@@ -11,10 +11,16 @@ interface LanguageContextType {
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [language, setLanguageState] = useState<Language>(() => {
+  // 서버와 클라이언트 첫 렌더 모두 'en'으로 시작 — hydration 불일치 방지
+  const [language, setLanguageState] = useState<Language>('en');
+
+  useEffect(() => {
+    // hydration 완료 후 localStorage에서 저장된 언어 복원
     const saved = localStorage.getItem('app_language');
-    return (saved === 'ko' || saved === 'en') ? saved : 'en';
-  });
+    if (saved === 'ko' || saved === 'en') {
+      setLanguageState(saved);
+    }
+  }, []);
 
   useEffect(() => {
     localStorage.setItem('app_language', language);

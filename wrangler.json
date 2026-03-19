@@ -1,0 +1,21 @@
+{
+  "name": "stann-lumo",
+  "compatibility_date": "2025-01-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "stann-lumo-db",
+      "database_id": "9ef2f5b5-e0f2-4bb0-98e2-b3b1ba39917e"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "MEDIA",
+      "bucket_name": "stann-lumo-media"
+    }
+  ],
+  "vars": {
+    "ADMIN_PASSWORD": ""
+  }
+}

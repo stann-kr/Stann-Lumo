@@ -8,13 +8,6 @@ export interface ArtistInfoItem {
 }
 
 /**
- * 아티스트 약력 타입
- */
-export interface Biography {
-  paragraphs: string[];
-}
-
-/**
  * 음악 철학 항목 타입
  */
 export interface PhilosophyItem {
@@ -24,10 +17,76 @@ export interface PhilosophyItem {
 }
 
 /**
- * 디자인 철학 타입 (단락 배열)
+ * 동적 섹션 타입
  */
-export interface DesignPhilosophy {
-  paragraphs: string[];
+export type DynamicSectionType = 'paragraphs' | 'philosophy-items';
+
+/**
+ * About 페이지 동적 섹션
+ */
+export interface DynamicSection {
+  id: string;
+  title: string;
+  type: DynamicSectionType;
+  order: number;
+  paragraphs?: string[];    // type === 'paragraphs'
+  items?: PhilosophyItem[]; // type === 'philosophy-items'
+}
+
+/**
+ * 홈 페이지 메타
+ */
+export interface HomePageMeta {
+  navTitle: string;
+}
+
+/**
+ * 음악 페이지 메타
+ */
+export interface MusicPageMeta {
+  title: string;
+  subtitle: string;
+}
+
+/**
+ * 이벤트 페이지 메타
+ */
+export interface EventsPageMeta {
+  title: string;
+  subtitle: string;
+  upcomingTitle: string;
+  pastTitle: string;
+}
+
+/**
+ * 연락처 페이지 메타
+ */
+export interface ContactPageMeta {
+  title: string;
+  subtitle: string;
+  guestbookTitle: string;
+  directTitle: string;
+  bookingTitle: string;
+}
+
+/**
+ * 링크 페이지 메타
+ */
+export interface LinkPageMeta {
+  title: string;
+  subtitle: string;
+  terminalTitle: string;
+}
+
+/**
+ * 전체 페이지 메타
+ */
+export interface PageMeta {
+  home: HomePageMeta;
+  music: MusicPageMeta;
+  events: EventsPageMeta;
+  contact: ContactPageMeta;
+  link: LinkPageMeta;
 }
 
 /**
@@ -116,6 +175,49 @@ export interface ThemeColors {
   accent: string;
   muted: string;
   bg: string;
+  bgSidebar: string;
+}
+
+/**
+ * 갤러리 사진 타입
+ */
+export interface GalleryPhoto {
+  id: string;
+  filename: string;
+  mimeType: string;
+  sizeBytes: number;
+  altText: string;
+  caption: string;
+  sortOrder: number;
+  createdAt: string;
+  mediaType: 'image' | 'video_file' | 'video_youtube';
+  focalX: number;
+  focalY: number;
+  videoYoutubeId?: string;
+  videoThumbnailUrl?: string;
+}
+
+/**
+ * 갤러리 레이아웃 설정 타입
+ */
+export interface GallerySettings {
+  layoutMode: 'masonry' | 'grid';
+  columnsMobile: 1 | 2;
+  columnsTablet: 2 | 3;
+  columnsDesktop: 2 | 3 | 4 | 5;
+  gapSize: 'sm' | 'md' | 'lg';
+  aspectRatio: 'auto' | '1:1' | '4:3' | '3:4' | '16:9';
+  hoverEffect: 'zoom' | 'fade' | 'none';
+  captionDisplay: 'overlay' | 'below' | 'hidden';
+  lightboxEnabled: boolean;
+}
+
+/**
+ * 갤러리 응답 데이터 타입 (photos + settings)
+ */
+export interface GalleryData {
+  photos: GalleryPhoto[];
+  settings: GallerySettings;
 }
 
 /**
@@ -133,9 +235,8 @@ export interface RAApiConfig {
  */
 export interface ContentData {
   artistInfo: ArtistInfoItem[];
-  biography: Biography;
-  musicalPhilosophy: PhilosophyItem[];
-  designPhilosophy: DesignPhilosophy;
+  aboutSections: DynamicSection[];
+  pageMeta: PageMeta;
   homeSections: HomeSection[];
   tracks: Track[];
   performances: Performance[];
@@ -145,6 +246,7 @@ export interface ContentData {
   contactInfo: ContactItem[];
   themeColors: ThemeColors;
   raApiConfig?: RAApiConfig;
+  displaySettings?: import('./displaySettings').AllDisplaySettings;
 }
 
 /**

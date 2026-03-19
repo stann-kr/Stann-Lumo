@@ -1,4 +1,5 @@
-import { BORDER, COLOR_VARS } from '../constants/styles';
+import type { CSSProperties } from 'react';
+import { BORDER } from '../constants/styles';
 import type { ColorVarKey } from '../constants/colors';
 
 /**
@@ -10,7 +11,7 @@ import type { ColorVarKey } from '../constants/colors';
 export const createColorMixStyle = (
   cssVariable: ColorVarKey,
   opacity: number
-): React.CSSProperties => {
+): CSSProperties => {
   return {
     borderColor: `color-mix(in srgb, var(${cssVariable}) ${opacity}%, transparent)`,
   };
@@ -27,9 +28,9 @@ export const createMultiColorMixStyle = (
   cssVariable: ColorVarKey,
   opacity: number,
   properties: Array<'borderColor' | 'backgroundColor' | 'color'>
-): React.CSSProperties => {
+): CSSProperties => {
   const colorValue = `color-mix(in srgb, var(${cssVariable}) ${opacity}%, transparent)`;
-  const style: React.CSSProperties = {};
+  const style: CSSProperties = {};
 
   properties.forEach((prop) => {
     style[prop] = colorValue;
@@ -49,7 +50,7 @@ export const createBorderStyle = (
   cssVariable: ColorVarKey,
   opacity: keyof typeof BORDER.OPACITY = 'LIGHT',
   width: keyof typeof BORDER.WIDTH = 'THIN'
-): React.CSSProperties => {
+): CSSProperties => {
   return {
     borderWidth: BORDER.WIDTH[width],
     borderStyle: 'solid',
@@ -61,7 +62,7 @@ export const createBorderStyle = (
  * 공통 border 스타일 생성 함수 — Faint (15% 투명도)
  * @returns 인라인 스타일 객체
  */
-export const createBorderFaint = (): React.CSSProperties => {
+export const createBorderFaint = (): CSSProperties => {
   return {
     borderColor: 'color-mix(in srgb, var(--color-secondary) 15%, transparent)',
   };
@@ -71,7 +72,7 @@ export const createBorderFaint = (): React.CSSProperties => {
  * 공통 border 스타일 생성 함수 — Mid (30% 투명도)
  * @returns 인라인 스타일 객체
  */
-export const createBorderMid = (): React.CSSProperties => {
+export const createBorderMid = (): CSSProperties => {
   return {
     borderColor: 'color-mix(in srgb, var(--color-secondary) 30%, transparent)',
   };
@@ -81,7 +82,7 @@ export const createBorderMid = (): React.CSSProperties => {
  * 공통 border 스타일 생성 함수 — Strong (50% 투명도)
  * @returns 인라인 스타일 객체
  */
-export const createBorderStrong = (): React.CSSProperties => {
+export const createBorderStrong = (): CSSProperties => {
   return {
     borderColor: 'color-mix(in srgb, var(--color-secondary) 50%, transparent)',
   };
@@ -91,7 +92,7 @@ export const createBorderStrong = (): React.CSSProperties => {
  * 공통 border 스타일 생성 함수 — Muted (10% 투명도)
  * @returns 인라인 스타일 객체
  */
-export const createBorderMuted = (): React.CSSProperties => {
+export const createBorderMuted = (): CSSProperties => {
   return {
     borderColor: 'color-mix(in srgb, var(--color-secondary) 10%, transparent)',
   };
@@ -101,7 +102,7 @@ export const createBorderMuted = (): React.CSSProperties => {
  * 공통 border 스타일 생성 함수 — Accent (50% 투명도)
  * @returns 인라인 스타일 객체
  */
-export const createBorderAccent = (): React.CSSProperties => {
+export const createBorderAccent = (): CSSProperties => {
   return {
     borderColor: 'color-mix(in srgb, var(--color-accent) 50%, transparent)',
   };
