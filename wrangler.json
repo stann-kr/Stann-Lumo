@@ -19,7 +19,5 @@
       "bucket_name": "stann-lumo-media"
     }
   ],
-  "vars": {
-    "ADMIN_PASSWORD": ""
-  }
+  "vars": {}
 }

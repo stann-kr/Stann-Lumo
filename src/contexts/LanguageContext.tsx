@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import i18n from '../i18n';
 
 type Language = 'en' | 'ko';
 
@@ -15,11 +16,11 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   const [language, setLanguageState] = useState<Language>('en');
 
   useEffect(() => {
-    // hydration 완료 후 localStorage에서 저장된 언어 복원
+    // hydration 완료 후 localStorage에서 저장된 언어 복원, i18next 동기화
     const saved = localStorage.getItem('app_language');
-    if (saved === 'ko' || saved === 'en') {
-      setLanguageState(saved);
-    }
+    const lang: Language = (saved === 'ko' || saved === 'en') ? saved : 'en';
+    setLanguageState(lang);
+    i18n.changeLanguage(lang);
   }, []);
 
   useEffect(() => {
@@ -28,10 +29,15 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 
   const setLanguage = (lang: Language) => {
     setLanguageState(lang);
+    i18n.changeLanguage(lang);
   };
 
   const toggleLanguage = () => {
-    setLanguageState(prev => prev === 'en' ? 'ko' : 'en');
+    setLanguageState(prev => {
+      const next = prev === 'en' ? 'ko' : 'en';
+      i18n.changeLanguage(next);
+      return next;
+    });
   };
 
   return (

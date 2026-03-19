@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, ReactNode } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
-import { useTranslation } from 'react-i18next';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useContent } from '../../contexts/ContentContext';
 import { createColorMixStyle } from '../../utils/colorMix';
@@ -16,22 +16,20 @@ interface TerminalLayoutProps {
 }
 
 const NAV_ITEMS = [
-  { label: 'nav_home', path: '/' },
-  { label: 'nav_about', path: '/about' },
-  { label: 'nav_music', path: '/music' },
-  { label: 'nav_events', path: '/events' },
-  { label: 'nav_gallery', path: '/gallery' },
-  { label: 'nav_contact', path: '/contact' },
-  { label: 'nav_link', path: '/link' },
-  { label: 'TERMINAL', path: TERMINAL_URL, external: true, raw: true },
+  { label: 'Home', path: '/' },
+  { label: 'About', path: '/about' },
+  { label: 'Music', path: '/music' },
+  { label: 'Events', path: '/events' },
+  { label: 'Gallery', path: '/gallery' },
+  { label: 'Contact', path: '/contact' },
+  { label: 'Link', path: '/link' },
+  { label: 'TERMINAL', path: TERMINAL_URL, external: true },
 ];
 
 const TerminalLayout = ({ children }: TerminalLayoutProps) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
-  const router = useRouter();
   const pathname = usePathname();
-  const { t } = useTranslation();
   const { language, toggleLanguage } = useLanguage();
   const { content } = useContent();
 
@@ -50,7 +48,6 @@ const TerminalLayout = ({ children }: TerminalLayoutProps) => {
     if (path === pathname) return;
     setMobileMenuOpen(false);
     setIsTransitioning(true);
-    setTimeout(() => router.push(path), 250);
   };
 
   const borderStyle = createColorMixStyle(COLOR_VARS.SECONDARY, 15);
@@ -89,13 +86,14 @@ const TerminalLayout = ({ children }: TerminalLayoutProps) => {
                       className="w-full text-left px-4 py-3 cursor-pointer whitespace-nowrap relative group flex items-center justify-between text-[var(--color-secondary)]/50 hover:text-[var(--color-secondary)] hover:bg-[var(--color-secondary)]/5"
                       style={{ transition: `${TRANSITION.DURATION.MEDIUM} ${TRANSITION.TIMING.EASE_IN_OUT}` }}
                     >
-                      <span className="text-sm tracking-widest uppercase">{item.raw ? item.label : t(item.label)}</span>
+                      <span className="text-sm tracking-widest uppercase">{item.label}</span>
                       <i className="ri-external-link-line text-xs opacity-50 group-hover:opacity-100" style={{ transition: `opacity ${TRANSITION.DURATION.DEFAULT}` }}></i>
                     </a>
                   ) : (
-                    <button
+                    <Link
+                      href={item.path}
                       onClick={() => handleNavClick(item.path)}
-                      className={`w-full text-left px-4 py-3 cursor-pointer whitespace-nowrap relative group ${
+                      className={`block px-4 py-3 cursor-pointer whitespace-nowrap relative group ${
                         isActive
                           ? 'text-[var(--color-primary)] bg-[var(--color-secondary)]/10'
                           : 'text-[var(--color-secondary)]/50 hover:text-[var(--color-secondary)] hover:bg-[var(--color-secondary)]/5'
@@ -105,8 +103,8 @@ const TerminalLayout = ({ children }: TerminalLayoutProps) => {
                       {isActive && (
                         <span className="absolute left-0 top-0 bottom-0 w-0.5 bg-[var(--color-secondary)]"></span>
                       )}
-                      <span className="text-sm tracking-widest uppercase">{t(item.label)}</span>
-                    </button>
+                      <span className="text-sm tracking-widest uppercase">{item.label}</span>
+                    </Link>
                   )}
                 </li>
               );
@@ -192,13 +190,14 @@ const TerminalLayout = ({ children }: TerminalLayoutProps) => {
                       className="w-full text-left px-6 py-4 cursor-pointer flex items-center justify-between text-[var(--color-secondary)]/50 hover:text-[var(--color-secondary)] hover:bg-[var(--color-secondary)]/5"
                       style={{ transition: `${TRANSITION.DURATION.DEFAULT} ${TRANSITION.TIMING.EASE_IN_OUT}` }}
                     >
-                      <span className="text-sm tracking-widest uppercase">{item.raw ? item.label : t(item.label)}</span>
+                      <span className="text-sm tracking-widest uppercase">{item.label}</span>
                       <i className="ri-external-link-line text-xs opacity-50"></i>
                     </a>
                   ) : (
-                    <button
+                    <Link
+                      href={item.path}
                       onClick={() => handleNavClick(item.path)}
-                      className={`w-full text-left px-6 py-4 cursor-pointer ${
+                      className={`block px-6 py-4 cursor-pointer ${
                         isActive
                           ? 'text-[var(--color-primary)] bg-[var(--color-secondary)]/10'
                           : 'text-[var(--color-secondary)]/50 hover:text-[var(--color-secondary)] hover:bg-[var(--color-secondary)]/5'
@@ -208,8 +207,8 @@ const TerminalLayout = ({ children }: TerminalLayoutProps) => {
                         transition: `${TRANSITION.DURATION.DEFAULT} ${TRANSITION.TIMING.EASE_IN_OUT}`
                       }}
                     >
-                      <span className="text-sm tracking-widest uppercase">{t(item.label)}</span>
-                    </button>
+                      <span className="text-sm tracking-widest uppercase">{item.label}</span>
+                    </Link>
                   )}
                 </li>
               );
