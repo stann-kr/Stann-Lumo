@@ -104,7 +104,7 @@ export function convertRAEventToPerformance(raEvent: RAEventXML): Performance {
     lineup: cleanRALineup(raEvent.lineup),
     raEventLink: raEvent.eventlink || undefined,
     raEventId: raEvent.id,
-    status: 'Confirmed',
+    status: 'Announced',
   };
 }
 
