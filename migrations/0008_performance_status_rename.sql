@@ -1,7 +1,8 @@
--- Performance status 네이밍 변경: Confirmed→Announced, Pending→TBA
--- SQLite는 CHECK 제약 수정 불가 → 테이블 재생성 방식으로 처리
+-- Performance status 네이밍 변경 + CHECK 제약 제거
+-- Confirmed→Announced, Pending→TBA
+-- CHECK 제약 없는 TEXT로 변경 → 향후 status 값 변경 시 마이그레이션 불필요
 
--- 1. 새 테이블 생성 (poster_image_id 포함, 새 CHECK 제약 적용)
+-- 1. 새 테이블 생성 (poster_image_id 포함, status CHECK 제약 없음)
 CREATE TABLE performances_new (
   id              TEXT NOT NULL PRIMARY KEY,
   date            TEXT NOT NULL,
@@ -13,7 +14,7 @@ CREATE TABLE performances_new (
   ra_event_link   TEXT,
   ra_event_id     TEXT,
   poster_image_id TEXT,
-  status          TEXT NOT NULL CHECK (status IN ('Announced', 'TBA', 'Cancelled')),
+  status          TEXT NOT NULL DEFAULT 'Announced',
   sort_order      INTEGER NOT NULL DEFAULT 0
 );
 
