@@ -155,7 +155,7 @@ const defaultEnContent: ContentData = {
       time: "23:00",
       title: "CONTRA Seoul",
       lineup: "Artist Name, Guest DJ",
-      status: "Confirmed",
+      status: "Announced",
     },
     {
       id: "2",
@@ -165,7 +165,7 @@ const defaultEnContent: ContentData = {
       time: "22:00",
       title: "MODECI Night",
       lineup: "Artist Name",
-      status: "Confirmed",
+      status: "Announced",
     },
   ],
   eventsInfo: {
@@ -350,7 +350,7 @@ const defaultKoContent: ContentData = {
       time: "23:00",
       title: "FAUST Seoul",
       lineup: "아티스트 이름, 게스트 DJ",
-      status: "Confirmed",
+      status: "Announced",
     },
     {
       id: "2",
@@ -360,7 +360,7 @@ const defaultKoContent: ContentData = {
       time: "22:00",
       title: "FAUST Night",
       lineup: "아티스트 이름",
-      status: "Confirmed",
+      status: "Announced",
     },
   ],
   eventsInfo: {
@@ -446,15 +446,15 @@ export const ContentProvider = ({ children }: { children: ReactNode }) => {
     // API 미사용 환경(dev, DB 없음) → 기본값 유지
     Promise.all([fetchContent("en"), fetchContent("ko")])
       .then(([enData, koData]) => {
+        // setAllContent + setIsLoading(false)를 동일 배치로 처리 — 중간 렌더링 방지
         setAllContent({
           en: enData ?? defaultEnContent,
           ko: koData ?? defaultKoContent,
         });
+        setIsLoading(false);
       })
       .catch(() => {
         // 네트워크 오류 등 — 기본값 유지
-      })
-      .finally(() => {
         setIsLoading(false);
       });
   }, []);

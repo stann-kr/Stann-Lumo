@@ -1,9 +1,9 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
-import Link from 'next/link';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import type { GalleryPhoto, GallerySettings, GalleryData } from '@/types/content';
-import { createBorderFaint, createBorderMid } from '@/utils/colorMix';
+import { createBorderFaint } from '@/utils/colorMix';
 import PageLayout from '@/components/feature/PageLayout';
 
 // ─── 설정 → CSS 클래스 매핑 ──────────────────────────────────────────────────
@@ -132,102 +132,10 @@ const GridItem = ({ photo, settings, onClick }: GridItemProps) => {
   );
 };
 
-// ─── 라이트박스 ──────────────────────────────────────────────────────────────
-interface LightboxProps {
-  photo: GalleryPhoto;
-  onClose: () => void;
-}
-
-const Lightbox = ({ photo, onClose }: LightboxProps) => {
-  const { t } = useTranslation();
-  const borderMid = createBorderMid();
-
-  let content: React.ReactNode;
-  if (photo.mediaType === 'video_youtube' && photo.videoYoutubeId) {
-    content = (
-      <iframe
-        src={`https://www.youtube.com/embed/${photo.videoYoutubeId}?autoplay=1`}
-        allow="autoplay; encrypted-media; fullscreen"
-        allowFullScreen
-        className="w-full max-w-4xl aspect-video"
-        title={photo.altText || photo.filename}
-      />
-    );
-  } else if (photo.mediaType === 'video_file') {
-    content = (
-      <video
-        src={`/api/media/${photo.id}`}
-        controls
-        autoPlay
-        className="max-w-full max-h-[70vh]"
-      />
-    );
-  } else {
-    content = (
-      <img
-        src={`/api/media/${photo.id}`}
-        alt={photo.altText || photo.filename}
-        className="max-w-full max-h-[70vh] object-contain"
-        style={{ objectPosition: `${photo.focalX}% ${photo.focalY}%` }}
-      />
-    );
-  }
-
-  return (
-    <div
-      className="fixed inset-0 z-50 bg-[var(--color-bg)]/95 backdrop-blur-sm flex items-center justify-center p-4 md:p-8"
-      onClick={onClose}
-    >
-      <div
-        className="relative max-w-5xl w-full max-h-full flex flex-col items-center gap-4"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* 닫기 버튼 — 뷰포트 내부 상단 우측 */}
-        <div className="w-full flex justify-end">
-          <button
-            onClick={onClose}
-            className="text-[var(--color-secondary)]/60 hover:text-[var(--color-secondary)] transition-colors cursor-pointer"
-            aria-label="Close"
-          >
-            <i className="ri-close-line text-2xl"></i>
-          </button>
-        </div>
-
-        {/* 미디어 + 캡션 영역 — 스크롤 가능 */}
-        <div className="flex-1 min-h-0 overflow-y-auto flex flex-col items-center gap-4 w-full">
-          {content}
-
-          {photo.caption && (
-            <p className="text-[var(--color-secondary)]/70 text-sm tracking-wider text-center max-w-xl">
-              {photo.caption}
-            </p>
-          )}
-
-          {/* 연결된 이벤트 링크 */}
-          {photo.linkedEventId && (
-            <Link
-              href={`/events/${photo.linkedEventId}`}
-              onClick={onClose}
-              className="inline-flex items-center gap-2 px-5 py-2 border text-xs tracking-widest text-[var(--color-secondary)] hover:bg-[var(--color-secondary)]/10 transition-colors"
-              style={borderMid}
-            >
-              <i className="ri-calendar-event-line"></i>
-              VIEW EVENT
-            </Link>
-          )}
-        </div>
-
-        <p className="text-[var(--color-secondary)]/25 text-xs tracking-widest shrink-0">
-          ESC {t('gallery_lightbox_close')}
-        </p>
-      </div>
-    </div>
-  );
-};
-
 // ─── 메인 갤러리 페이지 ──────────────────────────────────────────────────────
 const GalleryPage = () => {
   const { t } = useTranslation();
+  const router = useRouter();
   const [photos, setPhotos] = useState<GalleryPhoto[]>([]);
   const [settings, setSettings] = useState<GallerySettings>({
     layoutMode: 'masonry',
@@ -241,7 +149,6 @@ const GalleryPage = () => {
     lightboxEnabled: true,
   });
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedPhoto, setSelectedPhoto] = useState<GalleryPhoto | null>(null);
 
   useEffect(() => {
     const fetchGallery = async () => {
@@ -260,21 +167,6 @@ const GalleryPage = () => {
     };
     fetchGallery();
   }, []);
-
-  const closeLightbox = useCallback(() => setSelectedPhoto(null), []);
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') closeLightbox();
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [closeLightbox]);
-
-  useEffect(() => {
-    document.body.style.overflow = selectedPhoto ? 'hidden' : '';
-    return () => { document.body.style.overflow = ''; };
-  }, [selectedPhoto]);
 
   const borderStyle = createBorderFaint();
   const containerClasses = buildContainerClasses(settings);
@@ -304,18 +196,12 @@ const GalleryPage = () => {
               key={photo.id}
               photo={photo}
               settings={settings}
-              onClick={() => {
-                if (settings.lightboxEnabled) setSelectedPhoto(photo);
-              }}
+              onClick={() => router.push(`/gallery/${photo.id}`)}
             />
           ))}
         </div>
       )}
 
-      {/* 라이트박스 */}
-      {selectedPhoto && settings.lightboxEnabled && (
-        <Lightbox photo={selectedPhoto} onClose={closeLightbox} />
-      )}
     </PageLayout>
   );
 };

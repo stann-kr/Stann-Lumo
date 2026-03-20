@@ -13,8 +13,8 @@ interface EventDetailData {
 }
 
 const STATUS_CLASSES: Record<Performance['status'], string> = {
-  Confirmed: 'text-green-400',
-  Pending:   'text-yellow-400',
+  Announced: 'text-green-400',
+  TBA:       'text-yellow-400',
   Cancelled: 'text-red-400',
 };
 

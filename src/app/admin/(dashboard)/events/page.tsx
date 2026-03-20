@@ -142,7 +142,7 @@ const AdminEventsPage = () => {
       title: 'New Performance',
       location: 'Seoul',
       time: '23:00',
-      status: 'Pending',
+      status: 'TBA',
     });
   };
 
@@ -375,7 +375,23 @@ const AdminEventsPage = () => {
                 />
               ) : (
                 <div className="flex items-start gap-4">
+                  {/* 포스터 썸네일 — 있을 때만 좌측 표시 */}
+                  {performance.posterImageId && (
+                    <div className="shrink-0 w-20 h-20 overflow-hidden">
+                      <img
+                        src={`/api/media/${performance.posterImageId}`}
+                        alt="Poster"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  )}
                   <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormInput
+                      label="TITLE"
+                      value={performance.title}
+                      onChange={(value) => updatePerformanceField(index, 'title', value)}
+                      placeholder="Performance Title"
+                    />
                     <FormInput
                       label="DATE"
                       type="date"
@@ -405,8 +421,8 @@ const AdminEventsPage = () => {
                         onChange={(e) => updatePerformanceField(index, 'status', e.target.value)}
                         className="w-full bg-[var(--color-bg)] border-b border-[var(--color-secondary)]/30 text-[var(--color-secondary)] text-sm tracking-wider py-2 focus:outline-none focus:border-[var(--color-accent)] cursor-pointer"
                       >
-                        <option value="Confirmed">Confirmed</option>
-                        <option value="Pending">Pending</option>
+                        <option value="Announced">Announced</option>
+                        <option value="TBA">TBA</option>
                         <option value="Cancelled">Cancelled</option>
                       </select>
                     </div>
@@ -423,20 +439,13 @@ const AdminEventsPage = () => {
                         POSTER IMAGE <span className="text-[var(--color-secondary)]/30 normal-case font-normal">(선택)</span>
                       </label>
                       {performance.posterImageId ? (
-                        <div className="flex items-center gap-3">
-                          <img
-                            src={`/api/media/${performance.posterImageId}`}
-                            alt="Poster"
-                            className="w-16 h-16 object-cover"
-                          />
-                          <button
-                            onClick={() => handlePosterDelete(performance.id)}
-                            disabled={posterUploading[performance.id]}
-                            className="text-xs text-red-400 hover:text-red-300 tracking-widest disabled:opacity-50 cursor-pointer"
-                          >
-                            {posterUploading[performance.id] ? 'REMOVING...' : 'REMOVE'}
-                          </button>
-                        </div>
+                        <button
+                          onClick={() => handlePosterDelete(performance.id)}
+                          disabled={posterUploading[performance.id]}
+                          className="text-xs text-red-400 hover:text-red-300 tracking-widest disabled:opacity-50 cursor-pointer"
+                        >
+                          {posterUploading[performance.id] ? 'REMOVING...' : 'REMOVE POSTER'}
+                        </button>
                       ) : (
                         <label className="flex items-center gap-2 cursor-pointer text-xs text-[var(--color-secondary)]/60 hover:text-[var(--color-secondary)] tracking-widest transition-colors">
                           <i className="ri-upload-line"></i>

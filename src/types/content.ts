@@ -126,7 +126,7 @@ export interface Performance {
   raEventLink?: string;
   raEventId?: string;
   posterImageId?: string;
-  status: 'Confirmed' | 'Pending' | 'Cancelled';
+  status: 'Announced' | 'TBA' | 'Cancelled';
 }
 
 /**
