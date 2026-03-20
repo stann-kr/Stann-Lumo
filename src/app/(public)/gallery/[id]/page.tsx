@@ -70,9 +70,25 @@ const GalleryPhotoPage = () => {
     );
   }
 
+  // 타이틀: 파일명 제외, caption > altText > 인덱스 순 폴백
+  const pageTitle = photo.caption || photo.altText
+    || `${t('gallery_label') || 'GALLERY'} ${currentIndex + 1}`;
+
+  // 카테고리 뱃지
+  const categoryLabel =
+    photo.linkedEventId          ? 'EVENT'
+    : photo.mediaType === 'video_youtube' ? 'YOUTUBE'
+    : photo.mediaType === 'video_file'    ? 'VIDEO'
+    : 'PHOTO';
+  const categoryIcon =
+    photo.linkedEventId          ? 'ri-calendar-event-line'
+    : photo.mediaType === 'video_youtube' ? 'ri-youtube-line'
+    : photo.mediaType === 'video_file'    ? 'ri-film-line'
+    : 'ri-image-line';
+
   return (
-    <PageLayout title={photo.altText || photo.filename}>
-      {/* 상단 — 뒤로가기 + 인덱스 */}
+    <PageLayout title={pageTitle}>
+      {/* 상단 — 뒤로가기 + 카테고리 + 인덱스 */}
       <div className="flex items-center justify-between">
         <Link
           href="/gallery"
@@ -81,11 +97,19 @@ const GalleryPhotoPage = () => {
           <i className="ri-arrow-left-line"></i>
           GALLERY
         </Link>
-        {photos.length > 0 && (
-          <span className="text-xs text-[var(--color-secondary)]/30 tracking-widest">
-            {currentIndex + 1} / {photos.length}
+        <div className="flex items-center gap-4">
+          {/* 카테고리 뱃지 */}
+          <span className="inline-flex items-center gap-1.5 text-[10px] tracking-widest px-2 py-1 border"
+            style={{ borderColor: 'color-mix(in srgb, var(--color-accent) 30%, transparent)', color: 'var(--color-accent)', opacity: 0.7 }}>
+            <i className={`${categoryIcon} text-xs`}></i>
+            {categoryLabel}
           </span>
-        )}
+          {photos.length > 0 && (
+            <span className="text-xs text-[var(--color-secondary)]/30 tracking-widest">
+              {currentIndex + 1} / {photos.length}
+            </span>
+          )}
+        </div>
       </div>
 
       {/* 미디어 + 좌우 화살표 오버레이 */}
