@@ -1,8 +1,9 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import type { GalleryPhoto, GallerySettings, GalleryData } from '@/types/content';
-import { createBorderFaint } from '@/utils/colorMix';
+import { createBorderFaint, createBorderMid } from '@/utils/colorMix';
 import PageLayout from '@/components/feature/PageLayout';
 
 // ─── 설정 → CSS 클래스 매핑 ──────────────────────────────────────────────────
@@ -139,6 +140,7 @@ interface LightboxProps {
 
 const Lightbox = ({ photo, onClose }: LightboxProps) => {
   const { t } = useTranslation();
+  const borderMid = createBorderMid();
 
   let content: React.ReactNode;
   if (photo.mediaType === 'video_youtube' && photo.videoYoutubeId) {
@@ -157,7 +159,7 @@ const Lightbox = ({ photo, onClose }: LightboxProps) => {
         src={`/api/media/${photo.id}`}
         controls
         autoPlay
-        className="max-w-full max-h-[80vh]"
+        className="max-w-full max-h-[70vh]"
       />
     );
   } else {
@@ -165,7 +167,7 @@ const Lightbox = ({ photo, onClose }: LightboxProps) => {
       <img
         src={`/api/media/${photo.id}`}
         alt={photo.altText || photo.filename}
-        className="max-w-full max-h-[80vh] object-contain"
+        className="max-w-full max-h-[70vh] object-contain"
         style={{ objectPosition: `${photo.focalX}% ${photo.focalY}%` }}
       />
     );
@@ -177,26 +179,45 @@ const Lightbox = ({ photo, onClose }: LightboxProps) => {
       onClick={onClose}
     >
       <div
-        className="relative max-w-5xl max-h-full flex flex-col items-center gap-4"
+        className="relative max-w-5xl w-full max-h-full flex flex-col items-center gap-4"
         onClick={(e) => e.stopPropagation()}
       >
-        <button
-          onClick={onClose}
-          className="absolute -top-10 right-0 text-[var(--color-secondary)]/60 hover:text-[var(--color-secondary)] transition-colors cursor-pointer"
-          aria-label="Close"
-        >
-          <i className="ri-close-line text-2xl"></i>
-        </button>
+        {/* 닫기 버튼 — 뷰포트 내부 상단 우측 */}
+        <div className="w-full flex justify-end">
+          <button
+            onClick={onClose}
+            className="text-[var(--color-secondary)]/60 hover:text-[var(--color-secondary)] transition-colors cursor-pointer"
+            aria-label="Close"
+          >
+            <i className="ri-close-line text-2xl"></i>
+          </button>
+        </div>
 
-        {content}
+        {/* 미디어 + 캡션 영역 — 스크롤 가능 */}
+        <div className="flex-1 min-h-0 overflow-y-auto flex flex-col items-center gap-4 w-full">
+          {content}
 
-        {photo.caption && (
-          <p className="text-[var(--color-secondary)]/70 text-sm tracking-wider text-center max-w-xl">
-            {photo.caption}
-          </p>
-        )}
+          {photo.caption && (
+            <p className="text-[var(--color-secondary)]/70 text-sm tracking-wider text-center max-w-xl">
+              {photo.caption}
+            </p>
+          )}
 
-        <p className="text-[var(--color-secondary)]/25 text-xs tracking-widest">
+          {/* 연결된 이벤트 링크 */}
+          {photo.linkedEventId && (
+            <Link
+              href={`/events/${photo.linkedEventId}`}
+              onClick={onClose}
+              className="inline-flex items-center gap-2 px-5 py-2 border text-xs tracking-widest text-[var(--color-secondary)] hover:bg-[var(--color-secondary)]/10 transition-colors"
+              style={borderMid}
+            >
+              <i className="ri-calendar-event-line"></i>
+              VIEW EVENT
+            </Link>
+          )}
+        </div>
+
+        <p className="text-[var(--color-secondary)]/25 text-xs tracking-widest shrink-0">
           ESC {t('gallery_lightbox_close')}
         </p>
       </div>

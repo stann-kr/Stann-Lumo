@@ -240,7 +240,7 @@ const TerminalLayout = ({ children }: TerminalLayoutProps) => {
       {/* Main Content */}
       <main className="flex-1 lg:ml-64 pt-16 lg:pt-0">
         {isLoading ? (
-          <div className="min-h-screen flex items-center justify-center">
+          <div className="min-h-[calc(100dvh-4rem)] lg:min-h-[100dvh] flex items-center justify-center">
             <span className="text-xs tracking-widest text-[var(--color-secondary)]/30 animate-pulse">
               LOADING...
             </span>
@@ -248,7 +248,7 @@ const TerminalLayout = ({ children }: TerminalLayoutProps) => {
         ) : (
           <div
             key={pathname}
-            className="min-h-screen p-6 md:p-12 lg:p-16 animate-fadeIn"
+            className="min-h-[calc(100dvh-4rem)] lg:min-h-[100dvh] p-6 md:p-12 lg:p-16 animate-fadeIn"
           >
             {children}
           </div>

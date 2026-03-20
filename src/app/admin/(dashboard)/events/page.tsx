@@ -26,6 +26,8 @@ import {
   updateRaApiConfig as apiUpdateRaApiConfig,
   fetchDisplaySettings,
   updateDisplaySettings,
+  uploadEventPoster,
+  deleteEventPoster,
 } from '@/services/adminService';
 
 const AdminEventsPage = () => {
@@ -52,6 +54,7 @@ const AdminEventsPage = () => {
   const [fetchError, setFetchError] = useState('');
   const [fetchSuccess, setFetchSuccess] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [posterUploading, setPosterUploading] = useState<Record<string, boolean>>({});
 
   const { isVisible: showSuccess, showNotification } = useSaveNotification();
 
@@ -152,6 +155,34 @@ const AdminEventsPage = () => {
 
   const updateRaApiConfigField = (field: keyof RAApiConfig, value: string) => {
     setRaApiConfig((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handlePosterUpload = async (eventId: string, file: File) => {
+    setPosterUploading((prev) => ({ ...prev, [eventId]: true }));
+    try {
+      const result = await uploadEventPoster(eventId, file);
+      if (result.success && result.data) {
+        setPerformances((prev) =>
+          prev.map((p) => p.id === eventId ? { ...p, posterImageId: result.data!.photoId } : p)
+        );
+      }
+    } finally {
+      setPosterUploading((prev) => ({ ...prev, [eventId]: false }));
+    }
+  };
+
+  const handlePosterDelete = async (eventId: string) => {
+    setPosterUploading((prev) => ({ ...prev, [eventId]: true }));
+    try {
+      const result = await deleteEventPoster(eventId);
+      if (result.success) {
+        setPerformances((prev) =>
+          prev.map((p) => p.id === eventId ? { ...p, posterImageId: undefined } : p)
+        );
+      }
+    } finally {
+      setPosterUploading((prev) => ({ ...prev, [eventId]: false }));
+    }
   };
 
   return (
@@ -386,6 +417,43 @@ const AdminEventsPage = () => {
                         </p>
                       </div>
                     )}
+                    {/* 포스터 이미지 업로드 (선택 사항) */}
+                    <div className="md:col-span-2 space-y-2">
+                      <label className="block text-xs text-[var(--color-accent)] tracking-widest">
+                        POSTER IMAGE <span className="text-[var(--color-secondary)]/30 normal-case font-normal">(선택)</span>
+                      </label>
+                      {performance.posterImageId ? (
+                        <div className="flex items-center gap-3">
+                          <img
+                            src={`/api/media/${performance.posterImageId}`}
+                            alt="Poster"
+                            className="w-16 h-16 object-cover"
+                          />
+                          <button
+                            onClick={() => handlePosterDelete(performance.id)}
+                            disabled={posterUploading[performance.id]}
+                            className="text-xs text-red-400 hover:text-red-300 tracking-widest disabled:opacity-50 cursor-pointer"
+                          >
+                            {posterUploading[performance.id] ? 'REMOVING...' : 'REMOVE'}
+                          </button>
+                        </div>
+                      ) : (
+                        <label className="flex items-center gap-2 cursor-pointer text-xs text-[var(--color-secondary)]/60 hover:text-[var(--color-secondary)] tracking-widest transition-colors">
+                          <i className="ri-upload-line"></i>
+                          {posterUploading[performance.id] ? 'UPLOADING...' : 'UPLOAD POSTER'}
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            disabled={posterUploading[performance.id]}
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) handlePosterUpload(performance.id, file);
+                            }}
+                          />
+                        </label>
+                      )}
+                    </div>
                   </div>
                   <button
                     onClick={() => openDeleteConfirm(index)}

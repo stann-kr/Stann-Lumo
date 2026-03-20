@@ -1,5 +1,6 @@
 'use client';
 import { useState } from "react";
+import Link from "next/link";
 import { useTranslation } from "react-i18next";
 import { useContent } from "@/contexts/ContentContext";
 import PageLayout from "@/components/feature/PageLayout";
@@ -65,9 +66,10 @@ const EventsPage = () => {
         ) : (
           <div className={cardGapClass}>
             {upcomingEvents.map((event) => (
-              <div
+              <Link
                 key={event.id}
-                className={`group border ${cardPaddingClass} transition-all duration-300`}
+                href={`/events/${event.id}`}
+                className={`group border ${cardPaddingClass} transition-all duration-300 block`}
                 style={borderFaint}
               >
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -102,7 +104,7 @@ const EventsPage = () => {
                     )}
                   </div>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         )}
@@ -122,9 +124,10 @@ const EventsPage = () => {
           <>
             <div className={cardGapClass}>
               {visiblePastEvents.map((event) => (
-                <div
+                <Link
                   key={event.id}
-                  className={`group border ${cardPaddingClass} transition-all duration-300 hover:opacity-75`}
+                  href={`/events/${event.id}`}
+                  className={`group border ${cardPaddingClass} transition-all duration-300 hover:opacity-75 block`}
                   style={{ ...borderFaint, opacity: pastOpacity }}
                 >
                   <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -159,7 +162,7 @@ const EventsPage = () => {
                       )}
                     </div>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
 
