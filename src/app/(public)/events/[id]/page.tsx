@@ -30,7 +30,6 @@ const EventDetailPage = () => {
 
   useEffect(() => {
     if (!id) return;
-    setIsLoading(true);
     fetch(`/api/events/${id}`)
       .then((res) => res.json())
       .then((json) => {
