@@ -48,6 +48,9 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+        {/* iOS 상태바 / 안전영역 배경색을 앱 배경과 일치 */}
+        <meta name="theme-color" content={theme.bg} />
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@4.6.0/fonts/remixicon.css" />
         {/* SSR 시점에 DB 테마 색상을 직접 주입 — 첫 방문 포함 플래시 제거 */}
         <style dangerouslySetInnerHTML={{ __html: themeCSS }} />
