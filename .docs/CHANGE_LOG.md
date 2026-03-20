@@ -2,6 +2,91 @@
 
 ---
 
+## [Unreleased] — 2026-03-20 (Link 어드민 아이콘 선택 UI + 갤러리 상세 페이지 수정)
+
+### Link 어드민 아이콘 선택 UI
+- `admin/link/page.tsx`
+  - ICON CLASS 텍스트 입력 → 아이콘 선택 팝업으로 교체 (Contact 페이지와 동일한 UX 패턴)
+  - `AVAILABLE_ICONS` 31종 정의: SoundCloud·Spotify·YouTube·Instagram·X·TikTok·Bandcamp·Mixcloud·Discord·RA 등 플랫폼 특화
+  - 현재 선택 아이콘 미리보기 + 이름 표시, 6열 그리드 팝업, 선택 시 팝업 자동 닫힘
+
+### 갤러리 상세 페이지 수정 3건
+- `(public)/gallery/[id]/page.tsx`
+  - 키보드 힌트 하단 i18n 키 노출(`gallery_navigate`, `gallery_back`) → 하드코딩 문자열로 교체
+  - 페이지 타이틀에 파일명(IMG_5392.PNG 등) 노출 → `caption > altText > GALLERY N` 폴백으로 변경
+  - 카테고리 뱃지 추가: PHOTO / YOUTUBE / VIDEO / EVENT + 대응 remixicon
+
+---
+
+## [Unreleased] — 2026-03-20 (크리티컬 버그 3건 + Events-Gallery 개선 + 갤러리 상세 페이지)
+
+### 갤러리 상세 페이지 신규 구현
+- `(public)/gallery/[id]/page.tsx` (신규)
+  - `/api/gallery` 전체 목록 조회로 이전/다음 사진 네비게이션 지원
+  - 키보드 단축키: `←` 이전, `→` 다음, `ESC` 목록으로
+  - 미디어 오버레이 화살표 (호버 시 좌우 그라디언트 + 화살표 표시)
+  - 하단 이전/다음 버튼 + 캡션 + VIEW EVENT 링크 (linkedEventId 있을 때)
+  - YouTube embed / video_file / 이미지 미디어 타입 분기 렌더링
+- `(public)/gallery/page.tsx`
+  - Lightbox 팝업 제거 → `router.push('/gallery/${photo.id}')` 페이지 전환으로 교체
+  - `selectedPhoto`, `closeLightbox`, ESC 핸들러 등 Lightbox 관련 로직 전체 제거
+
+### Events 어드민 수정
+- `admin/events/page.tsx`
+  - TITLE `FormInput` 누락 → 추가 (미입력 시 "New Performance"로만 표시되던 버그 수정)
+  - 이벤트 카드 좌측에 포스터 썸네일(`w-20 h-20`) 표시 추가
+  - Status 옵션 변경: `Confirmed→Announced`, `Pending→TBA`
+  - 신규 이벤트 기본 status: `'Pending' → 'TBA'`
+  - DB 구 값(`Confirmed`/`Pending`) 로드 시 자동 정규화 처리
+
+### Events 공개 페이지 포스터 표시
+- `(public)/events/page.tsx`
+  - 이벤트 카드 좌측에 포스터 썸네일(`w-12 h-12`) 추가 (posterImageId 있을 때만 표시)
+  - 카드 레이아웃 `flex items-center gap-4` 구조로 변경
+
+### 이벤트 상세 → 사이드바 활성 상태 유지
+- `components/feature/TerminalLayout.tsx`
+  - 네비게이션 활성 판정: `pathname === item.path` → `pathname.startsWith(item.path + '/')` 확장
+  - `/events/[id]` 방문 시 사이드바 EVENTS 항목 하이라이트 유지
+
+### Performance Status 네이밍 변경
+- `types/content.ts` — `'Confirmed' | 'Pending' | 'Cancelled'` → `'Announced' | 'TBA' | 'Cancelled'`
+- `utils/raApi.ts` — `convertRAEventsToPerformances`: `status: 'Confirmed'` → `status: 'Announced'`
+- `contexts/ContentContext.tsx` — 기본값 performances 4건 status `"Confirmed"` → `"Announced"` 변경
+- `migrations/0008_performance_status_rename.sql` (신규)
+  - CREATE/INSERT CASE/DROP/RENAME 패턴으로 테이블 재생성 (CHECK 제약 우회)
+  - `Confirmed→Announced`, `Pending→TBA` 값 마이그레이션
+  - status 컬럼 `TEXT NOT NULL DEFAULT 'Announced'` (CHECK 제약 없음 — 향후 값 추가 시 마이그레이션 불필요)
+
+### 테마 색상 플래시 방지 (첫 방문 포함)
+- `app/layout.tsx`
+  - async 서버 컴포넌트로 전환
+  - D1 `theme_colors` 직접 조회 → `<style>` 태그로 CSS 변수 SSR 주입 (JS 실행 전 적용)
+  - DB 미사용/오류 환경 → 기본 테마값 폴백
+- `contexts/ContentContext.tsx`
+  - API 응답 후 `localStorage.setItem('stann_content_multilang', ...)` 저장
+  - 다음 방문 시 layout.tsx 인라인 스크립트가 즉시 테마 덮어쓰기 가능하도록
+
+### 홈 방문 시 로딩 플래시 방지
+- `contexts/ContentContext.tsx`
+  - `setAllContent(next)` + `setIsLoading(false)` 동일 `.then()` 내 배치 처리 → 기본 데이터 중간 렌더 차단
+- `components/feature/TerminalLayout.tsx`
+  - 사이드바 아티스트명: isLoading 중 `opacity-0` 처리 → 기본값 플래시 방지
+  - 모바일 헤더 아티스트명: isLoading 중 빈 문자열 처리
+
+### Contact 게스트북 섹션 비표시
+- `(public)/contact/page.tsx`
+  - 게스트북 폼 전체 JSX 주석(`{/* */}`)으로 비표시 처리
+  - 폼 로직(handleSubmit, state, imports)은 `//` 주석으로 보존
+  - Direct Contact 섹션이 첫 번째 visible 섹션으로 승격
+
+### 빌드 오류 수정
+- `(public)/events/[id]/page.tsx` — `setIsLoading(true)` useEffect 동기 호출 제거 (`react-hooks/set-state-in-effect`)
+- `admin/events/page.tsx` — `setPerformances((prev) => ...)` functional updater → 직접 참조 `performances.map(...)` (useListEditor 타입 불일치)
+- `utils/raApi.ts` — `status: 'Confirmed'` → `'Announced'` (Performance type union 변경 반영 누락)
+
+---
+
 ## [Unreleased] — 2026-03-20 (추가 개선: 갤러리 이벤트 연결 완성 + Contact 섹션 정리)
 
 ### Contact 게스트북 섹션 비표시 처리
