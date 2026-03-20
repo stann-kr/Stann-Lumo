@@ -57,7 +57,7 @@ const TerminalLayout = ({ children }: TerminalLayoutProps) => {
       >
         {/* Logo/Brand */}
         <div className="p-8 border-b" style={borderStyle}>
-          <h1 className="text-2xl font-bold text-[var(--color-primary)] tracking-wider">
+          <Link href="/" className="block text-2xl font-bold text-[var(--color-primary)] tracking-wider hover:opacity-80 transition-opacity">
             {isLoading ? (
               <span className="opacity-0 select-none">—</span>
             ) : (
@@ -65,7 +65,7 @@ const TerminalLayout = ({ children }: TerminalLayoutProps) => {
                 <span key={i} className="block">{word}</span>
               ))
             )}
-          </h1>
+          </Link>
         </div>
 
         {/* Navigation */}
@@ -154,12 +154,12 @@ const TerminalLayout = ({ children }: TerminalLayoutProps) => {
       {/* Mobile Header */}
       <header
         className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-[var(--color-bg-sidebar)]/95 backdrop-blur-sm border-b"
-        style={borderStyle}
+        style={{ ...borderStyle, paddingTop: 'env(safe-area-inset-top)' }}
       >
         <div className="flex items-center justify-between px-6 h-16">
-          <h1 className="text-xl font-bold text-[var(--color-primary)] tracking-wider">
+          <Link href="/" className="text-xl font-bold text-[var(--color-primary)] tracking-wider hover:opacity-80 transition-opacity">
             {isLoading ? '' : artistName}
-          </h1>
+          </Link>
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             className="w-10 h-10 flex flex-col items-center justify-center gap-1.5 cursor-pointer"
@@ -250,7 +250,7 @@ const TerminalLayout = ({ children }: TerminalLayoutProps) => {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 lg:ml-64 pt-16 lg:pt-0">
+      <main className="flex-1 lg:ml-64 mobile-header-offset">
         {isLoading ? (
           <div className="min-h-[calc(100dvh-4rem)] lg:min-h-[100dvh] flex items-center justify-center">
             <span className="text-xs tracking-widest text-[var(--color-secondary)]/30 animate-pulse">

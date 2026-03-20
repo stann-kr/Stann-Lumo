@@ -64,7 +64,7 @@ const GalleryPhotoPage = () => {
           className="inline-flex items-center gap-2 text-xs tracking-widest text-[var(--color-secondary)]/60 hover:text-[var(--color-secondary)] transition-colors"
         >
           <i className="ri-arrow-left-line"></i>
-          {t('back') || 'BACK TO GALLERY'}
+          BACK TO GALLERY
         </Link>
       </PageLayout>
     );
@@ -212,7 +212,7 @@ const GalleryPhotoPage = () => {
 
       {/* 키보드 힌트 */}
       <p className="text-[var(--color-secondary)]/20 text-xs tracking-widest">
-        ← → {t('gallery_navigate') || 'NAVIGATE'} · ESC {t('gallery_back') || 'BACK TO GALLERY'}
+        ← → NAVIGATE · ESC BACK TO GALLERY
       </p>
     </PageLayout>
   );

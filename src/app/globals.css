@@ -24,6 +24,17 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-y: scroll;
+  background-color: var(--color-bg);
+}
+
+/* iOS 안전영역 대응 — 모바일 헤더(4rem) + safe-area-inset-top, 데스크톱(lg)은 0 */
+.mobile-header-offset {
+  padding-top: calc(4rem + env(safe-area-inset-top, 0px));
+}
+@media (min-width: 1024px) {
+  .mobile-header-offset {
+    padding-top: 0;
+  }
 }
 
 @layer utilities {
