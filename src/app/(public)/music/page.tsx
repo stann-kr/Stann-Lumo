@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import { useTranslation } from "react-i18next";
 import { useContent } from "@/contexts/ContentContext";
 import PageLayout from "@/components/feature/PageLayout";
@@ -13,6 +14,36 @@ const MusicPage = () => {
       title={content.pageMeta?.music?.title || t("music_title")}
       subtitle={content.pageMeta?.music?.subtitle || t("music_subtitle")}
     >
+      <div className="mb-6 border p-4 md:p-5 space-y-3" style={borderFaint}>
+        <div className="font-mono text-[10px] tracking-widest text-[var(--color-accent)] uppercase">
+          MUSIC ECOSYSTEM
+        </div>
+        <p className="text-sm text-[var(--color-secondary)] opacity-70 leading-relaxed">
+          이 페이지는 Stann Lumo archive입니다. 더 넓은 음악 허브는 stann-web에서,
+          현장 중심 라이브 인터페이스는 TERMINAL에서 이어집니다.
+        </p>
+        <div className="flex flex-wrap gap-2">
+          <a
+            href="https://stann.kr/lumo"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 border px-3 py-1 font-mono text-xs tracking-widest text-[var(--color-secondary)] opacity-70 hover:opacity-100 hover:bg-[var(--color-accent)]/10 transition-all duration-300"
+            style={borderFaint}
+          >
+            OPEN MUSIC HUB
+          </a>
+          <a
+            href="https://terminal.stann.kr"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 border px-3 py-1 font-mono text-xs tracking-widest text-[var(--color-secondary)] opacity-50 hover:opacity-100 hover:bg-[var(--color-accent)]/10 transition-all duration-300"
+            style={borderFaint}
+          >
+            OPEN LIVE INTERFACE
+          </a>
+        </div>
+      </div>
+
       {/* Track List - Database Log Style */}
       <div className="border border-[var(--color-muted)] p-[1px] flex flex-col gap-[1px] overflow-x-hidden">
         {/* Header Row */}
@@ -76,6 +107,14 @@ const MusicPage = () => {
         <p className="text-sm text-[var(--color-secondary)] opacity-35 leading-relaxed">
           {t("music_note")}
         </p>
+        <div className="mt-4">
+          <Link
+            href="/"
+            className="font-mono text-xs tracking-widest text-[var(--color-accent)] hover:opacity-100 opacity-70 uppercase"
+          >
+            Return to artist archive root
+          </Link>
+        </div>
       </div>
     </PageLayout>
   );

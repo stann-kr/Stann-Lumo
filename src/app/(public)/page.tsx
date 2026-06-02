@@ -72,19 +72,35 @@ export default function HomePage() {
                 <p className="font-mono text-base leading-relaxed text-[var(--color-secondary)] opacity-60 max-w-2xl">
                   {content.terminalInfo.description}
                 </p>
+                <p className="font-mono text-xs tracking-widest text-[var(--color-secondary)]/45 uppercase">
+                  Archive here / Music hub on stann-web / Live interface on TERMINAL
+                </p>
               </div>
-              <a
-                href={content.terminalInfo.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group relative px-6 py-3 border border-[var(--color-accent)] text-sm font-mono tracking-widest text-[var(--color-accent)] whitespace-nowrap overflow-hidden transition-colors hover:text-white hover:bg-[var(--color-accent)]"
-              >
-                <div className="absolute inset-0 bg-[var(--color-accent)]/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
-                <span className="relative z-10 flex items-center gap-2">
-                  {t("home_terminal_enter")}{" "}
-                  <i className="ri-arrow-right-up-line"></i>
-                </span>
-              </a>
+              <div className="flex flex-wrap gap-3">
+                <a
+                  href="https://stann.kr/lumo"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group relative px-6 py-3 border border-[var(--color-muted)] text-sm font-mono tracking-widest text-[var(--color-secondary)] whitespace-nowrap overflow-hidden transition-colors hover:text-[var(--color-primary)] hover:border-[var(--color-accent)] hover:bg-[var(--color-accent)]/5"
+                >
+                  <span className="relative z-10 flex items-center gap-2">
+                    OPEN MUSIC HUB
+                    <i className="ri-arrow-right-up-line"></i>
+                  </span>
+                </a>
+                <a
+                  href={content.terminalInfo.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group relative px-6 py-3 border border-[var(--color-accent)] text-sm font-mono tracking-widest text-[var(--color-accent)] whitespace-nowrap overflow-hidden transition-colors hover:text-white hover:bg-[var(--color-accent)]"
+                >
+                  <div className="absolute inset-0 bg-[var(--color-accent)]/10 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
+                  <span className="relative z-10 flex items-center gap-2">
+                    {t("home_terminal_enter")}{" "}
+                    <i className="ri-arrow-right-up-line"></i>
+                  </span>
+                </a>
+              </div>
             </div>
 
             {/* Custom Fields */}
