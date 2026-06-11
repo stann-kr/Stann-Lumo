@@ -1,4 +1,4 @@
-# 기술 명세서
+# 기술 명세서 (Technical Specification)
 
 > 최종 업데이트: 2026-03-19 (Phase 4-h 완료 기준)
 
@@ -10,10 +10,10 @@
 
 | 항목 | 내용 |
 |------|------|
-| 프레임워크 | Next.js 15.5 (App Router) |
-| 런타임 | Cloudflare Workers (`nodejs_compat`) |
+| 프레임워크 | [[Next.js]] 15.5 (App Router) |
+| 런타임 | [[Cloudflare Workers]] (`nodejs_compat`) |
 | 배포 어댑터 | `@opennextjs/cloudflare` v1.17.1 — `cloudflare-node` wrapper, `edge` converter |
-| 개발 환경 | Docker (Node 22 Alpine, `linux/arm64`) |
+| 개발 환경 | [[Docker]] (Node 22 Alpine, `linux/arm64`) |
 | 빌드 | `NODE_ENV=production next build` → `opennextjs-cloudflare build` |
 
 ### open-next.config.ts
@@ -37,11 +37,11 @@
 }
 ```
 
-### Cloudflare 리소스 바인딩 (wrangler.json)
+### [[Cloudflare]] 리소스 바인딩 (wrangler.json)
 
 | 바인딩 | 리소스 | 용도 |
 |--------|--------|------|
-| `DB` | D1 `stann-lumo-db` | 콘텐츠 + 세션 저장 |
+| `DB` | [[D1]] `stann-lumo-db` | 콘텐츠 + 세션 저장 |
 | `MEDIA` | R2 `stann-lumo-media` | 이미지 / 동영상 파일 저장 |
 
 ---
@@ -181,7 +181,7 @@ ProtectedRoute (클라이언트)
 
 ---
 
-## D1 스키마 (마이그레이션 파일별)
+## [[D1]] 스키마 (마이그레이션 파일별)
 
 ### 0001_initial_schema.sql — 초기 스키마
 
@@ -285,10 +285,10 @@ ProtectedRoute (클라이언트)
 | `GET/PUT` | `/api/admin/display-settings` | Display Settings |
 | `GET/PUT` | `/api/admin/gallery-settings` | 갤러리 레이아웃 설정 |
 | `GET/PUT` | `/api/admin/gallery` | 갤러리 목록 + 메타 업데이트 |
-| `POST` | `/api/admin/gallery/upload` | 다중 파일 업로드 (R2 + D1) |
-| `DELETE` | `/api/admin/gallery/[id]` | 갤러리 항목 삭제 (D1 + R2) |
+| `POST` | `/api/admin/gallery/upload` | 다중 파일 업로드 (R2 + [[D1]]) |
+| `DELETE` | `/api/admin/gallery/[id]` | 갤러리 항목 삭제 ([[D1]] + R2) |
 | `POST` | `/api/admin/gallery/youtube` | YouTube URL 추가 |
-| `POST` | `/api/admin/migrate` | localStorage → D1 일괄 마이그레이션 (일회성) |
+| `POST` | `/api/admin/migrate` | localStorage → [[D1]] 일괄 마이그레이션 (일회성) |
 
 ### API 응답 형식
 

@@ -9,7 +9,7 @@
 - **컨셉**: 80-90년대 SF 스타일의 터미널 인터페이스(FUI)와 현대적 웹 기술의 결합
 - **핵심 경험**: CRT 노이즈, 스캔라인 효과, 타이핑 애니메이션 등을 통한 몰입형 UI 제공
 - **데이터 통합**: 아티스트의 음악(Music), 공연(Events), 시각 기록(Archive) 데이터를 중앙 집중식으로 관리
-- **기술 지향**: Cloudflare Workers, D1, R2 등 최신 에지 컴퓨팅 기술을 활용한 저지연 및 고효율 아키텍처 구축
+- **기술 지향**: [[Cloudflare Workers]], [[D1]], R2 등 최신 에지 컴퓨팅 기술을 활용한 저지연 및 고효율 아키텍처 구축
 
 ---
 
@@ -18,14 +18,14 @@
 
 | 항목 | 내용 |
 |------|------|
-| 프레임워크 | Next.js 15.5 (App Router) |
-| 런타임 | Cloudflare Workers (`nodejs_compat`) |
+| 프레임워크 | [[Next.js]] 15.5 (App Router) |
+| 런타임 | [[Cloudflare Workers]] (`nodejs_compat`) |
 | 배포 어댑터 | `@opennextjs/cloudflare` v1.17.1 |
-| DB | Cloudflare D1 (SQLite) — `stann-lumo-db` |
-| 스토리지 | Cloudflare R2 — `stann-lumo-media` |
+| DB | [[Cloudflare]] [[D1]] (SQLite) — `stann-lumo-db` |
+| 스토리지 | [[Cloudflare]] R2 — `stann-lumo-media` |
 | 국제화 | i18next (EN/KO) |
-| 스타일 | Tailwind CSS v3 |
-| 개발 환경 | Docker (Node 22 Alpine, `linux/arm64`) |
+| 스타일 | [[Tailwind CSS]] v3 |
+| 개발 환경 | [[Docker]] (Node 22 Alpine, `linux/arm64`) |
 
 ---
 
@@ -33,7 +33,7 @@
 
 ### 사전 요구 사항
 
-- Docker Desktop (Apple Silicon)
+- [[Docker]] Desktop (Apple Silicon)
 - `.env` 파일 생성 (`.env.example` 참고)
 
 ### 환경 변수 설정
@@ -50,8 +50,8 @@ cp .env.example .env
 | `ADMIN_PASSWORD` | 어드민 로그인 비밀번호 |
 | `NEXT_PUBLIC_TERMINAL_URL` | 외부 터미널 URL |
 | `NEXT_PUBLIC_FORM_ENDPOINT` | 폼 제출 엔드포인트 |
-| `CLOUDFLARE_ACCOUNT_ID` | Cloudflare 계정 ID |
-| `CLOUDFLARE_API_TOKEN` | Cloudflare API 토큰 |
+| `CLOUDFLARE_ACCOUNT_ID` | [[Cloudflare]] 계정 ID |
+| `CLOUDFLARE_API_TOKEN` | [[Cloudflare]] API 토큰 |
 
 ### 개발 서버 실행
 
@@ -68,7 +68,7 @@ docker compose logs -f web
 
 브라우저에서 `http://localhost:3000` 접속.
 
-> 개발 서버에서는 D1/R2 미연결 — API 실패 시 ContentContext 기본값으로 폴백.
+> 개발 서버에서는 [[D1]]/R2 미연결 — API 실패 시 ContentContext 기본값으로 폴백.
 
 ### 패키지 관리
 
@@ -144,16 +144,16 @@ migrations/
 
 `/admin` 경로 접근 → `ADMIN_PASSWORD`로 로그인.
 
-| 어드민 페이지 | 관리 콘텐츠 |
-|--------------|------------|
-| `/admin/home` | 홈 섹션 카드, 터미널 정보, Display Settings |
-| `/admin/about` | 아티스트 정보, 동적 섹션, Display Settings |
-| `/admin/music` | 트랙 목록, Display Settings |
-| `/admin/events` | 공연 일정, RA API 설정, Display Settings |
-| `/admin/contact` | 연락처, 이벤트 정보, Display Settings |
-| `/admin/link` | 링크 플랫폼, Display Settings |
-| `/admin/theme` | 테마 색상, Global Display Settings |
-| `/admin/gallery` | 사진/동영상 업로드, 갤러리 레이아웃 설정 |
+| 어드민 페이지          | 관리 콘텐츠                             |
+| ---------------- | ---------------------------------- |
+| `/admin/home`    | 홈 섹션 카드, 터미널 정보, Display Settings  |
+| `/admin/about`   | 아티스트 정보, 동적 섹션, Display Settings   |
+| `/admin/music`   | 트랙 목록, Display Settings            |
+| `/admin/events`  | 공연 일정, RA API 설정, Display Settings |
+| `/admin/contact` | 연락처, 이벤트 정보, Display Settings      |
+| `/admin/link`    | 링크 플랫폼, Display Settings           |
+| `/admin/theme`   | 테마 색상, Global Display Settings     |
+| `/admin/gallery` | 사진/동영상 업로드, 갤러리 레이아웃 설정            |
 
 ---
 
@@ -173,10 +173,11 @@ docker compose run --rm web npm run deploy
 
 ## 관련 문서
 
-| 문서 | 내용 |
-|------|------|
-| [배포 가이드](.docs/DEPLOYMENT.md) | 단계별 배포 절차, 명령어, 체크리스트 |
-| [변경 이력](.docs/CHANGE_LOG.md) | Phase별 변경 사항 (최신순) |
-| [잔여 작업](.docs/TASKS.md) | 완료/미완료 태스크 (최신순) |
-| [기술 명세](.docs/TECH_SPEC.md) | 아키텍처, DB 스키마, API 설계 |
-| [트러블슈팅](.docs/TROUBLESHOOTING.md) | 에러 해결 이력 (최신순) |
+| 문서                            | 내용                    |
+| ----------------------------- | --------------------- |
+| [배포 가이드](./DEPLOYMENT.md)     | 단계별 배포 절차, 명령어, 체크리스트 |
+| [변경 이력](./CHANGE_LOG.md)      | Phase별 변경 사항 (최신순)    |
+| [잔여 작업](./TASKS.md)           | 완료/미완료 태스크 (최신순)      |
+| [기술 명세](./TECH_SPEC.md)       | 아키텍처, DB 스키마, API 설계  |
+| [트러블슈팅](./TROUBLESHOOTING.md) | 에러 해결 이력 (최신순)        |
+|                               |                       |

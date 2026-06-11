@@ -9,7 +9,7 @@
 
 - [ ] **CF 빌드 완료 후 어드민 로그인 확인** (`ADMIN_PASSWORD` Secret 설정 완료)
 - [ ] **어드민 로그인 후 콘텐츠 마이그레이션** (`/api/admin/migrate` 실행)
-- [ ] D1 마이그레이션 0005 (display_settings) 원격 적용 여부 확인
+- [ ] [[D1]] 마이그레이션 0005 (display_settings) 원격 적용 여부 확인
 - [ ] 갤러리 R2 업로드 실제 동작 확인
 - [ ] 언어 전환(EN/KO) 번역 반영 확인
 
@@ -33,12 +33,12 @@
 - [x] `ProtectedRoute.tsx`: `verifySession` 내 setState → `.then()` 콜백으로 이동 (비동기 분리)
 - [x] `eslint.config.ts`: `react-hooks/purity` + `react-hooks/set-state-in-effect` override 제거 (0 errors 달성)
 
-### [2026-03-19] Cloudflare 빌드 오류 근본 수정
+### [2026-03-19] [[Cloudflare]] 빌드 오류 근본 수정
 
 - [x] `src/lib/db.ts`: `CloudflareEnv` 전역 확장 (`declare global`) — 타입 충돌 해소
 - [x] `eslint.config.ts`: `react-hooks` 플러그인 중복 등록 제거
 
-### [2026-03-19] Cloudflare 배포 버그 수정 + UX 개선
+### [2026-03-19] [[Cloudflare]] 배포 버그 수정 + UX 개선
 
 - [x] `src/lib/db.ts`: `getCloudflareContext` 정적 import 전환 (어드민 로그인 ADMIN_PASSWORD 누락 해결)
 - [x] `wrangler.json`: `ADMIN_PASSWORD` 빈 vars 제거 (Dashboard Variable 덮어쓰기 방지)
@@ -48,11 +48,11 @@
 - [x] `src/contexts/LanguageContext.tsx`: `i18n.changeLanguage()` 연동
 - [x] `src/app/(public)/gallery/page.tsx`: `PageLayout` 래퍼로 교체
 - [x] `src/components/feature/PageLayout.tsx`: 좌측 정렬 (`mx-auto` 제거)
-- [x] `wrangler.json`: `main` + `assets` 필드 추가 (Cloudflare Add Application 호환)
+- [x] `wrangler.json`: `main` + `assets` 필드 추가 ([[Cloudflare]] Add Application 호환)
 - [x] `package.json`: `deploy` 스크립트 추가
 - [x] PR #4~#7 main 머지 완료
 
-### [2026-03-19] 빌드 환경 수정 — Cloudflare 배포 준비
+### [2026-03-19] 빌드 환경 수정 — [[Cloudflare]] 배포 준비
 
 - [x] `docker-compose.yml`: `/app/.open-next` 익명 볼륨 추가 (VirtioFS 권한 문제 해결)
 - [x] `open-next.config.mjs` 삭제 (`.ts` 파일 컴파일로 대체)
@@ -93,11 +93,11 @@
 - [x] 어드민 세션 만료 처리 — `ProtectedRoute` 5분 주기 재검증 + 만료 시 `/admin` 자동 리다이렉트
 - [x] `src/types/content.ts` 불필요 타입 정리
 
-### [2026-03-18] Phase 4-e: 데이터 마이그레이션 + 어드민 D1 연동
+### [2026-03-18] Phase 4-e: 데이터 마이그레이션 + 어드민 [[D1]] 연동
 
-- [x] `POST /api/admin/migrate` — `MultiLanguageContent` JSON → D1 일괄 INSERT (batch 90개 청크)
+- [x] `POST /api/admin/migrate` — `MultiLanguageContent` JSON → [[D1]] 일괄 INSERT (batch 90개 청크)
 - [x] 어드민 6개 페이지 `saveChanges` → `adminService` 호출 + `Promise.allSettled` 패턴
-- [x] `POST /api/admin/ra-api-config` — raApiConfig D1 영속화
+- [x] `POST /api/admin/ra-api-config` — raApiConfig [[D1]] 영속화
 
 ### [2026-03-18] Phase 4-d: ContentContext API 전환
 
@@ -112,9 +112,9 @@
 - [x] `src/services/adminService.ts` — 어드민 API 전체 CRUD 함수
 - [x] `src/services/authService.ts` — `login` / `logout` / `checkSession`
 
-### [2026-03-18] Phase 4-b: D1 콘텐츠 API 구현
+### [2026-03-18] Phase 4-b: [[D1]] 콘텐츠 API 구현
 
-- [x] `GET /api/content/[lang]` — D1 16테이블 batch 조회 → `ContentData` 반환
+- [x] `GET /api/content/[lang]` — [[D1]] 16테이블 batch 조회 → `ContentData` 반환
 - [x] 어드민 CRUD API 11개 (`artist-info` / `about-sections` / `page-meta` / `home-sections` / `tracks` / `performances` / `events-info` / `link-platforms` / `contact-info` / `theme` / `site-config`)
 
 ### [2026-03-18] 동적 섹션 + pageMeta 시스템
@@ -124,23 +124,23 @@
 - [x] About 어드민 완전 재작성 — 동적 섹션 ADD/DELETE/순서변경
 - [x] 공개 5개 페이지 + 어드민 5개 페이지 PAGE SETTINGS 카드 추가
 
-### [2026-03-17] Phase 4-a: Cloudflare 인프라 기반
+### [2026-03-17] Phase 4-a: [[Cloudflare]] 인프라 기반
 
-- [x] `wrangler.json` — D1(`DB`), R2(`MEDIA`) 바인딩, `nodejs_compat` 플래그
+- [x] `wrangler.json` — [[D1]](`DB`), R2(`MEDIA`) 바인딩, `nodejs_compat` 플래그
 - [x] `open-next.config.ts` — `@opennextjs/cloudflare` 어댑터 설정
-- [x] `migrations/0001_initial_schema.sql` — D1 전체 초기 스키마
+- [x] `migrations/0001_initial_schema.sql` — [[D1]] 전체 초기 스키마
 - [x] `src/lib/db.ts` / `src/lib/auth.ts` / `src/lib/adminAuth.ts`
 - [x] `POST /api/auth/login` · `POST /api/auth/logout` · `GET /api/auth/session`
 - [x] `src/views/` 제거 → `src/app/` 직접 통합 + 빌드 오류 수정
 
-### [2026-03-17] Phase 3: Next.js 15 App Router 이주
+### [2026-03-17] Phase 3: [[Next.js]] 15 App Router 이주
 
-- [x] Vite / React Router 제거 → Next.js 15 (App Router) 전환
+- [x] Vite / [[React]] Router 제거 → [[Next.js]] 15 (App Router) 전환
 - [x] `src/app/` 구조 신규 구축 (공개 그룹 / 어드민 그룹 / API 라우트)
 - [x] SSR 가드, hydration 오류 수정, Route Handlers 인증 구현
 
 ### [2026-03-17] Phase 1/2: 인프라 정비 + 코드 품질
 
-- [x] Docker 환경 구성 (`Dockerfile`, `docker-compose.yml`, `.dockerignore`)
+- [x] [[Docker]] 환경 구성 (`Dockerfile`, `docker-compose.yml`, `.dockerignore`)
 - [x] 위생 파일 (`gitignore`, `.env.example`) + `.docs/` 문서 폴더 초기화
 - [x] 미사용 의존성/파일 제거, 타입 정합성 수정, 하드코딩 제거, i18n 전환, strict mode 활성화

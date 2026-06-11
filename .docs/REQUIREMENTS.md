@@ -1,4 +1,4 @@
-# 기능 요구사항
+# 프로젝트 세부 명세서 (Requirements)
 
 ---
 
@@ -46,9 +46,9 @@
 
 ---
 
-## Phase 3 — Cloudflare D1 + R2 통합 (예정)
+## Phase 3 — [[Cloudflare]] [[D1]] + R2 통합 (예정)
 
 - 서버사이드 세션 기반 인증 (`POST /api/auth/login`)
-- 전체 콘텐츠 D1 DB 저장
+- 전체 콘텐츠 [[D1]] DB 저장
 - 미디어(이미지/오디오) R2 스토리지 저장
 - localStorage → API 전환

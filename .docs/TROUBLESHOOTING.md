@@ -1,4 +1,4 @@
-# 트러블슈팅 이력
+# 트러블슈팅 이력 (Troubleshooting)
 
 > 최신 이슈가 상단에 위치. 신규 항목 추가 시 최상단 카테고리 섹션 내부 첫 번째에 삽입.
 
@@ -22,9 +22,9 @@
 
 ---
 
-## Cloudflare / 빌드 관련 이슈
+## [[Cloudflare]] / 빌드 관련 이슈
 
-### [2026-03-31] 보안 헤더가 배포 후 HTTP 응답에 미반영 — OpenNext `external: true` 미들웨어 구조 제약
+### [2026-03-31] 보안 헤더가 배포 후 HTTP 응답에 미반영 — [[OpenNext]] `external: true` 미들웨어 구조 제약
 
 **발생 상황 및 에러 로그 요약**
 - 증상: `next.config.ts headers()`, `src/middleware.ts NextResponse.next().headers.set()` 모두 설정했으나 `curl -I https://lumo.stann.kr`에서 보안 헤더(`X-Frame-Options` 등) 미반환
@@ -35,10 +35,10 @@
 - `external: true` 구조에서 미들웨어가 별도 Edge Worker 번들로 분리됨
 - Edge Worker가 `NextResponse.next()` 반환 시 내부적으로 `x-middleware-next: 1` 헤더만 설정
 - Edge Worker → 메인 앱 Node Worker 프록시 과정에서 **미들웨어 응답 헤더가 최종 응답에 병합되지 않음**
-- OpenNext GitHub Issues #606, #501, #585에서 확인된 알려진 제약사항
+- [[OpenNext]] GitHub Issues #606, #501, #585에서 확인된 알려진 제약사항
 
 **해결 방법**
-- Cloudflare Transform Rules 사용 (CDN 레벨 — Worker 코드와 완전히 무관하게 전체 응답에 적용)
+- [[Cloudflare]] Transform Rules 사용 (CDN 레벨 — Worker 코드와 완전히 무관하게 전체 응답에 적용)
 - Dashboard 경로: 도메인 → Rules → Transform Rules → Modify Response Header → Create rule
 - 조건: `Hostname equals lumo.stann.kr`
 - 설정 헤더 5개: `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `X-XSS-Protection: 1; mode=block`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy: camera=(), microphone=(), geolocation=()`
@@ -73,10 +73,10 @@
 
 ---
 
-### [2026-03-19] TypeScript 빌드 오류 — `CloudflareEnv` 타입 충돌
+### [2026-03-19] [[TypeScript]] 빌드 오류 — `CloudflareEnv` 타입 충돌
 
 **발생 상황 및 에러 로그 요약**
-- 증상: Cloudflare 자동 빌드 실패
+- 증상: [[Cloudflare]] 자동 빌드 실패
 - 에러:
   ```
   Type error: Conversion of type 'CloudflareContext<...>' to type '{ env: CloudflareEnv; }'
@@ -89,7 +89,7 @@
 - `@opennextjs/cloudflare`는 `declare global { interface CloudflareEnv {...} }`로 전역 인터페이스 선언
 - `db.ts`의 `export interface CloudflareEnv { DB, MEDIA, ADMIN_PASSWORD }`는 모듈 레벨 인터페이스 (별개 타입)
 - `getCloudflareContext()` 반환 타입의 `env`는 전역 `CloudflareEnv` (DB/MEDIA/ADMIN_PASSWORD 없음)
-- `as { env: CloudflareEnv }` 캐스트 시 로컬 타입을 참조 → 두 타입이 구조적으로 충분히 겹치지 않아 TypeScript 거부
+- `as { env: CloudflareEnv }` 캐스트 시 로컬 타입을 참조 → 두 타입이 구조적으로 충분히 겹치지 않아 [[TypeScript]] 거부
 
 **해결 방법**
 - 로컬 `export interface CloudflareEnv` 제거
@@ -110,7 +110,7 @@
 ### [2026-03-19] ESLint 빌드 오류 — `react-hooks` 플러그인 중복 등록
 
 **발생 상황 및 에러 로그 요약**
-- 증상: Cloudflare 자동 빌드 ESLint 단계 실패
+- 증상: [[Cloudflare]] 자동 빌드 ESLint 단계 실패
 - 에러:
   ```
   ESLint: Config (unnamed): Key "plugins": Cannot redefine plugin "react-hooks".
@@ -130,7 +130,7 @@
 ### [2026-03-19] 어드민 로그인 실패 — `getCloudflareContext` 잘못된 import
 
 **발생 상황 및 에러 로그 요약**
-- 증상: Cloudflare Dashboard Variables에 `ADMIN_PASSWORD` 설정했으나 로그인 시 "비밀번호 불일치" 오류
+- 증상: [[Cloudflare]] Dashboard Variables에 `ADMIN_PASSWORD` 설정했으나 로그인 시 "비밀번호 불일치" 오류
 - 원인 확인: `src/lib/db.ts`의 `getRequestCtx()`가 CF Workers 런타임에서 `null` 반환 → `ADMIN_PASSWORD = ''` 폴백
 
 **원인 분석**
@@ -146,14 +146,14 @@
   function getRequestCtx() { try { return getCloudflareContext(); } catch { return null; } }
   ```
 - `wrangler.json`: `"vars": { "ADMIN_PASSWORD": "" }` → `"vars": {}` 로 수정 (빈 값 제거)
-- Cloudflare Dashboard → Workers → Settings → Variables에서 `ADMIN_PASSWORD` 설정 후 재배포
+- [[Cloudflare]] Dashboard → Workers → Settings → Variables에서 `ADMIN_PASSWORD` 설정 후 재배포
 
 ---
 
-### [2026-03-19] Cloudflare 자동 배포 빌드 오류 — `eslint-config-next` Unexpected array
+### [2026-03-19] [[Cloudflare]] 자동 배포 빌드 오류 — `eslint-config-next` Unexpected array
 
 **발생 상황 및 에러 로그 요약**
-- 증상: Cloudflare Add Application CI/CD 빌드 실패
+- 증상: [[Cloudflare]] Add Application CI/CD 빌드 실패
 - 에러:
   ```
   ⨯ ESLint: Unexpected array.
@@ -172,10 +172,10 @@
 
 ---
 
-### [2026-03-19] Cloudflare 자동 배포 빌드 오류 — `getRequestContext` not exported
+### [2026-03-19] [[Cloudflare]] 자동 배포 빌드 오류 — `getRequestContext` not exported
 
 **발생 상황 및 에러 로그 요약**
-- 증상: Cloudflare Add Application CI/CD 빌드 실패
+- 증상: [[Cloudflare]] Add Application CI/CD 빌드 실패
 - 에러:
   ```
   Type error: Module '"@opennextjs/cloudflare"' has no exported member 'getRequestContext'.
@@ -190,17 +190,17 @@
 
 ---
 
-### [2026-03-19] Cloudflare 자동 배포 빌드 오류 — `wrangler versions upload` 진입점 미지정
+### [2026-03-19] [[Cloudflare]] 자동 배포 빌드 오류 — `wrangler versions upload` 진입점 미지정
 
 **발생 상황 및 에러 로그 요약**
-- 증상: Cloudflare Add Application CI/CD 빌드/업로드 실패
+- 증상: [[Cloudflare]] Add Application CI/CD 빌드/업로드 실패
 - 에러:
   ```
   Missing entry-point to Worker script
   ```
 
 **원인 분석**
-- Cloudflare Add Application은 내부적으로 `wrangler versions upload` 사용
+- [[Cloudflare]] Add Application은 내부적으로 `wrangler versions upload` 사용
 - `wrangler.json`에 `"main"` 필드가 없으면 Worker 스크립트 진입점을 찾지 못함
 
 **해결 방법**
@@ -222,7 +222,7 @@
 
 **원인 분석**
 - `@opennextjs/aws`의 `copyOpenNextConfig` 함수가 `fs.copyFileSync`로 임시 디렉토리(`/tmp/open-next-tmp-*`) → 바인드 마운트(`.:/app/.open-next/`)로 파일 복사
-- Docker Desktop for Mac의 VirtioFS에서 해당 경로로의 `copyFileSync` 시 읽기 권한 누락(`0200`) 설정
+- [[Docker]] Desktop for Mac의 VirtioFS에서 해당 경로로의 `copyFileSync` 시 읽기 권한 누락(`0200`) 설정
 - 기존 `.next/`, `node_modules/`와 동일한 VirtioFS 바인드 마운트 권한 문제
 
 **해결 방법**
@@ -243,7 +243,7 @@
 
 ---
 
-## Apple Silicon / Docker 관련 이슈
+## Apple Silicon / [[Docker]] 관련 이슈
 
 ### [2026-03-17] wrangler d1 migrations apply --local 실패 (Alpine glibc 부재)
 
@@ -252,20 +252,20 @@
 - 에러: `Error: spawn .../workerd ENOENT` → `ldd` 확인 시 `ld-linux-aarch64.so.1: No such file or directory`
 
 **원인 분석**
-- Alpine Linux는 `musl` libc 사용; Cloudflare `workerd` 바이너리는 `glibc(ld-linux-aarch64.so.1)` 동적 링크 대상
+- Alpine Linux는 `musl` libc 사용; [[Cloudflare]] `workerd` 바이너리는 `glibc(ld-linux-aarch64.so.1)` 동적 링크 대상
 - Alpine 컨테이너에서 glibc 기반 바이너리 실행 불가 — 설치되어 있어도 로더가 없어 `ENOENT` 반환
 
 **해결 방법**
-- 로컬 D1 에뮬레이션 대신 `--remote` 플래그로 실제 Cloudflare D1에 직접 마이그레이션 적용
+- 로컬 [[D1]] 에뮬레이션 대신 `--remote` 플래그로 실제 [[Cloudflare]] [[D1]]에 직접 마이그레이션 적용
 - `docker compose run --rm web sh -c "npx wrangler d1 migrations apply stann-lumo-db --remote"`
 - **주의:** `wrangler dev` (로컬 Workers 에뮬레이션)도 동일한 이유로 Alpine 환경에서 불가 — 최종 검증은 `--remote` 또는 실제 CF Workers 배포로 진행
 
 ---
 
-### [2026-03-17] 초기 Docker 환경 구축 (ARM64 바이너리 충돌)
+### [2026-03-17] 초기 [[Docker]] 환경 구축 (ARM64 바이너리 충돌)
 
 **발생 상황**
-Apple Silicon(ARM64) 환경에서 Docker 이미지 빌드 시 x86 바이너리 충돌 가능성.
+Apple Silicon(ARM64) 환경에서 [[Docker]] 이미지 빌드 시 x86 바이너리 충돌 가능성.
 
 **원인 분석**
 macOS ARM64와 Linux x86_64 간 네이티브 바인딩 패키지 이진 호환성 문제.
@@ -277,7 +277,7 @@ macOS ARM64와 Linux x86_64 간 네이티브 바인딩 패키지 이진 호환�
 
 ---
 
-## Next.js 빌드 관련 이슈
+## [[Next.js]] 빌드 관련 이슈
 
 ### [2026-03-17] `<Html> should not be imported outside of pages/_document` 빌드 오류
 

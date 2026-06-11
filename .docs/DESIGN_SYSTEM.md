@@ -1,6 +1,6 @@
-# Stann Lumo - UI/UX 디자인 시스템 및 레퍼런스 가이드
+# Stann Lumo - [[UI-UX|UI/UX]] 디자인 시스템 및 레퍼런스 가이드
 
-이 문서는 Stann Lumo 웹사이트에 도입된 **미니멀 퓨처리스틱 (Minimal Futuristic) 및 FUI (Fictional User Interface)** 기반의 전역 디자인 시스템과 아키텍처, 그리고 주요 모션 렌더링 기법들을 명명하고 정리한 것입니다.
+이 문서는 Stann Lumo 웹사이트에 도입된 **미니멀 퓨처리스틱 (Minimal Futuristic) 및 FUI (Fictional User Interface)** 기반의 전역 디자인 시스템과 아키텍처, 그리고 주요 모션 렌더링 기법들을 명명하고 정리한 것임.
 
 ---
 
@@ -34,7 +34,7 @@
 
 - **역할:** 전역 페이지 라우팅 전환 (Page Transitions).
 - **적용점:** `TerminalLayout.tsx`의 `<AnimatePresence>` 래퍼.
-- **효과:** Next.js 라우트를 이동할 때 즉시 끊기는 현상을 막고, 화면이 Blur 처리되며 아웃(Exit)되고 다음 화면이 Blur 해제되며 인(In) 되는 스캔/글리치(Scan/Glitch) 스타일의 부드러운 전환을 담당.
+- **효과:** [[Next.js]] 라우트를 이동할 때 즉시 끊기는 현상을 막고, 화면이 Blur 처리되며 아웃(Exit)되고 다음 화면이 Blur 해제되며 인(In) 되는 스캔/글리치(Scan/Glitch) 스타일의 부드러운 전환을 담당.
 
 ### 3) SplitType + GSAP 시너지 (Cipher Decode)
 
@@ -78,4 +78,4 @@
 
 ---
 
-> **요약 사항:** 현재 Stann Lumo의 UI는 단순히 CSS 떡칠을 통한 디자인이 아니며, **React의 재사용성을 바탕으로 한 GSAP DOM 제어 + 3D Canvas R5 렌더 트리 + Shaders(마스킹/후처리 합성) + Framer 상태 전환 라우팅**이 유기적으로 얽힌 초고도 통합 UI 시스템임.
+> **요약 사항:** 현재 Stann Lumo의 UI는 단순히 CSS 떡칠을 통한 디자인이 아니며, **[[React]]의 재사용성을 바탕으로 한 GSAP DOM 제어 + 3D Canvas R5 렌더 트리 + Shaders(마스킹/후처리 합성) + Framer 상태 전환 라우팅**이 유기적으로 얽힌 초고도 통합 UI 시스템임.
