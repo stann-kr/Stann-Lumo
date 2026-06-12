@@ -21,10 +21,7 @@
   --color-bg-sidebar: #050505; /* lumo 고유 — 사이드바 */
 }
 
-html {
-  /* 기본 16px → 17px: rem 기반 텍스트 전체 소폭 확대 */
-  font-size: 17px;
-}
+/* 타입 베이스 = 16px (브라우저 기본, STANN OS 공통 — 구 17px 오버라이드 제거) */
 
 /* ── 네이티브 스크롤바 완전 숨김 ───────────────────────────────────────
    React CustomScrollbar 컴포넌트(position:fixed)로 대체
