@@ -1,3 +1,4 @@
+@import "../styles/stann-os.css";
 @import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap");
 @import url("https://fonts.googleapis.com/css2?family=Orbit&display=swap");
 
@@ -7,16 +8,17 @@
 
 :root {
   /*
-   * ── 색상 단일 소스 ──────────────────────────────────────────────────
-   *  색상 변경 시: src/styles/colors.ts 의 THEME 섹션 수정 후
-   *  이 파일의 값과 동기화 유지 (두 파일이 1:1 대응)
-   * ─────────────────────────────────────────────────────────────────── */
-  --color-primary: #ffffff; /* THEME.primary   */
-  --color-secondary: #cbcbcb; /* THEME.secondary */
-  --color-accent: #ff0033; /* THEME.accent    */
-  --color-muted: #333333; /* THEME.muted     */
-  --color-bg: #000000; /* THEME.bg        */
-  --color-bg-sidebar: #050505; /* THEME.bgSidebar */
+   * ── 색상: 정본은 src/styles/stann-os.css (STANN OS 공통 토큰) ──
+   *  primary/secondary/accent/bg = MUSIC 신호 팔레트 브릿지.
+   *  muted/bg-sidebar = lumo 고유 레이어(리터럴 유지).
+   *  colors.ts(THEME)는 JS 참조용 — 값 변경은 정본에서.
+   */
+  --color-primary: var(--os-music-primary); /* #ffffff */
+  --color-secondary: var(--os-music-sub); /* #b8b8b8 — 구 #cbcbcb에서 정본 정렬 */
+  --color-accent: var(--os-music-accent); /* #ff0033 */
+  --color-muted: #333333; /* lumo 고유 — 구분선/보더 */
+  --color-bg: var(--os-music-bg); /* #000000 */
+  --color-bg-sidebar: #050505; /* lumo 고유 — 사이드바 */
 }
 
 html {

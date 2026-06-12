@@ -6,9 +6,8 @@
  * 이 파일이 사이트 전체 색상의 단일 소스입니다.
  *
  * 색상 변경 방법:
- *   1. 아래 THEME 섹션의 값을 수정
- *   2. src/app/globals.css 의 :root 를 동일하게 업데이트
- *      (두 파일이 1:1 대응, 항상 동기화 유지)
+ *   1. 정본 stann-os.css(STANN OS 공통 토큰)에서 변경 — stann-web가 원본
+ *   2. THEME은 JS 참조용 미러 — 정본과 일치 유지 (드리프트 가드는 stann-web의 stann-os.test.ts)
  *
  * 구조:
  *   PALETTE  → 원시 색상값 (hex) — 재사용 가능한 색상 팔레트
@@ -32,7 +31,7 @@ export const PALETTE = {
   white: "#ffffff",
 
   // 포인트 컬러
-  neonGreen: "#999999",
+  subGray: "#b8b8b8",
   cyberRed: "#ff0033",
 } as const;
 
@@ -44,7 +43,7 @@ export const PALETTE = {
 
 export const THEME = {
   primary: PALETTE.white, // --color-primary    : 주 텍스트, 헤딩
-  secondary: PALETTE.neonGreen, // --color-secondary  : 보조 텍스트, 일반 본문
+  secondary: PALETTE.subGray, // --color-secondary  : 보조 텍스트, 일반 본문
   accent: PALETTE.cyberRed, // --color-accent     : 아이콘, 라벨, 포인트 컬러
   muted: PALETTE.midGray, // --color-muted      : 흐린 텍스트, 구분선
   bg: PALETTE.black, // --color-bg         : 페이지 배경

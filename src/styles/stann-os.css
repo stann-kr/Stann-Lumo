@@ -1,0 +1,66 @@
+/* ════════════════════════════════════════════════════════════════
+   STANN OS — 공통 토큰 정본 (v1)
+   정본: stann-web/src/styles/stann-os.css
+   복사본: stann-lumo/src/styles/stann-os.css · terminal-2/app/stann-os.css
+   ⚠ 복사본 직접 수정 금지 — 정본 수정 후 복사 동기화 (3파일 diff 일치 필수)
+   설계: stann-web/.docs/2026-06-11-stann-os-ui-unification-design.md
+   ════════════════════════════════════════════════════════════════ */
+:root {
+  /* ── A. 불변 토큰 ───────────────────────────────────────────── */
+  --os-radius: 0;
+  --os-hairline: 1px;
+  --os-tracking: 0.14em;
+  --os-grid-size: 40px;
+  --os-space-unit: 4px;
+  --os-ease-hud: cubic-bezier(0.16, 1, 0.3, 1);
+  --os-dur-fast: 160ms;
+  --os-dur-base: 320ms;
+  --os-dur-slow: 640ms;
+  --os-decode-speed: 80ms; /* 사이퍼 디코드 per-char */
+  --os-z-base: 0;
+  --os-z-nav: 40;
+  --os-z-overlay: 50;
+  --os-z-modal: 60;
+
+  /* ── B. 타입 스케일 (16px 베이스) ───────────────────────────── */
+  --os-text-meta: 0.75rem;
+  --os-text-body: 1rem;
+  --os-text-lead: 1.25rem;
+  --os-text-h3: 1.5rem;
+  --os-text-h2: 2rem;
+  --os-text-display: clamp(2.75rem, 8vw, 4.5rem);
+
+  /* ── C. 폰트 스택 (모노 = 시각적 접착제) ────────────────────── */
+  --os-font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", monospace;
+
+  /* ── D. 신호 팔레트 정본 ────────────────────────────────────── */
+  /* DEV — 라이트 블루프린트 */
+  --os-dev-bg: #fcfbf7;
+  --os-dev-panel: #f5f2eb;
+  --os-dev-primary: #1f1e1a;
+  --os-dev-sub: #59554b;
+  --os-dev-border: #dfdacb;
+  --os-dev-accent: #c23b22;
+  --os-dev-grid: rgba(31, 30, 26, 0.04);
+  /* MUSIC — 다크 네온 (액센트 = 사이버 레드, 결정 D2 · JS THEME 키는 "lumo") */
+  --os-music-bg: #000000;
+  --os-music-panel: #0a0a0a;
+  --os-music-primary: #ffffff;
+  --os-music-sub: #b8b8b8;
+  --os-music-border: rgba(255, 255, 255, 0.12);
+  --os-music-accent: #ff0033;
+  --os-music-grid: rgba(255, 255, 255, 0.03);
+  /* NEUTRAL — 허브 랜딩 */
+  --os-neutral-bg: #0d0d0c;
+  --os-neutral-panel: #141413;
+  --os-neutral-primary: #e8e6df;
+  --os-neutral-sub: #8a877d;
+  --os-neutral-border: rgba(255, 255, 255, 0.1);
+  --os-neutral-accent: #c23b22;
+  --os-neutral-grid: rgba(255, 255, 255, 0.03);
+
+  /* ── E. 상태색 역할 (terminal-2 muted 체계 승격, 다크 표면 기준) ── */
+  --os-status-ok: #3a9880;
+  --os-status-warn: #b39847;
+  --os-status-alert: #b34747;
+}
