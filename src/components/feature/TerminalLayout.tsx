@@ -113,7 +113,7 @@ const TerminalLayout = ({ children }: TerminalLayoutProps) => {
                       className="w-full flex items-center gap-3 px-3 py-2 cursor-pointer group text-[var(--color-muted)] hover:text-[var(--color-primary)] transition-colors"
                     >
                       <span className="font-mono text-[9px] opacity-50">
-                        [{numStr}]
+                        {numStr} /
                       </span>
                       <span className="font-mono text-xs tracking-widest uppercase">
                         {item.label}
@@ -134,7 +134,7 @@ const TerminalLayout = ({ children }: TerminalLayoutProps) => {
                         <span className="absolute left-0 top-0 bottom-0 w-[2px] bg-[var(--color-accent)]"></span>
                       )}
                       <span className="font-mono text-[9px] opacity-50">
-                        [{numStr}]
+                        {numStr} /
                       </span>
                       <span className="font-mono text-xs tracking-widest uppercase">
                         {item.label}
@@ -253,7 +253,7 @@ const TerminalLayout = ({ children }: TerminalLayoutProps) => {
                       className="flex items-center gap-3 py-3 text-[var(--color-muted)] hover:text-[var(--color-primary)]"
                     >
                       <span className="font-mono text-[10px] opacity-50">
-                        [{numStr}]
+                        {numStr} /
                       </span>
                       <span className="font-mono text-sm tracking-widest uppercase">
                         {item.label}
@@ -274,7 +274,7 @@ const TerminalLayout = ({ children }: TerminalLayoutProps) => {
                         <span className="absolute left-[-24px] w-1 h-full bg-[var(--color-accent)]"></span>
                       )}
                       <span className="font-mono text-[10px] opacity-50">
-                        [{numStr}]
+                        {numStr} /
                       </span>
                       <span className="font-mono text-sm tracking-widest uppercase">
                         {item.label}
