@@ -18,7 +18,7 @@ const PageLayout = ({
   title,
   titleExtra,
   subtitle,
-  typingSpeed = 80,
+  typingSpeed = 80, // --os-decode-speed(80ms/char) 정본과 일치 (stann-os.css)
   typingDelay = 100,
   children,
 }: PageLayoutProps) => {
@@ -57,9 +57,9 @@ const PageLayout = ({
     <div ref={containerRef} className="max-w-5xl space-y-10 pb-8 relative">
       {/* Sci-Fi Page Header */}
       <div className="relative space-y-4 gsap-stagger-item opacity-0">
-        <div className="font-mono text-xs text-[var(--color-accent)] tracking-widest flex items-center gap-2">
+        <div className="font-mono text-xs text-[var(--color-accent)] tracking-label flex items-center gap-2">
           <span className="w-1.5 h-1.5 bg-[var(--color-accent)] animate-pulse"></span>
-          ACCESS_GRANTED // PAGE_INIT
+          [ ACCESS_GRANTED // PAGE_INIT ]
         </div>
         
         <h1 className="text-6xl md:text-8xl font-black uppercase tracking-[0.1em] text-[var(--color-primary)] leading-none break-all overflow-hidden">

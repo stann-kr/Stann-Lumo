@@ -24,6 +24,9 @@ export default {
       animation: {
         shimmer: 'shimmer 1.2s ease-in-out infinite',
       },
+      letterSpacing: {
+        label: 'var(--os-tracking)', // 0.14em — STANN OS 모노 라벨 자간
+      },
       fontFamily: {
         sans: ['Orbit', 'sans-serif'],
         mono: ['JetBrains Mono', 'monospace'],
