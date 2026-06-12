@@ -22,9 +22,15 @@ function subscribe(callback: () => void) {
   return () => window.removeEventListener('storage', callback);
 }
 
+/**
+ * 첫 방문 언어 결정 (STANN OS 공통 규칙, 설계 §6-5).
+ * 우선순위: 저장값 > 브라우저 언어(ko 계열만 ko) > en 폴백(lumo 고유 — 국제 청중).
+ */
 function getSnapshot(): Language {
   const saved = localStorage.getItem('app_language');
-  return saved === 'ko' || saved === 'en' ? saved : 'en';
+  if (saved === 'ko' || saved === 'en') return saved;
+  const nav = (navigator.languages?.[0] || navigator.language || 'en').toLowerCase();
+  return nav.startsWith('ko') ? 'ko' : 'en';
 }
 
 function getServerSnapshot(): Language {
