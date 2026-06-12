@@ -35,6 +35,18 @@
   display: none; /* Chrome/Safari/Opera */
 }
 
+/* 셀렉션 — 액센트 배경 (STANN OS 불변 글루) */
+::selection {
+  background: var(--color-accent);
+  color: var(--color-bg);
+}
+
+/* 포커스 가시화 — STANN OS 불변 글루 (web canon: 2px accent, offset 2px) */
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
 * {
   margin: 0;
   padding: 0;

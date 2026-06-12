@@ -56,7 +56,7 @@ const TerminalLayout = ({ children }: TerminalLayoutProps) => {
   };
 
   return (
-    <div className="min-h-screen bg-transparent text-[var(--color-primary)] font-sans antialiased flex selection:bg-[var(--color-accent)] selection:text-white">
+    <div className="min-h-screen bg-transparent text-[var(--color-primary)] font-sans antialiased flex">
       {/* 커스텀 스크롤바 — 페이지 전환 독립, 네이티브 플래시 차단 */}
       <CustomScrollbar />
       {/* 전역 커서 글로우 (Sci-Fi 스타일 유지) */}
