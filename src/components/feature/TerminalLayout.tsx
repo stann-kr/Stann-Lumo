@@ -6,11 +6,12 @@ import { usePathname } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useContent } from "../../contexts/ContentContext";
-import { SITE_NAME, SITE_VERSION, TERMINAL_URL } from "../../constants/site";
+import { SITE_NAME, SITE_VERSION, TERMINAL_URL, HUB_URL } from "../../constants/site";
 import CursorGlow from "../home/CursorGlow";
 import LiveClock from "../home/LiveClock";
 import Scene3D from "./Scene3D";
 import CustomScrollbar from "../base/CustomScrollbar";
+import SignalNet from "../base/SignalNet";
 
 interface TerminalLayoutProps {
   children: ReactNode;
@@ -39,6 +40,7 @@ const TerminalLayout = ({ children }: TerminalLayoutProps) => {
     { label: t("nav_contact"), path: "/contact" },
     { label: t("nav_link"), path: "/link" },
     { label: "TERMINAL", path: TERMINAL_URL, external: true },
+    { label: "HUB", path: HUB_URL, external: true },
   ];
 
   const artistName = (() => {
@@ -147,6 +149,8 @@ const TerminalLayout = ({ children }: TerminalLayoutProps) => {
 
         {/* HUD Footer (Time & Version) */}
         <div className="p-6 border-t border-[var(--color-muted)] space-y-4">
+          <SignalNet />
+
           <div className="flex flex-col gap-1">
             <span className="text-[9px] font-mono text-[var(--color-muted)] uppercase tracking-widest">
               LOCAL TIME

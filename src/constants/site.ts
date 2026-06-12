@@ -7,3 +7,4 @@ export const SITE_NAME = 'STANN LUMO';
 export const SITE_TAGLINE = 'TECHNO / SEOUL';
 export const SITE_VERSION = 'v1.0.0';
 export const TERMINAL_URL = process.env.NEXT_PUBLIC_TERMINAL_URL || 'https://terminal.stann.kr';
+export const HUB_URL = process.env.NEXT_PUBLIC_HUB_URL || 'https://stann.kr';

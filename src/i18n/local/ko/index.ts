@@ -190,6 +190,7 @@ export default {
   // Footer
   footer_version: '버전',
   footer_language: '언어',
+  footer_signal_net_aria: 'STANN OS 표면 간 이동',
   
   // Time
   time_seoul: '서울 시간',
