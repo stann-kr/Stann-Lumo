@@ -2,6 +2,28 @@
 
 ---
 
+## [Unreleased] — 2026-06-12 (STANN OS 통일 Phase 2)
+
+### 디자인 토큰
+
+- `src/styles/stann-os.css` — STANN OS 공통 토큰 정본 도입 (stann-web에서 복사, diff 동기화 — 직접 수정 금지)
+- `src/app/globals.css` — `--color-primary/secondary/accent/bg`를 `--os-music-*` 브릿지로 전환. `--color-secondary` `#cbcbcb → #b8b8b8` 정본 정렬 (colors.ts↔globals 수동 동기화 폐지, 어긋남 버그 해소)
+- `src/styles/colors.ts` — `PALETTE.neonGreen`(실제 회색) → `PALETTE.subGray` 네이밍 정정
+- `html 17px → 16px` 타입 베이스 정렬 (STANN OS 공통)
+
+### 글루 (3사이트 불변 요소)
+
+- `::selection` 액센트 배경 전역 규칙 (TerminalLayout 인라인 클래스 제거), `:focus-visible` 2px accent 아웃라인
+- 네비 섹션 인덱스 `[01]` → `01 /` 정본 포맷, 페이지 라벨 `[ ACCESS_GRANTED // PAGE_INIT ]` 문법, 자간 `tracking-label`(0.14em) 토큰
+- 첫 방문 언어: 저장값 > 브라우저 감지 > en 폴백 (`LanguageContext.getSnapshot`)
+
+### SIGNAL_NET
+
+- `src/constants/signalNet.ts` + `src/components/base/SignalNet.tsx` — 3표면 상호 링크(SL-01 자기 노드 마커), 사이드바 푸터 삽입
+- 네비에 `HUB`(stann.kr) 외부 링크 추가, `NEXT_PUBLIC_HUB_URL` 환경변수 (.env.example 반영)
+
+---
+
 ## [Unreleased] — 2026-03-31 (보안·SEO·성능·코드 품질 일괄 개선)
 
 ### 보안 (긴급)
