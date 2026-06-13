@@ -12,6 +12,7 @@ import LiveClock from "../home/LiveClock";
 import Scene3D from "./Scene3D";
 import CustomScrollbar from "../base/CustomScrollbar";
 import SignalNet from "../base/SignalNet";
+import { SELF_NODE_ID } from "../../constants/signalNet";
 
 interface TerminalLayoutProps {
   children: ReactNode;
@@ -69,7 +70,7 @@ const TerminalLayout = ({ children }: TerminalLayoutProps) => {
         {/* HUD Top-Left Branding Container */}
         <div className="hud-crosshair p-8 border-b border-[var(--color-muted)] relative">
           <div className="absolute top-2 left-2 text-[8px] font-mono text-[var(--color-muted)] tracking-widest">
-            SYS.ID: SL-01
+            SYS.ID: {SELF_NODE_ID}
           </div>
           <Link
             href="/"

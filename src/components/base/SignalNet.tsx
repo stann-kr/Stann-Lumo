@@ -29,7 +29,7 @@ const SignalNet = () => {
               key={node.id}
               href={node.href}
               rel="noopener noreferrer"
-              className="text-[10px] font-mono tracking-widest text-[var(--color-secondary)] transition-colors hover:text-[var(--color-accent)]"
+              className="text-[10px] font-mono tracking-widest text-[var(--color-secondary)] transition-colors duration-[var(--os-dur-fast)] hover:text-[var(--color-accent)]"
             >
               [{node.label}] {node.id}
             </a>
