@@ -2,6 +2,19 @@
 
 ---
 
+## [Unreleased] — 2026-06-13 (사후 정비)
+
+### 토큰 드리프트 가드 (`64b4bb9`)
+
+- `scripts/check-token-sync.mjs` + `prebuild` 훅 — `src/styles/stann-os.css`(정본 복사본) 해시 검증, 사본 무단 편집 시 빌드 차단
+- 정본 변경 시 동기화 의식: 파일 복사 + 스크립트의 `EXPECTED_MD5` 갱신(3레포 동일 값)
+
+### 폴리시 정렬 (`4eb7f75`)
+
+- `SYS.ID`를 `SELF_NODE_ID` 파생으로 단일 진실원화, SignalNet hover를 `--os-dur-fast` 토큰화
+
+---
+
 ## [Unreleased] — 2026-06-12 (STANN OS 통일 Phase 2)
 
 ### 디자인 토큰
