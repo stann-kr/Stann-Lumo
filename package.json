@@ -4,6 +4,7 @@
   "version": "0.0.0",
   "scripts": {
     "dev": "next dev --port 3000",
+    "prebuild": "node scripts/check-token-sync.mjs",
     "build": "NODE_ENV=production next build",
     "start": "next start --port 3000",
     "lint": "eslint src --report-unused-disable-directives --max-warnings 0",
