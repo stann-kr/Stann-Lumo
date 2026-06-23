@@ -13,6 +13,18 @@
 
 ---
 
+## STANN OS 일관화
+
+- 표면 역할: ARCHIVE
+- SYS.ID: `SL-01`
+- HUB: `https://stann.kr`
+- LIVE: `https://terminal.stann.kr`
+- 통합 검증 리포트: [[Dev/Projects/stann-web/docs/STANN_OS_UNIFICATION_2026-06-16|STANN OS 3사이트 일관화 검증 리포트]]
+- 로컬 변경/검증 로그: [WORK_LOG](./WORK_LOG.md)
+- 관련 변경 이력: [CHANGE_LOG](./CHANGE_LOG.md)
+- 디자인 기준: [DESIGN_SYSTEM](./DESIGN_SYSTEM.md)
+
+---
 
 ## 기술 스택
 
