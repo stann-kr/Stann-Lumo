@@ -30,7 +30,7 @@ npm-debug.log*
 .wrangler/
 
 # Git worktrees (Claude 전용이 아닌 범용 작업 트리)
-/worktrees/
+/.worktrees/
 
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
