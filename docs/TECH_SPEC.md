@@ -1,0 +1,126 @@
+# 기술 명세
+
+## 아키텍처 개요
+
+`stann-lumo`는 Next.js App Router 기반 artist web app이다. public route group과 admin dashboard route group이 분리되어 있고, content/language context가 site content를 공급한다. Cloudflare 배포는 OpenNext worker와 Wrangler binding을 기준으로 한다.
+
+```text
+src/app/(public)/
+└─ TerminalLayout + public pages
+src/app/admin/
+└─ AdminLayout + dashboard pages
+Cloudflare
+├─ D1 binding: DB
+└─ R2 binding: MEDIA
+```
+
+## 실제 소스 기준
+
+| 영역 | 파일/경로 | 확인 내용 |
+|---|---|---|
+| Public routes | `src/app/(public)/` | home, about, music, events, archive, contact, link |
+| Admin routes | `src/app/admin/(dashboard)/` | home, about, contact, link, music, events, archive, theme |
+| Public shell | `src/components/feature/TerminalLayout.tsx` | navigation, language, content loading, scene, signal links |
+| 3D scene | `src/components/feature/Scene3D.tsx` | visual background |
+| Content | `src/contexts/ContentContext.tsx` | site content 공급 |
+| Language | `src/contexts/LanguageContext.tsx` | language state |
+| Deploy | `wrangler.json` | Cloudflare route, D1, R2 binding |
+
+## 런타임과 프레임워크
+
+| 영역 | 값 |
+|---|---|
+| Framework | Next.js 15 |
+| React | 19 |
+| Language | TypeScript 5.8 |
+| Motion | GSAP, Framer Motion, SplitType |
+| 3D | Three.js, React Three Fiber, Drei, Postprocessing |
+| i18n | i18next, react-i18next |
+| Deploy | OpenNext for Cloudflare, Wrangler |
+| Storage | Cloudflare D1, R2 |
+
+## 주요 모듈
+
+| 모듈 | 역할 |
+|---|---|
+| `TerminalLayout.tsx` | public site shell, navigation, scene, signal links |
+| `PageLayout.tsx` | public page frame |
+| `AdminLayout.tsx` | admin dashboard shell |
+| `ProtectedRoute.tsx` | admin route protection boundary |
+| `ContentContext.tsx` | site content loading and state |
+| `LanguageContext.tsx` | language state |
+| `Scene3D.tsx` | 3D background scene |
+| `SignalNet.tsx` | STANN OS signal network 표시 |
+| `wrangler.json` | Cloudflare route and binding config |
+
+## 데이터 모델과 저장소
+
+Cloudflare resources:
+
+| Binding | Resource | 용도 |
+|---|---|---|
+| `DB` | D1 database `stann-lumo-db` | content/admin data |
+| `MEDIA` | R2 bucket `stann-lumo-media` | media asset storage |
+
+상세 schema와 migration 절차는 deployment/runbook 보강 시 별도 문서화한다.
+
+## 인증과 권한
+
+- public route는 방문자에게 공개된다.
+- admin route는 `ProtectedRoute`와 admin dashboard 구조를 기준으로 보호한다.
+- admin 인증/권한의 상세 정책은 실제 구현과 함께 별도 최신화가 필요하다.
+
+## 환경 변수와 설정
+
+| 항목 | 설명 | 공개 가능 여부 |
+|---|---|---|
+| `NODE_ENV` | build/dev mode | 가능 |
+| `DB` | Cloudflare D1 binding | binding 이름만 가능 |
+| `MEDIA` | Cloudflare R2 binding | binding 이름만 가능 |
+| Cloudflare token/account | 배포 인증 | 실값 금지 |
+
+## 배포와 운영
+
+배포는 OpenNext Cloudflare build 후 Wrangler deploy를 기준으로 한다.
+
+```bash
+npm run deploy
+```
+
+상세 절차는 [배포 가이드](./DEPLOYMENT.md)를 따른다.
+
+## 테스트와 검증
+
+```bash
+npm run lint
+npm run type-check
+npm run build
+```
+
+`build` 전에는 token sync 검사가 `prebuild`로 실행된다.
+
+## 변경 시 같이 볼 파일
+
+| 변경 영역 | 함께 확인할 파일 |
+|---|---|
+| public route 변경 | `src/app/(public)/**`, `README.md`, `REQUIREMENTS.md` |
+| admin 기능 변경 | `src/app/admin/**`, `ProtectedRoute.tsx`, `TECH_SPEC.md` |
+| content schema 변경 | `ContentContext.tsx`, D1 migration, `DEPLOYMENT.md` |
+| Cloudflare binding 변경 | `wrangler.json`, `DEPLOYMENT.md`, `TROUBLESHOOTING.md` |
+| 디자인 토큰 변경 | `DESIGN_SYSTEM.md`, `scripts/check-token-sync.mjs` |
+
+## 문서 최신성 기준
+
+다음 변경 시 이 문서를 갱신한다.
+
+- public/admin route 구조 변경
+- D1/R2 binding 변경
+- admin 인증/권한 정책 변경
+- deployment command 또는 OpenNext/Wrangler config 변경
+- STANN OS signal link grammar 변경
+
+## 알려진 기술 부채
+
+- `CHANGE_LOG.md`와 `TROUBLESHOOTING.md`의 이전 상세 원본은 길어 public 문서에서는 최신 항목 중심으로 유지한다.
+- admin 권한 경계의 상세 정책은 실제 구현 기준으로 재검토가 필요하다.
+- 공개 task tracker는 제거하고 private `.docs`에서 관리한다.
