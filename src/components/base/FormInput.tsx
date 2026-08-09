@@ -1,14 +1,24 @@
-import { useState } from 'react';
+import { useId, useState } from 'react';
+import type { HTMLInputTypeAttribute, InputHTMLAttributes } from 'react';
 import { createBorderMid, createBorderAccent } from '../../utils/colorMix';
 
 /**
  * FormInput Props 정의
  */
-interface FormInputProps {
+interface FormInputProps extends Pick<
+  InputHTMLAttributes<HTMLInputElement>,
+  | 'id'
+  | 'name'
+  | 'disabled'
+  | 'autoComplete'
+  | 'required'
+  | 'aria-describedby'
+  | 'aria-invalid'
+> {
   /** 입력 필드 라벨 */
   label: string;
   /** 입력 필드 타입 (기본값: 'text') */
-  type?: string;
+  type?: HTMLInputTypeAttribute;
   /** 현재 입력값 */
   value: string;
   /** 값 변경 시 호출될 콜백 함수 */
@@ -45,21 +55,40 @@ const FormInput = ({
   onChange,
   placeholder,
   readOnly = false,
+  id,
+  name,
+  disabled,
+  autoComplete,
+  required,
+  'aria-describedby': ariaDescribedBy,
+  'aria-invalid': ariaInvalid,
 }: FormInputProps) => {
   const [isFocused, setIsFocused] = useState(false);
+  const generatedId = useId();
+  const inputId = id ?? generatedId;
 
   return (
     <div>
-      <label className="block text-xs text-[var(--color-accent)] tracking-widest mb-2">
+      <label
+        htmlFor={inputId}
+        className="block text-xs text-[var(--color-accent)] tracking-widest mb-2"
+      >
         {label}
       </label>
       <input
+        id={inputId}
+        name={name}
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         readOnly={readOnly}
-        className="w-full bg-transparent border-b text-[var(--color-secondary)] text-sm tracking-wider py-2 focus:outline-none transition-colors"
+        disabled={disabled}
+        autoComplete={autoComplete}
+        required={required}
+        aria-describedby={ariaDescribedBy}
+        aria-invalid={ariaInvalid}
+        className="w-full bg-transparent border-b text-[var(--color-secondary)] text-sm tracking-wider py-2 focus:outline-none transition-colors disabled:cursor-not-allowed disabled:opacity-50"
         style={isFocused ? createBorderAccent() : createBorderMid()}
         onFocus={() => setIsFocused(true)}
         onBlur={() => setIsFocused(false)}

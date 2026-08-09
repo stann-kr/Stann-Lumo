@@ -6,16 +6,34 @@
  * 이 라우트가 서버(CF Workers)에서 RA API를 호출하고 XML을 그대로 반환.
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { getDB } from '@/lib/db';
-import { requireAdminSession } from '@/lib/adminAuth';
+import {
+  privateNoStoreJson,
+  privateNoStoreResponse,
+  requireAdminSession,
+} from '@/lib/adminAuth';
+import { getRaApiConfigSecret, isRAApiOption } from '@/lib/admin/raApiConfig.server';
 
-interface RaApiConfigRow {
-  user_id: string | null;
-  api_key: string | null;
-  dj_id: string | null;
-  option: string;
-  year: string | null;
+function escapeXmlText(value: string): string {
+  return value
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&apos;');
+}
+
+function containsCredentialReflection(body: string, credential: string): boolean {
+  const formEncoded = new URLSearchParams({ credential }).toString().slice('credential='.length);
+  const variants = new Set([
+    credential,
+    escapeXmlText(credential),
+    encodeURIComponent(credential),
+    formEncoded,
+  ]);
+
+  return [...variants].some((variant) => variant.length > 0 && body.includes(variant));
 }
 
 export async function GET(request: NextRequest) {
@@ -24,40 +42,50 @@ export async function GET(request: NextRequest) {
 
   const db = getDB();
   if (!db) {
-    return NextResponse.json(
+    return privateNoStoreJson(
       { success: false, error: { code: 'DB_UNAVAILABLE', message: 'Database not available' } },
       { status: 503 },
     );
   }
 
   try {
-    const row = await db
-      .prepare('SELECT user_id, api_key, dj_id, option, year FROM ra_api_config WHERE id = 1')
-      .first<RaApiConfigRow>();
+    const searchParams = request.nextUrl.searchParams;
+    const requestedOption = searchParams.get('option');
+    const requestedYear = searchParams.get('year');
 
-    if (!row?.user_id || !row?.api_key || !row?.dj_id) {
-      return NextResponse.json(
+    if (requestedOption !== null && !isRAApiOption(requestedOption)) {
+      return privateNoStoreJson(
+        { success: false, error: { code: 'BAD_REQUEST', message: 'Invalid RA option' } },
+        { status: 400 },
+      );
+    }
+    if (requestedYear !== null && requestedYear !== '' && !/^\d{4}$/.test(requestedYear)) {
+      return privateNoStoreJson(
+        { success: false, error: { code: 'BAD_REQUEST', message: 'Invalid RA year' } },
+        { status: 400 },
+      );
+    }
+
+    const config = await getRaApiConfigSecret(db);
+
+    if (!config) {
+      return privateNoStoreJson(
         { success: false, error: { code: 'NOT_CONFIGURED', message: 'RA API 설정이 완료되지 않았습니다.' } },
         { status: 400 },
       );
     }
 
-    const searchParams = request.nextUrl.searchParams;
-    const reqOption = searchParams.get('option');
-    const reqYear = searchParams.get('year');
+    const option = requestedOption ?? config.option;
+    let year = requestedYear !== null ? requestedYear : config.year;
 
-    const option = reqOption || row.option || '1';
-    let year = reqYear !== null ? reqYear : row.year;
-    
-    // 만약 year가 비어있고, Option이 4(최근) 혹은 3이라면 기본값으로 올해 연도를 채웁니다.
     if (!year && option === '4') {
       year = new Date().getFullYear().toString();
     }
 
     const params = new URLSearchParams({
-      AccessKey: row.api_key,
-      UserID: row.user_id,
-      DJID: row.dj_id,
+      AccessKey: config.apiKey,
+      UserID: config.userId,
+      DJID: config.djId,
       Option: option,
       VenueID: '',
       CountryID: '',
@@ -72,24 +100,30 @@ export async function GET(request: NextRequest) {
     );
 
     if (!raResponse.ok) {
-      return NextResponse.json(
+      return privateNoStoreJson(
         { success: false, error: { code: 'RA_API_ERROR', message: `RA API 오류: ${raResponse.status}` } },
         { status: 502 },
       );
     }
 
     const xml = await raResponse.text();
+    if (containsCredentialReflection(xml, config.apiKey)) {
+      return privateNoStoreJson(
+        { success: false, error: { code: 'RA_API_ERROR', message: 'RA API 응답을 처리하지 못했습니다.' } },
+        { status: 502 },
+      );
+    }
 
-    return new Response(xml, {
+    return privateNoStoreResponse(xml, {
       headers: { 'Content-Type': 'text/xml; charset=utf-8' },
     });
-  } catch (error) {
-    return NextResponse.json(
+  } catch {
+    return privateNoStoreJson(
       {
         success: false,
         error: {
           code: 'INTERNAL_ERROR',
-          message: error instanceof Error ? error.message : 'RA API 호출 실패',
+          message: 'RA API 호출 실패',
         },
       },
       { status: 500 },

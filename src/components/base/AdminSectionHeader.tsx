@@ -15,6 +15,8 @@ interface AdminSectionHeaderProps {
   onSave?: () => void;
   /** 저장 중 상태 */
   isSaving?: boolean;
+  /** 저장 외 사유로 저장 버튼을 비활성화할지 여부 */
+  isSaveDisabled?: boolean;
   /** 추가 액션 버튼 (선택 사항) - action과 actions 모두 지원 */
   action?: ReactNode;
   actions?: ReactNode;
@@ -45,6 +47,7 @@ export default function AdminSectionHeader({
   showSaveButton = true,
   onSave,
   isSaving = false,
+  isSaveDisabled = false,
   action,
   actions,
   className = '',
@@ -72,7 +75,11 @@ export default function AdminSectionHeader({
       <div className="flex gap-3">
         {actionContent}
         {showSaveButton && onSave && (
-          <SaveButton onClick={onSave} isSaving={isSaving} />
+          <SaveButton
+            onClick={onSave}
+            isSaving={isSaving}
+            disabled={isSaveDisabled}
+          />
         )}
       </div>
     </div>

@@ -7,15 +7,26 @@
 import { NextRequest } from 'next/server';
 import { getDB } from '@/lib/db';
 import { privateNoStoreJson, requireAdminSession } from '@/lib/adminAuth';
-import type { RAApiConfigLegacy, RAApiConfigLegacyUpdate } from '@/types/admin';
+import { getRaApiConfigView, isRAApiOption } from '@/lib/admin/raApiConfig.server';
+import type { RAApiConfigUpdate } from '@/types/admin';
 
-interface RaApiConfigRow {
-  id: number;
-  user_id: string | null;
-  api_key: string | null;
-  dj_id: string | null;
-  option: string;
-  year: string | null;
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+
+function parseUpdate(value: unknown): RAApiConfigUpdate | null {
+  if (!isRecord(value)) return null;
+
+  const { userId, djId, option, year, apiKey, clearApiKey } = value;
+  if (typeof userId !== 'string' || typeof djId !== 'string' || !isRAApiOption(option)) {
+    return null;
+  }
+  if (year !== undefined && typeof year !== 'string') return null;
+  if (apiKey !== undefined && typeof apiKey !== 'string') return null;
+  if (clearApiKey !== undefined && typeof clearApiKey !== 'boolean') return null;
+  if (clearApiKey === true && typeof apiKey === 'string' && apiKey.trim().length > 0) return null;
+
+  return { userId, djId, option, year, apiKey, clearApiKey };
 }
 
 export async function GET(request: NextRequest) {
@@ -31,16 +42,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const row = await db.prepare('SELECT * FROM ra_api_config WHERE id = 1').first<RaApiConfigRow>();
-
-    const data: RAApiConfigLegacy = {
-      userId: row?.user_id ?? '',
-      apiKey: row?.api_key ?? '',
-      djId: row?.dj_id ?? '',
-      option: (row?.option ?? '1') as RAApiConfigLegacy['option'],
-      year: row?.year ?? '',
-    };
-
+    const data = await getRaApiConfigView(db);
     return privateNoStoreJson({ success: true, data });
   } catch {
     return privateNoStoreJson(
@@ -63,12 +65,12 @@ export async function PUT(request: NextRequest) {
   }
 
   try {
-    const body = (await request.json()) as { raApiConfig?: RAApiConfigLegacyUpdate };
-    const { raApiConfig } = body;
+    const body: unknown = await request.json();
+    const raApiConfig = isRecord(body) ? parseUpdate(body.raApiConfig) : null;
 
-    if (!raApiConfig || typeof raApiConfig !== 'object') {
+    if (!raApiConfig) {
       return privateNoStoreJson(
-        { success: false, error: { code: 'BAD_REQUEST', message: 'raApiConfig is required' } },
+        { success: false, error: { code: 'BAD_REQUEST', message: 'Invalid RA API config update' } },
         { status: 400 },
       );
     }
@@ -77,7 +79,10 @@ export async function PUT(request: NextRequest) {
       .prepare(
         `UPDATE ra_api_config
          SET user_id = ?,
-             api_key = COALESCE(NULLIF(TRIM(?), ''), api_key),
+             api_key = CASE
+               WHEN ? = 1 THEN NULL
+               ELSE COALESCE(NULLIF(TRIM(?), ''), api_key)
+             END,
              dj_id = ?,
              option = ?,
              year = ?
@@ -85,6 +90,7 @@ export async function PUT(request: NextRequest) {
       )
       .bind(
         raApiConfig.userId ?? null,
+        raApiConfig.clearApiKey === true ? 1 : 0,
         raApiConfig.apiKey ?? null,
         raApiConfig.djId ?? null,
         raApiConfig.option ?? '1',
@@ -92,7 +98,8 @@ export async function PUT(request: NextRequest) {
       )
       .run();
 
-    return privateNoStoreJson({ success: true });
+    const data = await getRaApiConfigView(db);
+    return privateNoStoreJson({ success: true, data });
   } catch {
     return privateNoStoreJson(
       { success: false, error: { code: 'INTERNAL_ERROR', message: 'Failed to update RA API config' } },

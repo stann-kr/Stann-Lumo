@@ -70,6 +70,8 @@ Cloudflare resources:
 
 - public route는 방문자에게 공개된다.
 - admin route는 `ProtectedRoute`와 admin dashboard 구조를 기준으로 보호한다.
+- 관리자 외부 이벤트 연동 설정 API는 저장 여부만 반환하며, 실제 API key는 서버 전용 모듈에서만 읽는다. 빈 key 업데이트는 기존 값을 보존하고 명시적 삭제 요청만 저장 값을 제거한다.
+- 관리자 외부 이벤트 연동 API의 성공·오류·인증 실패 응답은 모두 private/no-store 정책을 적용한다.
 - admin 인증/권한의 상세 정책은 실제 구현과 함께 별도 최신화가 필요하다.
 
 ## 환경 변수와 설정

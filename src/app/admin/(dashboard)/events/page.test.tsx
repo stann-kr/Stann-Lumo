@@ -1,7 +1,7 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ContentData, PageMeta } from '@/types/content';
-import type { RAApiConfigLegacy } from '@/types/admin';
+import type { RAApiConfigView } from '@/types/admin';
 import AdminEventsPage from './page';
 
 const mocks = vi.hoisted(() => ({
@@ -83,29 +83,41 @@ function deferred<T>() {
   return { promise, resolve };
 }
 
-describe('AdminEventsPage S1a RA config bridge', () => {
+describe('AdminEventsPage masked RA config boundary', () => {
   beforeEach(() => {
     mocks.currentEditLanguage = 'en';
     vi.clearAllMocks();
     mocks.updatePerformances.mockResolvedValue({ success: true });
     mocks.updatePageMeta.mockResolvedValue({ success: true });
-    mocks.updateRaApiConfig.mockResolvedValue({ success: true });
+    mocks.updateRaApiConfig.mockResolvedValue({
+      success: true,
+      data: {
+        userId: 'user-fixture',
+        djId: 'dj-fixture',
+        option: '2',
+        year: '2026',
+        hasApiKey: true,
+      },
+    });
+    mocks.fetchRaEvents.mockResolvedValue({ events: [] });
   });
 
   it('loads protected config once, disables save/sync while pending, and preserves it across locale changes', async () => {
-    const config: RAApiConfigLegacy = {
+    const config: RAApiConfigView = {
       userId: 'user-fixture',
-      apiKey: 'test-only-admin-key',
       djId: 'dj-fixture',
       option: '2',
       year: '2026',
+      hasApiKey: true,
     };
-    const pending = deferred<{ success: true; data: RAApiConfigLegacy }>();
+    const pending = deferred<{ success: true; data: RAApiConfigView }>();
     mocks.fetchRaApiConfig.mockReturnValue(pending.promise);
 
     const { rerender } = render(<AdminEventsPage />);
 
-    expect(screen.getByRole('button', { name: 'SAVING...' })).toBeDisabled();
+    const pendingSaveButton = screen.getByRole('button', { name: 'SAVE CHANGES' });
+    expect(pendingSaveButton).toBeDisabled();
+    expect(pendingSaveButton).toHaveAttribute('aria-busy', 'false');
     expect(screen.getByRole('button', { name: 'events_fetch_from_ra' })).toBeDisabled();
     expect(mocks.fetchRaApiConfig).toHaveBeenCalledTimes(1);
 
@@ -117,12 +129,17 @@ describe('AdminEventsPage S1a RA config bridge', () => {
     await waitFor(() => {
       expect(screen.getByRole('button', { name: 'SAVE CHANGES' })).toBeEnabled();
     });
-    expect(screen.getByPlaceholderText('your-api-key')).toHaveValue('test-only-admin-key');
+    const apiKeyInput = screen.getByLabelText('events_api_key');
+    expect(apiKeyInput).toHaveValue('');
+    expect(apiKeyInput).toHaveAttribute('type', 'password');
+    expect(apiKeyInput).toHaveAttribute('autocomplete', 'new-password');
+    expect(apiKeyInput).toHaveAccessibleDescription('API 키 저장됨');
+    expect(screen.getByText('API 키 저장됨')).toBeInTheDocument();
 
     mocks.currentEditLanguage = 'ko';
     rerender(<AdminEventsPage />);
 
-    expect(screen.getByPlaceholderText('your-api-key')).toHaveValue('test-only-admin-key');
+    expect(screen.getByLabelText('events_api_key')).toHaveValue('');
     expect(mocks.fetchRaApiConfig).toHaveBeenCalledTimes(1);
   });
 
@@ -150,5 +167,154 @@ describe('AdminEventsPage S1a RA config bridge', () => {
       pageMeta: allContent.en.pageMeta,
     });
     expect(mocks.showNotification).toHaveBeenCalledTimes(1);
+  });
+
+  it('requires a missing key to be saved before RA sync becomes available', async () => {
+    mocks.fetchRaApiConfig.mockResolvedValue({
+      success: true,
+      data: {
+        userId: 'user-fixture',
+        djId: 'dj-fixture',
+        option: '2',
+        year: '2026',
+        hasApiKey: false,
+      },
+    });
+
+    render(<AdminEventsPage />);
+
+    const syncButton = await screen.findByRole('button', { name: 'events_fetch_from_ra' });
+    expect(syncButton).toBeDisabled();
+
+    fireEvent.change(screen.getByLabelText('events_api_key'), {
+      target: { value: 'test-only-replacement-key' },
+    });
+    expect(syncButton).toBeDisabled();
+
+    fireEvent.click(screen.getByRole('button', { name: 'SAVE CHANGES' }));
+
+    await waitFor(() => {
+      expect(mocks.updateRaApiConfig).toHaveBeenCalledWith({
+        userId: 'user-fixture',
+        djId: 'dj-fixture',
+        option: '2',
+        year: '2026',
+        apiKey: 'test-only-replacement-key',
+      });
+      expect(syncButton).toBeEnabled();
+    });
+
+    fireEvent.click(syncButton);
+    await waitFor(() => {
+      expect(mocks.fetchRaEvents).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  it('keeps ordinary event saves working when the RA connection has no key', async () => {
+    mocks.fetchRaApiConfig.mockResolvedValue({
+      success: true,
+      data: {
+        userId: 'user-fixture',
+        djId: 'dj-fixture',
+        option: '2',
+        year: '2026',
+        hasApiKey: false,
+      },
+    });
+
+    render(<AdminEventsPage />);
+    await screen.findByText('저장된 API 키 없음');
+
+    fireEvent.click(screen.getByRole('button', { name: 'SAVE CHANGES' }));
+
+    await waitFor(() => {
+      expect(mocks.updatePerformances).toHaveBeenCalledTimes(1);
+      expect(mocks.updatePageMeta).toHaveBeenCalledTimes(1);
+    });
+    expect(mocks.updateRaApiConfig).not.toHaveBeenCalled();
+    expect(mocks.fetchRaEvents).not.toHaveBeenCalled();
+    expect(mocks.showNotification).toHaveBeenCalledTimes(1);
+  });
+
+  it('locks RA credential controls while a config save is pending', async () => {
+    mocks.fetchRaApiConfig.mockResolvedValue({
+      success: true,
+      data: {
+        userId: 'user-fixture',
+        djId: 'dj-fixture',
+        option: '2',
+        year: '2026',
+        hasApiKey: true,
+      },
+    });
+    const pending = deferred<{
+      success: true;
+      data: RAApiConfigView;
+    }>();
+    mocks.updateRaApiConfig.mockReturnValue(pending.promise);
+
+    render(<AdminEventsPage />);
+    await screen.findByText('API 키 저장됨');
+
+    fireEvent.change(screen.getByLabelText('events_api_key'), {
+      target: { value: 'test-only-replacement-key' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'SAVE CHANGES' }));
+
+    await waitFor(() => {
+      expect(mocks.updateRaApiConfig).toHaveBeenCalledTimes(1);
+    });
+    expect(screen.getByLabelText('events_api_userid')).toBeDisabled();
+    expect(screen.getByLabelText('events_api_key')).toBeDisabled();
+    expect(screen.getByLabelText('events_api_option')).toBeDisabled();
+    expect(screen.getByRole('checkbox', { name: '저장된 API 키 제거' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'events_fetch_from_ra' })).toBeDisabled();
+
+    await act(async () => {
+      pending.resolve({
+        success: true,
+        data: {
+          userId: 'user-fixture',
+          djId: 'dj-fixture',
+          option: '2',
+          year: '2026',
+          hasApiKey: true,
+        },
+      });
+      await pending.promise;
+    });
+
+    await waitFor(() => {
+      expect(screen.getByLabelText('events_api_key')).toBeEnabled();
+    });
+  });
+
+  it('does not show a success state when the masked config update fails', async () => {
+    mocks.fetchRaApiConfig.mockResolvedValue({
+      success: true,
+      data: {
+        userId: 'user-fixture',
+        djId: 'dj-fixture',
+        option: '2',
+        year: '2026',
+        hasApiKey: true,
+      },
+    });
+    mocks.updateRaApiConfig.mockResolvedValue({
+      success: false,
+      error: { code: 'INTERNAL_ERROR', message: 'test-only failure' },
+    });
+
+    render(<AdminEventsPage />);
+    await screen.findByText('API 키 저장됨');
+
+    fireEvent.change(screen.getByLabelText('events_api_option'), {
+      target: { value: '3' },
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'SAVE CHANGES' }));
+
+    await screen.findByText(/일부 변경 사항을 저장하지 못했습니다/);
+    expect(mocks.showNotification).not.toHaveBeenCalled();
   });
 });

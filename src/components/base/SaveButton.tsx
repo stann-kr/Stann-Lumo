@@ -6,6 +6,8 @@ interface SaveButtonProps {
   onClick: () => void;
   /** 저장 중 상태 여부 */
   isSaving: boolean;
+  /** 저장 외 사유로 버튼을 비활성화할지 여부 */
+  disabled?: boolean;
   /** 버튼 텍스트 (기본값: 'SAVE CHANGES') */
   text?: string;
   /** 저장 중 텍스트 (기본값: 'SAVING...') */
@@ -31,13 +33,16 @@ interface SaveButtonProps {
 const SaveButton = ({
   onClick,
   isSaving,
+  disabled = false,
   text = 'SAVE CHANGES',
   savingText = 'SAVING...',
 }: SaveButtonProps) => {
   return (
     <button
+      type="button"
       onClick={onClick}
-      disabled={isSaving}
+      disabled={isSaving || disabled}
+      aria-busy={isSaving}
       className="px-8 py-3 bg-[var(--color-accent)] text-[var(--color-bg)] tracking-wider text-sm hover:bg-[var(--color-primary)] transition-colors disabled:opacity-50 whitespace-nowrap cursor-pointer"
     >
       {isSaving ? savingText : text}

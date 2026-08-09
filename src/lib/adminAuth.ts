@@ -10,6 +10,12 @@ import { validateSession, SESSION_COOKIE_NAME } from './auth';
 
 export const PRIVATE_NO_STORE_CACHE_CONTROL = 'private, no-store';
 
+export function privateNoStoreResponse(body: BodyInit | null, init?: ResponseInit): Response {
+  const headers = new Headers(init?.headers);
+  headers.set('Cache-Control', PRIVATE_NO_STORE_CACHE_CONTROL);
+  return new Response(body, { ...init, headers });
+}
+
 export function privateNoStoreJson(payload: unknown, init?: ResponseInit): NextResponse {
   const headers = new Headers(init?.headers);
   headers.set('Cache-Control', PRIVATE_NO_STORE_CACHE_CONTROL);

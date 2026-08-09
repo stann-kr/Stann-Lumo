@@ -60,31 +60,37 @@ function expectPrivateNoStore(response: Response) {
   expect(response.headers.get('Cache-Control')).toBe('private, no-store');
 }
 
-describe('admin RA config route compatibility boundary', () => {
+describe('admin RA config masked boundary', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(requireAdminSession).mockResolvedValue(null);
   });
 
-  it('preserves the authenticated legacy GET while marking it private and no-store', async () => {
-    const { database } = createDatabase({
+  it('returns only the browser-safe view and never the raw key', async () => {
+    const sentinel = 'test-only-admin-key-never-return';
+    const { database, statements } = createDatabase({
       row: {
         user_id: 'user-fixture',
-        api_key: 'test-only-admin-key',
+        api_key: sentinel,
         dj_id: 'dj-fixture',
         option: '2',
         year: '2026',
+        has_api_key: 1,
       },
     });
     vi.mocked(getDB).mockReturnValue(database);
 
     const response = await GET(request('GET'));
+    const body = await response.text();
     expect(response.status).toBe(200);
     expectPrivateNoStore(response);
-    await expect(response.json()).resolves.toMatchObject({
+    expect(JSON.parse(body)).toMatchObject({
       success: true,
-      data: { apiKey: 'test-only-admin-key' },
+      data: { hasApiKey: true, userId: 'user-fixture' },
     });
+    expect(body).not.toContain(sentinel);
+    expect(body).not.toContain('apiKey');
+    expect(statements[0]?.sql).toContain('has_api_key');
   });
 
   it.each([
@@ -126,7 +132,8 @@ describe('admin RA config route compatibility boundary', () => {
     expect(response.status).toBe(200);
     expectPrivateNoStore(response);
     expect(statements[0]?.sql).toContain("COALESCE(NULLIF(TRIM(?), ''), api_key)");
-    expect(statements[0]?.bindings[1]).toBe(apiKey ?? null);
+    expect(statements[0]?.bindings[1]).toBe(0);
+    expect(statements[0]?.bindings[2]).toBe(apiKey ?? null);
   });
 
   it('passes a nonblank replacement key to the update statement', async () => {
@@ -146,7 +153,49 @@ describe('admin RA config route compatibility boundary', () => {
     );
 
     expect(response.status).toBe(200);
-    expect(statements[0]?.bindings[1]).toBe('test-only-replacement-key');
+    expect(statements[0]?.bindings[1]).toBe(0);
+    expect(statements[0]?.bindings[2]).toBe('test-only-replacement-key');
+  });
+
+  it('clears the key only when the explicit clear flag is set', async () => {
+    const { database, statements } = createDatabase();
+    vi.mocked(getDB).mockReturnValue(database);
+
+    const response = await PUT(
+      request('PUT', {
+        raApiConfig: {
+          userId: 'user-fixture',
+          djId: 'dj-fixture',
+          option: '2',
+          year: '2026',
+          clearApiKey: true,
+        },
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(statements[0]?.bindings[1]).toBe(1);
+    expect(statements[0]?.bindings[2]).toBeNull();
+  });
+
+  it('rejects conflicting replacement and clear intent', async () => {
+    const { database } = createDatabase();
+    vi.mocked(getDB).mockReturnValue(database);
+
+    const response = await PUT(
+      request('PUT', {
+        raApiConfig: {
+          userId: 'user-fixture',
+          djId: 'dj-fixture',
+          option: '2',
+          apiKey: 'test-only-replacement-key',
+          clearApiKey: true,
+        },
+      }),
+    );
+
+    expect(response.status).toBe(400);
+    expectPrivateNoStore(response);
   });
 
   it('returns the early PUT auth failure unchanged and private', async () => {

@@ -19,7 +19,7 @@ import type {
   TerminalCustomField,
   TerminalStyleConfig,
 } from '@/types/content';
-import type { RAApiConfigLegacy, RAApiConfigLegacyUpdate } from '@/types/admin';
+import type { RAApiConfigUpdate, RAApiConfigView } from '@/types/admin';
 import type { SiteConfigData } from '@/app/api/admin/site-config/route';
 
 // ---------- 아티스트 정보 ----------
@@ -112,10 +112,10 @@ export async function deleteEventPoster(
 // ---------- RA API 설정 ----------
 
 export function fetchRaApiConfig() {
-  return apiGet<RAApiConfigLegacy>('/api/admin/ra-api-config');
+  return apiGet<RAApiConfigView>('/api/admin/ra-api-config');
 }
-export function updateRaApiConfig(raApiConfig: RAApiConfigLegacyUpdate) {
-  return apiPut<void>('/api/admin/ra-api-config', { raApiConfig });
+export function updateRaApiConfig(raApiConfig: RAApiConfigUpdate) {
+  return apiPut<RAApiConfigView>('/api/admin/ra-api-config', { raApiConfig });
 }
 
 // ---------- 이벤트 정보 ----------

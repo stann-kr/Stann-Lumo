@@ -1,6 +1,6 @@
 import type { RAEventXML, RAApiResponse, RAApiError } from '../types/ra-api';
 import type { Performance } from '../types/content';
-import type { RAApiConfigLegacy } from '../types/admin';
+import type { RAApiConfigView } from '../types/admin';
 
 /**
  * XML 문자열을 파싱하여 RAApiResponse 객체로 변환
@@ -12,7 +12,7 @@ export function parseRAApiXML(xmlString: string): RAApiResponse {
   // 파싱 에러 체크
   const parserError = xmlDoc.querySelector('parsererror');
   if (parserError) {
-    throw new Error('XML 파싱 실패: ' + parserError.textContent);
+    throw new Error('RA API 응답을 해석하지 못했습니다.');
   }
 
   const eventNodes = xmlDoc.querySelectorAll('event');
@@ -130,7 +130,7 @@ export function convertRAEventToPerformance(raEvent: RAEventXML): Performance {
  * RA 이벤트 조회 — 서버 사이드 프록시(/api/admin/ra-events)를 통해 호출
  * 브라우저에서 RA API 직접 호출 시 CORS 차단됨
  */
-export async function fetchRAEvents(config?: Pick<RAApiConfigLegacy, 'option' | 'year'>): Promise<RAApiResponse> {
+export async function fetchRAEvents(config?: Pick<RAApiConfigView, 'option' | 'year'>): Promise<RAApiResponse> {
   try {
     const url = new URL(window.location.origin + '/api/admin/ra-events');
     if (config?.option !== undefined) url.searchParams.set('option', config.option);
@@ -139,8 +139,7 @@ export async function fetchRAEvents(config?: Pick<RAApiConfigLegacy, 'option' | 
     const response = await fetch(url.toString(), { method: 'GET' });
 
     if (!response.ok) {
-      const data = await response.json() as { error?: { message?: string } };
-      throw new Error(data?.error?.message ?? `RA API 호출 실패: ${response.status}`);
+      throw new Error('RA API 호출에 실패했습니다.');
     }
 
     const xmlText = await response.text();

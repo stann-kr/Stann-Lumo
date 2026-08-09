@@ -11,7 +11,7 @@ import { useSaveNotification } from '@/hooks/useSaveNotification';
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Performance, PageMeta } from '@/types/content';
-import type { RAApiConfigLegacy } from '@/types/admin';
+import type { RAApiConfigUpdate, RAApiConfigView } from '@/types/admin';
 import {
   fetchRAEvents,
   convertRAEventsToPerformances,
@@ -29,12 +29,12 @@ import {
 
 const POSTER_ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/avif', 'image/gif'];
 const POSTER_MAX_SIZE_BYTES = 10 * 1024 * 1024;
-const EMPTY_RA_API_CONFIG: RAApiConfigLegacy = {
+const EMPTY_RA_API_CONFIG: RAApiConfigView = {
   userId: '',
-  apiKey: '',
   djId: '',
   option: '1',
   year: '',
+  hasApiKey: false,
 };
 
 const AdminEventsPage = () => {
@@ -49,7 +49,10 @@ const AdminEventsPage = () => {
     deleteItem: deletePerformance,
   } = useListEditor<Performance>(content.performances);
 
-  const [raApiConfig, setRaApiConfig] = useState<RAApiConfigLegacy>(EMPTY_RA_API_CONFIG);
+  const [raApiConfig, setRaApiConfig] = useState<RAApiConfigView>(EMPTY_RA_API_CONFIG);
+  const [replacementApiKey, setReplacementApiKey] = useState('');
+  const [clearApiKey, setClearApiKey] = useState(false);
+  const [isRaConfigDirty, setIsRaConfigDirty] = useState(false);
   const [isRaConfigLoading, setIsRaConfigLoading] = useState(true);
   const [raConfigLoadFailed, setRaConfigLoadFailed] = useState(false);
   const [pageMeta, setPageMeta] = useState<PageMeta>(content.pageMeta);
@@ -80,6 +83,9 @@ const AdminEventsPage = () => {
 
         if (response.success && response.data) {
           setRaApiConfig(response.data);
+          setReplacementApiKey('');
+          setClearApiKey(false);
+          setIsRaConfigDirty(false);
           setRaConfigLoadFailed(false);
         } else {
           setRaConfigLoadFailed(true);
@@ -114,21 +120,49 @@ const AdminEventsPage = () => {
     setPageMeta(prev => ({ ...prev, events: { ...prev.events, [field]: value } }));
   };
 
+  const canSyncWithRA =
+    !isRaConfigLoading &&
+    !isSaving &&
+    !raConfigLoadFailed &&
+    raApiConfig.hasApiKey &&
+    raApiConfig.userId.trim().length > 0 &&
+    raApiConfig.djId.trim().length > 0 &&
+    !isRaConfigDirty;
+
   const saveChanges = async () => {
+    const shouldSaveRaConfig = !isRaConfigLoading && !raConfigLoadFailed;
+    const shouldUpdateRaConfig = shouldSaveRaConfig && isRaConfigDirty;
+    const hasReplacementKey = replacementApiKey.trim().length > 0;
+
     setIsSaving(true);
     setFetchError('');
 
     try {
-      const requests = [
+      const baseResults = await Promise.all([
         apiUpdatePerformances(performances),
         apiUpdatePageMeta(currentEditLanguage, pageMeta),
-      ];
-      if (!isRaConfigLoading && !raConfigLoadFailed) {
-        requests.push(apiUpdateRaApiConfig(raApiConfig));
+      ]);
+
+      let raResult: Awaited<ReturnType<typeof apiUpdateRaApiConfig>> | null = null;
+      if (shouldUpdateRaConfig) {
+        const update: RAApiConfigUpdate = {
+          userId: raApiConfig.userId,
+          djId: raApiConfig.djId,
+          option: raApiConfig.option,
+          year: raApiConfig.year,
+          ...(hasReplacementKey && { apiKey: replacementApiKey.trim() }),
+          ...(clearApiKey && { clearApiKey: true }),
+        };
+        raResult = await apiUpdateRaApiConfig(update);
+        if (raResult.success && raResult.data) {
+          setRaApiConfig(raResult.data);
+          setReplacementApiKey('');
+          setClearApiKey(false);
+          setIsRaConfigDirty(false);
+        }
       }
 
-      const results = await Promise.all(requests);
-      if (results.some((result) => !result.success)) {
+      if (baseResults.some((result) => !result.success) || (raResult && !raResult.success)) {
         setFetchError('일부 변경 사항을 저장하지 못했습니다. 다시 시도해 주세요.');
         return;
       }
@@ -143,11 +177,7 @@ const AdminEventsPage = () => {
   };
 
   const fetchFromRA = async () => {
-    if (isRaConfigLoading || raConfigLoadFailed) {
-      setFetchError(t('events_api_config_required'));
-      return;
-    }
-    if (!raApiConfig.userId || !raApiConfig.apiKey || !raApiConfig.djId) {
+    if (!canSyncWithRA) {
       setFetchError(t('events_api_config_required'));
       return;
     }
@@ -201,9 +231,20 @@ const AdminEventsPage = () => {
     }
   };
 
-  const updateRaApiConfigField = (field: keyof RAApiConfigLegacy, value: string) => {
+  const updateRaApiConfigField = <
+    Field extends 'userId' | 'djId' | 'option' | 'year',
+  >(field: Field, value: RAApiConfigView[Field]) => {
     setRaApiConfig((prev) => ({ ...prev, [field]: value }));
+    setIsRaConfigDirty(true);
   };
+
+  const updateReplacementApiKey = (value: string) => {
+    setReplacementApiKey(value);
+    if (value.trim().length > 0) setClearApiKey(false);
+    setIsRaConfigDirty(true);
+  };
+
+  const isRaConfigReadOnly = isRaConfigLoading || raConfigLoadFailed || isSaving;
 
   const handlePosterUpload = async (eventId: string, file: File) => {
     setPosterError((prev) => ({ ...prev, [eventId]: null }));
@@ -254,7 +295,8 @@ const AdminEventsPage = () => {
         title="EVENTS SECTION"
         description={`${t('admin_events_subtitle')} (${currentEditLanguage.toUpperCase()})`}
         onSave={saveChanges}
-        isSaving={isSaving || isRaConfigLoading}
+        isSaving={isSaving}
+        isSaveDisabled={isRaConfigLoading}
         action={
           <button
             onClick={addNewPerformance}
@@ -316,26 +358,41 @@ const AdminEventsPage = () => {
                 value={raApiConfig.userId}
                 onChange={(value) => updateRaApiConfigField('userId', value)}
                 placeholder="123456"
+                disabled={isRaConfigReadOnly}
               />
               <FormInput
+                id="ra-api-key"
                 label={t('events_api_key')}
-                value={raApiConfig.apiKey}
-                onChange={(value) => updateRaApiConfigField('apiKey', value)}
-                placeholder="your-api-key"
+                type="password"
+                value={replacementApiKey}
+                onChange={updateReplacementApiKey}
+                placeholder={raApiConfig.hasApiKey ? '저장된 키 유지 — 교체할 때만 입력' : '새 API 키 입력'}
+                autoComplete="new-password"
+                aria-describedby="ra-api-key-status"
+                disabled={isRaConfigReadOnly}
               />
               <FormInput
                 label={t('events_api_djid')}
                 value={raApiConfig.djId}
                 onChange={(value) => updateRaApiConfigField('djId', value)}
                 placeholder="123456"
+                disabled={isRaConfigReadOnly}
               />
               <div>
-                <label className="block text-xs text-[var(--color-accent)] tracking-widest mb-2">
+                <label
+                  htmlFor="ra-api-option"
+                  className="block text-xs text-[var(--color-accent)] tracking-widest mb-2"
+                >
                   {t('events_api_option')}
                 </label>
                 <select
+                  id="ra-api-option"
                   value={raApiConfig.option}
-                  onChange={(e) => updateRaApiConfigField('option', e.target.value as RAApiConfigLegacy['option'])}
+                  onChange={(e) => updateRaApiConfigField(
+                    'option',
+                    e.target.value as RAApiConfigView['option'],
+                  )}
+                  disabled={isRaConfigReadOnly}
                   className="w-full bg-[var(--color-bg)] border-b border-[var(--color-secondary)]/30 text-[var(--color-secondary)] text-sm tracking-wider py-2 focus:outline-none focus:border-[var(--color-accent)] cursor-pointer"
                 >
                   <option value="1">{t('events_api_option_1')}</option>
@@ -349,23 +406,47 @@ const AdminEventsPage = () => {
                 value={raApiConfig.year ?? ''}
                 onChange={(value) => updateRaApiConfigField('year', value)}
                 placeholder="2025"
+                disabled={isRaConfigReadOnly}
               />
             </div>
+            {!isRaConfigLoading && !raConfigLoadFailed && (
+              <div className="space-y-2 text-xs tracking-wider text-[var(--color-secondary)]/70">
+                <p id="ra-api-key-status" role="status" aria-live="polite">
+                  {raApiConfig.hasApiKey ? 'API 키 저장됨' : '저장된 API 키 없음'}
+                </p>
+                {raApiConfig.hasApiKey && (
+                  <label className="inline-flex min-h-11 items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={clearApiKey}
+                      disabled={isSaving}
+                      onChange={(event) => {
+                        const shouldClear = event.target.checked;
+                        setClearApiKey(shouldClear);
+                        if (shouldClear) setReplacementApiKey('');
+                        setIsRaConfigDirty(true);
+                      }}
+                    />
+                    저장된 API 키 제거
+                  </label>
+                )}
+              </div>
+            )}
             <div className="space-y-2">
               <button
                 onClick={fetchFromRA}
-                disabled={isFetching || isRaConfigLoading || raConfigLoadFailed}
+                disabled={isFetching || !canSyncWithRA}
                 className="px-6 py-2 bg-[var(--color-accent)] text-[var(--color-bg)] tracking-wider text-sm hover:bg-[var(--color-primary)] transition-colors whitespace-nowrap cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isFetching ? t('events_fetching') : t('events_fetch_from_ra')}
               </button>
               {raConfigLoadFailed && (
-                <p className="text-sm text-red-400 tracking-wider">
+                <p role="alert" className="text-sm text-red-400 tracking-wider">
                   RA API 설정을 불러오지 못했습니다. 설정 저장과 동기화가 비활성화됩니다.
                 </p>
               )}
-              {fetchError && <p className="text-sm text-red-400 tracking-wider">{fetchError}</p>}
-              {fetchSuccess && <p className="text-sm text-green-400 tracking-wider">{fetchSuccess}</p>}
+              {fetchError && <p role="alert" className="text-sm text-red-400 tracking-wider">{fetchError}</p>}
+              {fetchSuccess && <p role="status" className="text-sm text-green-400 tracking-wider">{fetchSuccess}</p>}
             </div>
           </div>
         </AdminCard>
@@ -428,8 +509,14 @@ const AdminEventsPage = () => {
                       onChange={(value) => updatePerformanceField(index, 'location', value)}
                     />
                     <div className="md:col-span-2">
-                      <label className="block text-xs text-[var(--color-accent)] tracking-widest mb-2">STATUS</label>
+                      <label
+                        htmlFor={`performance-status-${performance.id}`}
+                        className="block text-xs text-[var(--color-accent)] tracking-widest mb-2"
+                      >
+                        STATUS
+                      </label>
                       <select
+                        id={`performance-status-${performance.id}`}
                         value={performance.status}
                         onChange={(e) => updatePerformanceField(index, 'status', e.target.value)}
                         className="w-full bg-[var(--color-bg)] border-b border-[var(--color-secondary)]/30 text-[var(--color-secondary)] text-sm tracking-wider py-2 focus:outline-none focus:border-[var(--color-accent)] cursor-pointer"
