@@ -20,7 +20,6 @@
 - stann-web hub 기능의 중복 구현
 - TERMINAL live interface 기능의 중복 구현
 - 결제/티켓팅 시스템 자체 구현
-- 내부 task tracker의 public docs 노출
 
 ## 사용자와 역할
 
@@ -48,7 +47,6 @@
 | NFR-001 | build 전 token sync 검사가 실행되어야 한다. | `prebuild` script가 `scripts/check-token-sync.mjs`를 실행한다. |
 | NFR-002 | TypeScript typecheck가 통과해야 한다. | `npm run type-check`가 통과한다. |
 | NFR-003 | lint는 unused disable directive와 warning을 엄격하게 처리해야 한다. | `npm run lint`가 warning 0 기준으로 동작한다. |
-| NFR-004 | 공개 문서는 Obsidian wikilink와 private 작업 흔적 없이 유지해야 한다. | public docs residue scan이 0건이다. |
 
 ## 미해결 질문
 

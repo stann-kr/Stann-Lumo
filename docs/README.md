@@ -60,8 +60,8 @@ docs/                    # public project docs
 - [변경 이력](./CHANGE_LOG.md)
 - [트러블슈팅](./TROUBLESHOOTING.md)
 
-## 운영 메모
+## 문서 최신성
 
-- 잔여 작업 목록과 phase plan은 공개 문서가 아니라 `.docs/`에서 관리한다.
-- 공개 문서는 실제 route, deployment binding, admin/public 경계를 기준으로 유지한다.
-- push/배포는 별도 승인 후 진행한다.
+- route, API, schema, 인증 경계가 바뀌면 요구사항과 기술 명세를 함께 갱신한다.
+- 디자인 토큰과 공용 컴포넌트 계약이 바뀌면 디자인 시스템을 갱신한다.
+- 배포 명령이나 Cloudflare binding이 바뀌면 배포 가이드와 트러블슈팅을 확인한다.

@@ -121,6 +121,4 @@ npm run build
 
 ## 알려진 기술 부채
 
-- `CHANGE_LOG.md`와 `TROUBLESHOOTING.md`의 이전 상세 원본은 길어 public 문서에서는 최신 항목 중심으로 유지한다.
 - admin 권한 경계의 상세 정책은 실제 구현 기준으로 재검토가 필요하다.
-- 공개 task tracker는 제거하고 private `.docs`에서 관리한다.

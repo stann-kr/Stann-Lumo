@@ -77,3 +77,13 @@ next-env.d.ts
 /.docs/
 !/docs/
 !/docs/**/*.md
+
+# 에이전트 지침 및 로컬 설정 (공개 금지)
+/CLAUDE.md
+/AGENTS.md
+/.claude/
+/.agents/
+/.codex/
+
+# 작업 로그는 비공개 레이어에서만 관리한다
+/WORK_LOG.md
