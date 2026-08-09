@@ -6,6 +6,22 @@ import type {
 } from './content';
 
 /**
+ * S1 호환 단계에서만 사용하는 인증 관리자 RA 설정 타입.
+ * 공개 ContentData 타입 그래프에는 포함하지 않는다.
+ */
+export interface RAApiConfigLegacy {
+  userId: string;
+  apiKey: string;
+  djId: string;
+  option: '1' | '2' | '3' | '4';
+  year?: string;
+}
+
+export type RAApiConfigLegacyUpdate = Omit<RAApiConfigLegacy, 'apiKey'> & {
+  apiKey?: string;
+};
+
+/**
  * 폼 필드 변경 핸들러 타입
  */
 export type FieldChangeHandler = (field: string, value: string) => void;

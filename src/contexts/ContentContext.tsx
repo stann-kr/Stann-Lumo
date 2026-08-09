@@ -79,10 +79,6 @@ export const ContentProvider = ({ children }: { children: ReactNode }) => {
 
         setAllContent({ en: enData, ko: finalKo });
         setIsLoading(false);
-
-        try {
-          localStorage.setItem('stann_content_multilang', JSON.stringify({ en: enData, ko: finalKo }));
-        } catch { /* 스토리지 제한 무시 */ }
       })
       .catch(() => {
         setIsError(true);

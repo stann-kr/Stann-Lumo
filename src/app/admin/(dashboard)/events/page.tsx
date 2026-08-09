@@ -10,7 +10,8 @@ import { useDeleteConfirm } from '@/hooks/useDeleteConfirm';
 import { useSaveNotification } from '@/hooks/useSaveNotification';
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { RAApiConfig, Performance, PageMeta } from '@/types/content';
+import type { Performance, PageMeta } from '@/types/content';
+import type { RAApiConfigLegacy } from '@/types/admin';
 import {
   fetchRAEvents,
   convertRAEventsToPerformances,
@@ -20,6 +21,7 @@ import { createBorderFaint } from '@/utils/colorMix';
 import {
   updatePerformances as apiUpdatePerformances,
   updatePageMeta as apiUpdatePageMeta,
+  fetchRaApiConfig as apiFetchRaApiConfig,
   updateRaApiConfig as apiUpdateRaApiConfig,
   uploadEventPoster,
   deleteEventPoster,
@@ -27,6 +29,13 @@ import {
 
 const POSTER_ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/avif', 'image/gif'];
 const POSTER_MAX_SIZE_BYTES = 10 * 1024 * 1024;
+const EMPTY_RA_API_CONFIG: RAApiConfigLegacy = {
+  userId: '',
+  apiKey: '',
+  djId: '',
+  option: '1',
+  year: '',
+};
 
 const AdminEventsPage = () => {
   const { t } = useTranslation();
@@ -40,9 +49,9 @@ const AdminEventsPage = () => {
     deleteItem: deletePerformance,
   } = useListEditor<Performance>(content.performances);
 
-  const [raApiConfig, setRaApiConfig] = useState<RAApiConfig>(
-    content.raApiConfig || { userId: '', apiKey: '', djId: '', option: '1', year: '' }
-  );
+  const [raApiConfig, setRaApiConfig] = useState<RAApiConfigLegacy>(EMPTY_RA_API_CONFIG);
+  const [isRaConfigLoading, setIsRaConfigLoading] = useState(true);
+  const [raConfigLoadFailed, setRaConfigLoadFailed] = useState(false);
   const [pageMeta, setPageMeta] = useState<PageMeta>(content.pageMeta);
   const [isFetching, setIsFetching] = useState(false);
   const [fetchError, setFetchError] = useState('');
@@ -62,6 +71,33 @@ const AdminEventsPage = () => {
   } = useDeleteConfirm();
 
   useEffect(() => {
+    let active = true;
+
+    const loadRaApiConfig = async () => {
+      try {
+        const response = await apiFetchRaApiConfig();
+        if (!active) return;
+
+        if (response.success && response.data) {
+          setRaApiConfig(response.data);
+          setRaConfigLoadFailed(false);
+        } else {
+          setRaConfigLoadFailed(true);
+        }
+      } catch {
+        if (active) setRaConfigLoadFailed(true);
+      } finally {
+        if (active) setIsRaConfigLoading(false);
+      }
+    };
+
+    void loadRaApiConfig();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
     // 구버전 status 값 정규화 (DB 마이그레이션 전 환경 대비)
     const normalized = allContent[currentEditLanguage].performances.map((p) => ({
       ...p,
@@ -71,9 +107,6 @@ const AdminEventsPage = () => {
     }));
     // 초기 로드 시에도 최신순 정렬 보장
     setPerformances(sortEventsByDate(normalized, false));
-    setRaApiConfig(
-      allContent[currentEditLanguage].raApiConfig || { userId: '', apiKey: '', djId: '', option: '1', year: '' }
-    );
     setPageMeta(allContent[currentEditLanguage].pageMeta);
   }, [currentEditLanguage, allContent, setPerformances]);
 
@@ -83,19 +116,37 @@ const AdminEventsPage = () => {
 
   const saveChanges = async () => {
     setIsSaving(true);
-    const results = await Promise.allSettled([
-      apiUpdatePerformances(performances),
-      apiUpdatePageMeta(currentEditLanguage, pageMeta),
-      apiUpdateRaApiConfig(raApiConfig),
-    ]);
-    const failed = results.filter((r) => r.status === 'rejected');
-    if (failed.length > 0) console.error('일부 저장 실패:', failed);
-    updateContent({ performances, raApiConfig, pageMeta });
-    showNotification();
-    setIsSaving(false);
+    setFetchError('');
+
+    try {
+      const requests = [
+        apiUpdatePerformances(performances),
+        apiUpdatePageMeta(currentEditLanguage, pageMeta),
+      ];
+      if (!isRaConfigLoading && !raConfigLoadFailed) {
+        requests.push(apiUpdateRaApiConfig(raApiConfig));
+      }
+
+      const results = await Promise.all(requests);
+      if (results.some((result) => !result.success)) {
+        setFetchError('일부 변경 사항을 저장하지 못했습니다. 다시 시도해 주세요.');
+        return;
+      }
+
+      updateContent({ performances, pageMeta });
+      showNotification();
+    } catch {
+      setFetchError('일부 변경 사항을 저장하지 못했습니다. 다시 시도해 주세요.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const fetchFromRA = async () => {
+    if (isRaConfigLoading || raConfigLoadFailed) {
+      setFetchError(t('events_api_config_required'));
+      return;
+    }
     if (!raApiConfig.userId || !raApiConfig.apiKey || !raApiConfig.djId) {
       setFetchError(t('events_api_config_required'));
       return;
@@ -150,7 +201,7 @@ const AdminEventsPage = () => {
     }
   };
 
-  const updateRaApiConfigField = (field: keyof RAApiConfig, value: string) => {
+  const updateRaApiConfigField = (field: keyof RAApiConfigLegacy, value: string) => {
     setRaApiConfig((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -203,7 +254,7 @@ const AdminEventsPage = () => {
         title="EVENTS SECTION"
         description={`${t('admin_events_subtitle')} (${currentEditLanguage.toUpperCase()})`}
         onSave={saveChanges}
-        isSaving={isSaving}
+        isSaving={isSaving || isRaConfigLoading}
         action={
           <button
             onClick={addNewPerformance}
@@ -284,7 +335,7 @@ const AdminEventsPage = () => {
                 </label>
                 <select
                   value={raApiConfig.option}
-                  onChange={(e) => updateRaApiConfigField('option', e.target.value as RAApiConfig['option'])}
+                  onChange={(e) => updateRaApiConfigField('option', e.target.value as RAApiConfigLegacy['option'])}
                   className="w-full bg-[var(--color-bg)] border-b border-[var(--color-secondary)]/30 text-[var(--color-secondary)] text-sm tracking-wider py-2 focus:outline-none focus:border-[var(--color-accent)] cursor-pointer"
                 >
                   <option value="1">{t('events_api_option_1')}</option>
@@ -303,11 +354,16 @@ const AdminEventsPage = () => {
             <div className="space-y-2">
               <button
                 onClick={fetchFromRA}
-                disabled={isFetching}
+                disabled={isFetching || isRaConfigLoading || raConfigLoadFailed}
                 className="px-6 py-2 bg-[var(--color-accent)] text-[var(--color-bg)] tracking-wider text-sm hover:bg-[var(--color-primary)] transition-colors whitespace-nowrap cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isFetching ? t('events_fetching') : t('events_fetch_from_ra')}
               </button>
+              {raConfigLoadFailed && (
+                <p className="text-sm text-red-400 tracking-wider">
+                  RA API 설정을 불러오지 못했습니다. 설정 저장과 동기화가 비활성화됩니다.
+                </p>
+              )}
               {fetchError && <p className="text-sm text-red-400 tracking-wider">{fetchError}</p>}
               {fetchSuccess && <p className="text-sm text-green-400 tracking-wider">{fetchSuccess}</p>}
             </div>

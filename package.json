@@ -6,10 +6,16 @@
     "dev": "next dev --port 3000",
     "prebuild": "node scripts/check-token-sync.mjs",
     "build": "NODE_ENV=production next build",
+    "build:cloudflare": "node scripts/check-token-sync.mjs && npm run env:check:opennext && opennextjs-cloudflare build && npm run env:check:opennext-artifact",
     "start": "next start --port 3000",
     "lint": "eslint src --report-unused-disable-directives --max-warnings 0",
+    "test": "vitest run",
+    "test:env": "node --test scripts/check-opennext-env.test.mjs",
+    "test:watch": "vitest",
     "type-check": "tsc --noEmit",
-    "deploy": "opennextjs-cloudflare build && wrangler deploy"
+    "env:check:opennext": "node scripts/check-opennext-env.mjs source",
+    "env:check:opennext-artifact": "node scripts/check-opennext-env.mjs artifact",
+    "deploy": "npm run build:cloudflare && wrangler deploy"
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",
@@ -29,22 +35,30 @@
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20260317.1",
+    "@dotenvx/dotenvx": "1.31.0",
     "@eslint/js": "^9.30.1",
     "@opennextjs/cloudflare": "^1.17.1",
+    "@testing-library/jest-dom": "^7.0.0",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.3",
     "@types/node": "^22.0.0",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
+    "@types/three": "^0.183.1",
+    "@vitejs/plugin-react": "^6.0.5",
     "autoprefixer": "^10.4.21",
+    "axe-core": "^4.13.0",
     "eslint": "^9.30.1",
     "eslint-config-next": "^16.2.0",
     "eslint-plugin-react-hooks": "^5.2.0",
     "globals": "^16.3.0",
     "jiti": "^2.6.1",
+    "jsdom": "^30.0.1",
     "postcss": "^8.5.6",
     "tailwindcss": "^3.4.17",
     "typescript": "~5.8.3",
     "typescript-eslint": "^8.35.1",
-    "wrangler": "^4.74.0",
-    "@types/three": "^0.183.1"
+    "vitest": "^4.1.10",
+    "wrangler": "^4.74.0"
   }
 }

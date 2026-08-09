@@ -64,6 +64,8 @@ Cloudflare resources:
 
 상세 schema와 migration 절차는 deployment/runbook 보강 시 별도 문서화한다.
 
+공개 `GET /api/content/[lang]`은 화면 표시용 콘텐츠만 반환한다. 관리자 전용 외부 이벤트 연동 설정은 별도의 인증 API에서 관리하며 공개 응답과 브라우저 저장소에 포함하지 않는다. 공개 콘텐츠 응답은 현재 `Cache-Control: no-store, max-age=0`을 사용한다.
+
 ## 인증과 권한
 
 - public route는 방문자에게 공개된다.
@@ -93,11 +95,13 @@ npm run deploy
 
 ```bash
 npm run lint
+npm test
+npm run test:env
 npm run type-check
-npm run build
+npm run build:cloudflare
 ```
 
-`build` 전에는 token sync 검사가 `prebuild`로 실행된다.
+Cloudflare build는 token sync, OpenNext 환경 변수 allowlist, Worker build, 생성된 환경 변수 산출물 allowlist를 순서대로 검사한다.
 
 ## 변경 시 같이 볼 파일
 

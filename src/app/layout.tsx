@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import "./globals.css";
 import Providers from "./Providers";
+import LegacyPublicStorageCleanup from "@/components/security/LegacyPublicStorageCleanup";
 
 export const metadata: Metadata = {
   title: "STANN LUMO",
@@ -30,6 +31,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         />
       </head>
       <body>
+        <LegacyPublicStorageCleanup />
         <Providers>{children}</Providers>
       </body>
     </html>

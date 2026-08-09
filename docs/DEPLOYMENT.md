@@ -22,13 +22,16 @@
 - R2 bucket `stann-lumo-media`가 존재해야 한다.
 - 필요한 secret과 환경 변수 실값은 배포 환경에만 저장한다.
 - token sync 검사가 통과해야 한다.
+- OpenNext가 읽는 `.env*`에는 허용된 공개 URL 설정만 두고 서버 secret은 Cloudflare secret 또는 binding으로 제공한다.
 
 ## 로컬 검증
 
 ```bash
 npm run lint
+npm test
+npm run test:env
 npm run type-check
-npm run build
+npm run build:cloudflare
 ```
 
 ## 배포
@@ -37,7 +40,7 @@ npm run build
 npm run deploy
 ```
 
-`deploy` script는 OpenNext Cloudflare build 후 Wrangler deploy를 실행한다.
+`deploy` script는 token과 환경 변수 소스·산출물 검사를 포함한 `build:cloudflare`가 성공한 뒤에만 Wrangler deploy를 실행한다.
 
 ## 배포 후 확인
 
