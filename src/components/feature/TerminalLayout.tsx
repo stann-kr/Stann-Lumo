@@ -9,10 +9,10 @@ import { useContent } from "../../contexts/ContentContext";
 import { SITE_NAME, SITE_VERSION, TERMINAL_URL, HUB_URL } from "../../constants/site";
 import CursorGlow from "../home/CursorGlow";
 import LiveClock from "../home/LiveClock";
-import Scene3D from "./Scene3D";
-import CustomScrollbar from "../base/CustomScrollbar";
+import HomeAmbientScene from "./HomeAmbientScene";
 import SignalNet from "../base/SignalNet";
 import { SELF_NODE_ID } from "../../constants/signalNet";
+import { useMotionPreference } from "../../hooks/useMotionPreference";
 
 interface TerminalLayoutProps {
   children: ReactNode;
@@ -25,6 +25,7 @@ const TerminalLayout = ({ children }: TerminalLayoutProps) => {
   const { t } = useTranslation();
   const { language, setLanguage } = useLanguage();
   const { content, isLoading, isError } = useContent();
+  const { isResolved: isMotionPreferenceResolved, prefersReducedMotion } = useMotionPreference();
   const mainRef = useRef<HTMLElement | null>(null);
   const mobileMenuButtonRef = useRef<HTMLButtonElement | null>(null);
   const mobileDialogRef = useRef<HTMLDivElement | null>(null);
@@ -36,6 +37,7 @@ const TerminalLayout = ({ children }: TerminalLayoutProps) => {
   const mainNavigationLabel = language === "ko" ? "주요 탐색" : "Primary navigation";
   const mobileNavigationLabel = language === "ko" ? "모바일 탐색" : "Mobile navigation";
   const skipLinkLabel = language === "ko" ? "본문으로 건너뛰기" : "Skip to main content";
+  const disableMotion = !isMotionPreferenceResolved || prefersReducedMotion;
 
   const closeMobileMenu = useCallback((restoreFocus = true) => {
     restoreMobileMenuFocusRef.current = restoreFocus;
@@ -161,16 +163,15 @@ const TerminalLayout = ({ children }: TerminalLayoutProps) => {
       >
         {skipLinkLabel}
       </a>
-      {/* 커스텀 스크롤바 — 페이지 전환 독립, 네이티브 플래시 차단 */}
-      <CustomScrollbar />
-      {/* 전역 커서 글로우 (Sci-Fi 스타일 유지) */}
-      <CursorGlow />
+      {/* Home desktop에만 저대비 ambient layer를 둔다. */}
+      {pathname === "/" && <HomeAmbientScene />}
+      {pathname === "/" && !mobileMenuOpen && !disableMotion && <CursorGlow />}
 
       {/* Desktop Sidebar (HUD Left Panel) */}
       <aside className="hidden lg:flex lg:flex-col lg:w-64 lg:fixed lg:left-0 lg:top-0 lg:h-screen lg:border-r lg:border-[var(--color-muted)] lg:bg-[var(--color-bg-sidebar)]/80 lg:backdrop-blur-sm z-40">
         {/* HUD Top-Left Branding Container */}
         <div className="hud-crosshair p-8 border-b border-[var(--color-muted)] relative">
-          <div className="absolute top-2 left-2 text-[8px] font-mono text-[var(--color-muted)] tracking-widest">
+          <div className="absolute top-2 left-2 text-xs font-mono text-[var(--color-text-muted)] tracking-widest">
             SYS.ID: {SELF_NODE_ID}
           </div>
           <Link
@@ -188,8 +189,8 @@ const TerminalLayout = ({ children }: TerminalLayoutProps) => {
               ))
             )}
           </Link>
-          <div className="mt-2 text-[10px] font-mono text-[var(--color-muted)] uppercase tracking-widest">
-            <span className="w-2 h-2 inline-block bg-[var(--color-accent)] mr-2 animate-pulse"></span>
+          <div className="mt-2 text-xs font-mono text-[var(--color-text-muted)] uppercase tracking-widest">
+            <span aria-hidden="true" className="w-2 h-2 inline-block bg-[var(--color-accent)] mr-2 animate-pulse"></span>
             STATUS: ACTIVE
           </div>
         </div>
@@ -213,9 +214,9 @@ const TerminalLayout = ({ children }: TerminalLayoutProps) => {
                       href={item.path}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="w-full flex items-center gap-3 px-3 py-2 cursor-pointer group text-[var(--color-muted)] hover:text-[var(--color-primary)] transition-colors"
+                      className="w-full min-h-11 flex items-center gap-3 px-3 py-2 cursor-pointer group text-[var(--color-text-muted)] hover:text-[var(--color-primary)] transition-colors"
                     >
-                      <span className="font-mono text-[9px] opacity-50">
+                      <span className="font-mono text-xs text-[var(--color-text-muted)]">
                         {numStr} /
                       </span>
                       <span className="font-mono text-xs tracking-widest uppercase">
@@ -228,16 +229,16 @@ const TerminalLayout = ({ children }: TerminalLayoutProps) => {
                       href={item.path}
                       onClick={() => handleNavClick(item.path)}
                       aria-current={isActive ? "page" : undefined}
-                      className={`flex items-center gap-3 px-3 py-2 cursor-pointer relative transition-colors ${
+                      className={`flex min-h-11 items-center gap-3 px-3 py-2 cursor-pointer relative transition-colors ${
                         isActive
                           ? "text-[var(--color-accent)]"
-                          : "text-[var(--color-muted)] hover:text-[var(--color-primary)]"
+                          : "text-[var(--color-text-muted)] hover:text-[var(--color-primary)]"
                       }`}
                     >
                       {isActive && (
                         <span className="absolute left-0 top-0 bottom-0 w-[2px] bg-[var(--color-accent)]"></span>
                       )}
-                      <span className="font-mono text-[9px] opacity-50">
+                      <span className="font-mono text-xs text-[var(--color-text-muted)]">
                         {numStr} /
                       </span>
                       <span className="font-mono text-xs tracking-widest uppercase">
@@ -256,7 +257,7 @@ const TerminalLayout = ({ children }: TerminalLayoutProps) => {
           <SignalNet />
 
           <div className="flex flex-col gap-1">
-            <span className="text-[9px] font-mono text-[var(--color-muted)] uppercase tracking-widest">
+            <span className="text-xs font-mono text-[var(--color-text-muted)] uppercase tracking-widest">
               LOCAL TIME
             </span>
             <LiveClock className="text-xs font-mono text-[var(--color-primary)] tracking-widest tabular-nums font-bold" />
@@ -264,30 +265,30 @@ const TerminalLayout = ({ children }: TerminalLayoutProps) => {
 
           <div className="flex items-end justify-between">
             <div className="flex flex-col gap-1">
-              <span className="text-[9px] font-mono text-[var(--color-muted)] uppercase tracking-widest">
+              <span className="text-xs font-mono text-[var(--color-text-muted)] uppercase tracking-widest">
                 VERSION
               </span>
-              <span className="text-[10px] font-mono text-[var(--color-primary)]">
+              <span className="text-xs font-mono text-[var(--color-primary)]">
                 {SITE_VERSION}
               </span>
             </div>
 
             {/* Language Toggle HUD */}
-            <div className="flex items-center gap-1 border border-[var(--color-muted)] px-2 py-1 bg-black">
+            <div className="flex items-center border border-[var(--color-muted)] bg-black">
               <button
                 type="button"
                 onClick={() => setLanguage("en")}
                 aria-label="Switch language to English"
                 aria-pressed={language === "en"}
-                className={`text-[10px] font-mono tracking-widest px-1 transition-colors ${
+                className={`min-h-11 min-w-11 text-xs font-mono tracking-widest transition-colors ${
                   language === "en"
                     ? "text-[var(--color-accent)]"
-                    : "text-[var(--color-muted)] hover:text-[var(--color-primary)]"
+                    : "text-[var(--color-text-muted)] hover:text-[var(--color-primary)]"
                 }`}
               >
                 EN
               </button>
-              <span className="text-[10px] font-mono text-[var(--color-muted)]">
+              <span className="text-xs font-mono text-[var(--color-text-muted)]">
                 |
               </span>
               <button
@@ -295,10 +296,10 @@ const TerminalLayout = ({ children }: TerminalLayoutProps) => {
                 onClick={() => setLanguage("ko")}
                 aria-label="언어를 한국어로 전환"
                 aria-pressed={language === "ko"}
-                className={`text-[10px] font-mono tracking-widest px-1 transition-colors ${
+                className={`min-h-11 min-w-11 text-xs font-mono tracking-widest transition-colors ${
                   language === "ko"
                     ? "text-[var(--color-accent)]"
-                    : "text-[var(--color-muted)] hover:text-[var(--color-primary)]"
+                    : "text-[var(--color-text-muted)] hover:text-[var(--color-primary)]"
                 }`}
               >
                 KO
@@ -322,7 +323,7 @@ const TerminalLayout = ({ children }: TerminalLayoutProps) => {
             ref={mobileMenuButtonRef}
             type="button"
             onClick={() => mobileMenuOpen ? closeMobileMenu() : setMobileMenuOpen(true)}
-            className="w-10 h-10 flex flex-col items-center justify-center gap-[4px] cursor-pointer"
+            className="w-11 h-11 flex flex-col items-center justify-center gap-[4px] cursor-pointer"
             aria-label={
               mobileMenuOpen ? t("nav_close_menu") : t("nav_open_menu")
             }
@@ -380,9 +381,9 @@ const TerminalLayout = ({ children }: TerminalLayoutProps) => {
                       href={item.path}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-3 py-3 text-[var(--color-muted)] hover:text-[var(--color-primary)]"
+                      className="flex min-h-11 items-center gap-3 py-3 text-[var(--color-text-muted)] hover:text-[var(--color-primary)]"
                     >
-                      <span className="font-mono text-[10px] opacity-50">
+                      <span className="font-mono text-xs text-[var(--color-text-muted)]">
                         {numStr} /
                       </span>
                       <span className="font-mono text-sm tracking-widest uppercase">
@@ -395,16 +396,16 @@ const TerminalLayout = ({ children }: TerminalLayoutProps) => {
                       href={item.path}
                       onClick={() => handleNavClick(item.path)}
                       aria-current={isActive ? "page" : undefined}
-                      className={`flex items-center gap-3 py-3 relative ${
+                      className={`flex min-h-11 items-center gap-3 py-3 relative ${
                         isActive
                           ? "text-[var(--color-accent)]"
-                          : "text-[var(--color-muted)]"
+                          : "text-[var(--color-text-muted)]"
                       }`}
                     >
                       {isActive && (
                         <span className="absolute left-[-24px] w-1 h-full bg-[var(--color-accent)]"></span>
                       )}
-                      <span className="font-mono text-[10px] opacity-50">
+                      <span className="font-mono text-xs text-[var(--color-text-muted)]">
                         {numStr} /
                       </span>
                       <span className="font-mono text-sm tracking-widest uppercase">
@@ -419,20 +420,20 @@ const TerminalLayout = ({ children }: TerminalLayoutProps) => {
               </nav>
 
               <div className="flex items-center justify-between border-t border-[var(--color-muted)] px-6 py-4">
-            <span className="font-mono text-[10px] text-[var(--color-muted)] tracking-widest">
+            <span className="font-mono text-xs text-[var(--color-text-muted)] tracking-widest">
               LANG
             </span>
-            <div className="flex gap-2">
+            <div className="flex">
               <button
                 type="button"
                 onClick={() => setLanguage("en")}
                 aria-label="Switch language to English"
                 aria-pressed={language === "en"}
-                className={`font-mono text-xs ${language === "en" ? "text-[var(--color-accent)]" : "text-[var(--color-muted)]"}`}
+                className={`min-h-11 min-w-11 font-mono text-xs ${language === "en" ? "text-[var(--color-accent)]" : "text-[var(--color-text-muted)]"}`}
               >
                 EN
               </button>
-              <span className="font-mono text-[10px] text-[var(--color-muted)]">
+              <span className="font-mono text-xs text-[var(--color-text-muted)]">
                 |
               </span>
               <button
@@ -440,7 +441,7 @@ const TerminalLayout = ({ children }: TerminalLayoutProps) => {
                 onClick={() => setLanguage("ko")}
                 aria-label="언어를 한국어로 전환"
                 aria-pressed={language === "ko"}
-                className={`font-mono text-xs ${language === "ko" ? "text-[var(--color-accent)]" : "text-[var(--color-muted)]"}`}
+                className={`min-h-11 min-w-11 font-mono text-xs ${language === "ko" ? "text-[var(--color-accent)]" : "text-[var(--color-text-muted)]"}`}
               >
                 KO
               </button>
@@ -450,9 +451,6 @@ const TerminalLayout = ({ children }: TerminalLayoutProps) => {
           </>
         )}
       </header>
-
-      {/* 3D Background */}
-      <Scene3D />
 
       {/* Main Content (HUD Viewport) */}
       <main
@@ -472,13 +470,13 @@ const TerminalLayout = ({ children }: TerminalLayoutProps) => {
           {isLoading || isNavigating ? (
             <motion.div
               key="spinner"
-              initial={{ opacity: 0 }}
+              initial={disableMotion ? false : { opacity: 0 }}
               animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.15, ease: "easeInOut" }}
+              exit={disableMotion ? undefined : { opacity: 0 }}
+              transition={{ duration: disableMotion ? 0 : 0.15, ease: "easeInOut" }}
               className="min-h-[calc(100dvh-4rem)] lg:min-h-[100dvh] flex items-center justify-center"
             >
-              <div className="font-mono text-[10px] tracking-[0.2em] text-[var(--color-primary)] flex flex-col items-center gap-2">
+              <div className="font-mono text-xs tracking-[0.2em] text-[var(--color-primary)] flex flex-col items-center gap-2">
                 <div className="w-8 h-8 border border-[var(--color-primary)] border-t-transparent animate-spin"></div>
                 <span className="animate-pulse">FETCHING DATA...</span>
               </div>
@@ -486,25 +484,25 @@ const TerminalLayout = ({ children }: TerminalLayoutProps) => {
           ) : isError ? (
             <motion.div
               key="error"
-              initial={{ opacity: 0 }}
+              initial={disableMotion ? false : { opacity: 0 }}
               animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2, ease: "easeInOut" }}
+              exit={disableMotion ? undefined : { opacity: 0 }}
+              transition={{ duration: disableMotion ? 0 : 0.2, ease: "easeInOut" }}
               className="min-h-[calc(100dvh-4rem)] lg:min-h-[100dvh] flex items-center justify-center"
             >
               <div className="font-mono flex flex-col items-center gap-4 text-center px-8">
-                <div className="text-[10px] tracking-[0.2em] text-[var(--color-muted)] uppercase">
+                <div className="text-xs tracking-[0.2em] text-[var(--color-text-muted)] uppercase">
                   SYS.ERR — CONNECTION FAILED
                 </div>
                 <div className="w-8 h-[1px] bg-[var(--color-muted)]"></div>
-                <p className="text-xs text-[var(--color-muted)] tracking-widest max-w-xs leading-relaxed">
+                <p className="text-xs text-[var(--color-text-muted)] tracking-widest max-w-xs leading-relaxed">
                   일시적인 서버 오류가 발생했습니다.
                   <br />
                   잠시 후 다시 시도해 주세요.
                 </p>
                 <button
                   onClick={() => window.location.reload()}
-                  className="mt-2 border border-[var(--color-muted)] px-6 py-2 text-[10px] font-mono tracking-[0.2em] text-[var(--color-muted)] hover:text-[var(--color-primary)] hover:border-[var(--color-primary)] transition-colors cursor-pointer"
+                  className="mt-2 min-h-11 border border-[var(--color-muted)] px-6 py-2 text-xs font-mono tracking-[0.2em] text-[var(--color-text-muted)] hover:text-[var(--color-primary)] hover:border-[var(--color-primary)] transition-colors cursor-pointer"
                 >
                   RETRY
                 </button>
@@ -513,10 +511,10 @@ const TerminalLayout = ({ children }: TerminalLayoutProps) => {
           ) : (
             <motion.div
               key={pathname}
-              initial={{ opacity: 0, y: 10, filter: "blur(8px)" }}
-              animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-              exit={{ opacity: 0, y: -6, filter: "blur(6px)" }}
-              transition={{ duration: 0.25, ease: "easeInOut" }}
+              initial={disableMotion ? false : { opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={disableMotion ? undefined : { opacity: 0, y: -6 }}
+              transition={{ duration: disableMotion ? 0 : 0.2, ease: "easeOut" }}
               className="min-h-[calc(100dvh-4rem)] lg:min-h-[100dvh] p-4 md:p-8 lg:p-12 relative z-10"
             >
               {children}

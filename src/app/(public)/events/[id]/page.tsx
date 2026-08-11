@@ -15,8 +15,8 @@ interface EventDetailData {
 
 const STATUS_CLASSES: Record<Performance['status'], string> = {
   Announced: 'text-[var(--color-accent)]',
-  TBA:       'text-[var(--color-secondary)] opacity-60',
-  Cancelled: 'text-[var(--color-muted)]',
+  TBA:       'text-[var(--color-text-muted)]',
+  Cancelled: 'text-[var(--color-text-muted)]',
 };
 
 const EventDetailPage = () => {
@@ -55,12 +55,12 @@ const EventDetailPage = () => {
   if (error || !data) {
     return (
       <PageLayout key="error" title="EVENT NOT FOUND">
-        <p className="text-[var(--color-secondary)]/60 text-sm tracking-wider">{error}</p>
+        <p className="text-[var(--color-text-muted)] text-base tracking-wider">{error}</p>
         <Link
           href="/events"
-          className="inline-flex items-center gap-2 text-xs tracking-widest text-[var(--color-secondary)]/60 hover:text-[var(--color-secondary)] transition-colors mt-4"
+          className="inline-flex min-h-11 items-center gap-2 text-xs tracking-widest text-[var(--color-text-muted)] hover:text-[var(--color-secondary)] transition-colors mt-4"
         >
-          <i className="ri-arrow-left-line"></i>
+          <i aria-hidden="true" className="ri-arrow-left-line"></i>
           {t('back') || 'BACK TO EVENTS'}
         </Link>
       </PageLayout>
@@ -74,9 +74,9 @@ const EventDetailPage = () => {
       {/* 뒤로가기 */}
       <Link
         href="/events"
-        className="inline-flex items-center gap-2 text-xs tracking-widest text-[var(--color-secondary)]/50 hover:text-[var(--color-secondary)] transition-colors"
+        className="inline-flex min-h-11 items-center gap-2 text-xs tracking-widest text-[var(--color-text-muted)] hover:text-[var(--color-secondary)] transition-colors"
       >
-        <i className="ri-arrow-left-line"></i>
+        <i aria-hidden="true" className="ri-arrow-left-line"></i>
         {t('back') || 'BACK TO EVENTS'}
       </Link>
 
@@ -100,7 +100,7 @@ const EventDetailPage = () => {
             <p className="text-xs tracking-widest text-[var(--color-accent)]">DATE</p>
             <p className="text-2xl font-mono text-[var(--color-secondary)]">{event.date}</p>
             {event.time && (
-              <p className="text-sm font-mono text-[var(--color-secondary)]/60">{event.time}</p>
+              <p className="text-xs font-mono text-[var(--color-text-muted)]">{event.time}</p>
             )}
           </div>
 
@@ -109,7 +109,7 @@ const EventDetailPage = () => {
             <p className="text-xs tracking-widest text-[var(--color-accent)]">VENUE</p>
             <p className="text-lg text-[var(--color-secondary)]">{event.venue}</p>
             {event.location && (
-              <p className="text-sm text-[var(--color-secondary)]/60">{event.location}</p>
+              <p className="text-base text-[var(--color-text-muted)]">{event.location}</p>
             )}
           </div>
 
@@ -117,7 +117,7 @@ const EventDetailPage = () => {
           {event.lineup && (
             <div className="space-y-1 border-b pb-6" style={borderFaint}>
               <p className="text-xs tracking-widest text-[var(--color-accent)]">LINEUP</p>
-              <p className="text-sm text-[var(--color-secondary)]/80 leading-relaxed whitespace-pre-line">
+              <p className="text-base text-[var(--color-text-muted)] leading-relaxed whitespace-pre-line">
                 {event.lineup}
               </p>
             </div>
@@ -137,10 +137,10 @@ const EventDetailPage = () => {
               href={event.raEventLink}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-6 py-3 border text-xs tracking-widest text-[var(--color-secondary)] hover:bg-[var(--color-secondary)]/10 transition-colors"
+              className="inline-flex min-h-11 items-center gap-2 px-6 py-3 border text-xs tracking-widest text-[var(--color-secondary)] hover:bg-[var(--color-secondary)]/10 transition-colors"
               style={borderMid}
             >
-              <i className="ri-external-link-line"></i>
+              <i aria-hidden="true" className="ri-external-link-line"></i>
               VIEW ON RESIDENT ADVISOR
             </a>
           )}

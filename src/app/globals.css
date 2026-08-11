@@ -17,22 +17,36 @@
   --color-secondary: var(--os-music-sub); /* #b8b8b8 — 구 #cbcbcb에서 정본 정렬 */
   --color-accent: var(--os-music-accent); /* #ff0033 */
   --color-muted: #333333; /* lumo 고유 — 구분선/보더 */
+  --color-text-muted: #a0a0a0; /* 본문·메타 보조 텍스트, black 표면에서 AA 대비 */
   --color-bg: var(--os-music-bg); /* #000000 */
   --color-bg-sidebar: #050505; /* lumo 고유 — 사이드바 */
 }
 
 /* 타입 베이스 = 16px (브라우저 기본, STANN OS 공통 — 구 17px 오버라이드 제거) */
 
-/* ── 네이티브 스크롤바 완전 숨김 ───────────────────────────────────────
-   React CustomScrollbar 컴포넌트(position:fixed)로 대체
-   → DOM 변경 시 브라우저 네이티브 재렌더 타이밍 플래시 원천 차단
+/* ── 네이티브 스크롤바 ────────────────────────────────────────────────
+   OS 접근성 설정과 키보드 탐색을 보존하고, 색상만 HUD 표면에 맞춘다.
    ──────────────────────────────────────────────────────────────────── */
-* {
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE/Edge */
+html {
+  scrollbar-color: var(--color-text-muted) var(--color-bg);
+  scrollbar-width: thin;
 }
-*::-webkit-scrollbar {
-  display: none; /* Chrome/Safari/Opera */
+
+::-webkit-scrollbar {
+  width: 0.75rem;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-bg);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-text-muted);
+  border: 3px solid var(--color-bg);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-primary);
 }
 
 /* 셀렉션 — 액센트 배경 (STANN OS 불변 글루) */
@@ -68,6 +82,34 @@ body {
     linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
   background-size: 40px 40px;
   background-attachment: fixed;
+}
+
+.home-scene-fallback {
+  position: fixed;
+  inset: 0;
+  z-index: -10;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 65% 34%, color-mix(in srgb, var(--color-accent) 12%, transparent), transparent 28%),
+    linear-gradient(135deg, transparent 49.8%, color-mix(in srgb, var(--color-secondary) 10%, transparent) 50%, transparent 50.2%);
+  opacity: 0.45;
+}
+
+@media (max-width: 1023px) {
+  .home-scene-fallback {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 /* iOS 안전영역 대응 — 모바일 헤더(4rem) + safe-area-inset-top, 데스크톱(lg)은 0 */

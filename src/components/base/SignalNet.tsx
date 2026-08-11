@@ -10,7 +10,7 @@ const SignalNet = () => {
   const { t } = useTranslation();
   return (
     <nav aria-label={t('footer_signal_net_aria')} className="flex flex-col gap-1">
-      <span className="text-[9px] font-mono text-[var(--color-muted)] uppercase tracking-widest">
+      <span className="text-xs font-mono text-[var(--color-text-muted)] uppercase tracking-widest">
         SIGNAL_NET
       </span>
       <span className="inline-flex flex-wrap items-center gap-x-3 gap-y-1">
@@ -19,7 +19,7 @@ const SignalNet = () => {
             <span
               key={node.id}
               aria-current="page"
-              className="text-[10px] font-mono tracking-widest text-[var(--color-accent)]"
+              className="inline-flex min-h-11 items-center text-xs font-mono tracking-widest text-[var(--color-accent)]"
             >
               ● [{node.label}] {node.id}
             </span>
@@ -29,7 +29,7 @@ const SignalNet = () => {
               key={node.id}
               href={node.href}
               rel="noopener noreferrer"
-              className="text-[10px] font-mono tracking-widest text-[var(--color-secondary)] transition-colors duration-[var(--os-dur-fast)] hover:text-[var(--color-accent)]"
+              className="inline-flex min-h-11 items-center text-xs font-mono tracking-widest text-[var(--color-secondary)] transition-colors duration-[var(--os-dur-fast)] hover:text-[var(--color-accent)]"
             >
               [{node.label}] {node.id}
             </a>

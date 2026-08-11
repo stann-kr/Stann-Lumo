@@ -46,12 +46,12 @@ const EventsPage = () => {
     >
       {/* Upcoming Events */}
       <div className="space-y-6">
-        <h2 className="text-sm font-mono font-semibold text-[var(--color-accent)] tracking-widest">
+        <h2 className="text-base font-mono font-semibold text-[var(--color-accent)] tracking-widest">
           {content.pageMeta?.events?.upcomingTitle || t("events_upcoming")}
         </h2>
 
         {upcomingEvents.length === 0 ? (
-          <p className="text-sm text-[var(--color-secondary)] opacity-40">
+          <p className="text-base text-[color:color-mix(in_srgb,var(--color-secondary)_72%,transparent)]">
             {t("msg_no_items")}
           </p>
         ) : (
@@ -62,9 +62,9 @@ const EventsPage = () => {
                 <Link
                   key={event.id}
                   href={`/events/${event.id}`}
-                  className="bg-surface group relative overflow-hidden transition-colors hover:bg-[var(--color-accent)]/5 flex flex-col md:flex-row md:items-center p-4 gap-4"
+                  className="bg-surface group relative min-h-11 overflow-hidden transition-colors hover:bg-[var(--color-accent)]/5 flex flex-col md:flex-row md:items-center p-4 gap-4"
                 >
-                  <div className="w-8 font-mono text-[10px] text-[var(--color-accent)] hidden md:block">
+                  <div className="hidden w-8 font-mono text-xs text-[var(--color-accent)] md:block">
                     [{idStr}]
                   </div>
 
@@ -74,7 +74,7 @@ const EventsPage = () => {
                       <img
                         src={`/api/media/${event.posterImageId}`}
                         alt={event.title}
-                        className="w-full h-full object-cover filter grayscale group-hover:grayscale-0 transition-all duration-500"
+                        className="w-full h-full object-cover filter grayscale transition-[filter] duration-500 group-hover:grayscale-0"
                       />
                     </div>
                   )}
@@ -83,7 +83,7 @@ const EventsPage = () => {
                     <h3 className="font-mono text-base tracking-[0.1em] text-[var(--color-secondary)] group-hover:text-[var(--color-primary)] transition-colors uppercase truncate mb-1">
                       {event.title}
                     </h3>
-                    <div className="flex items-center gap-2 font-mono text-xs tracking-widest text-[var(--color-secondary)] opacity-60 uppercase">
+                    <div className="flex items-center gap-2 font-mono text-xs tracking-widest text-[color:color-mix(in_srgb,var(--color-secondary)_72%,transparent)] uppercase">
                       <span>{event.venue}</span>
                       {event.location && (
                         <>
@@ -95,11 +95,11 @@ const EventsPage = () => {
                   </div>
 
                   <div className="flex flex-col md:items-end justify-center shrink-0 md:w-32 font-mono">
-                    <p className="text-sm text-[var(--color-primary)] tracking-widest mb-1">
+                    <p className="text-base text-[var(--color-primary)] tracking-widest mb-1">
                       {event.date}
                     </p>
                     {event.time && (
-                      <p className="text-xs text-[var(--color-accent)] opacity-80 tracking-widest">
+                      <p className="text-xs text-[var(--color-accent)] tracking-widest">
                         {event.time}
                       </p>
                     )}
@@ -113,12 +113,12 @@ const EventsPage = () => {
 
       {/* Past Events */}
       <div className="space-y-6 pt-8 relative before:absolute before:top-0 before:left-0 before:w-16 before:h-px before:bg-[var(--color-accent)]">
-        <h2 className="text-sm font-mono font-semibold text-[var(--color-secondary)] opacity-50 tracking-widest">
+        <h2 className="text-base font-mono font-semibold text-[color:color-mix(in_srgb,var(--color-secondary)_72%,transparent)] tracking-widest">
           {content.pageMeta?.events?.pastTitle || t("events_past")}
         </h2>
 
         {pastEvents.length === 0 ? (
-          <p className="text-sm text-[var(--color-secondary)] opacity-40 font-mono">
+          <p className="font-mono text-base text-[color:color-mix(in_srgb,var(--color-secondary)_72%,transparent)]">
             {t("msg_no_items")}
           </p>
         ) : (
@@ -130,10 +130,9 @@ const EventsPage = () => {
                   <Link
                     key={event.id}
                     href={`/events/${event.id}`}
-                    style={{ opacity: 0.5 }}
-                    className="bg-surface group relative overflow-hidden transition-colors hover:bg-[var(--color-muted)] flex flex-col md:flex-row md:items-center p-4 gap-4"
+                  className="bg-surface group relative min-h-11 overflow-hidden transition-colors hover:bg-[var(--color-muted)] flex flex-col md:flex-row md:items-center p-4 gap-4"
                   >
-                    <div className="w-8 font-mono text-[10px] text-[var(--color-secondary)] opacity-50 hidden md:block">
+                    <div className="hidden w-8 font-mono text-xs text-[color:color-mix(in_srgb,var(--color-secondary)_72%,transparent)] md:block">
                       [{idStr}]
                     </div>
 
@@ -142,22 +141,22 @@ const EventsPage = () => {
                         <img
                           src={`/api/media/${event.posterImageId}`}
                           alt={event.title}
-                          className="w-full h-full object-cover filter grayscale opacity-50 group-hover:opacity-100 transition-all duration-300"
+                          className="w-full h-full object-cover filter grayscale opacity-50 transition-[filter,opacity] duration-300 group-hover:opacity-100"
                         />
                       </div>
                     )}
 
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-mono text-sm tracking-widest text-[var(--color-secondary)] group-hover:text-[var(--color-primary)] transition-colors uppercase truncate mb-1">
+                      <h3 className="font-mono text-base tracking-widest text-[color:color-mix(in_srgb,var(--color-secondary)_72%,transparent)] transition-colors group-hover:text-[var(--color-primary)] uppercase truncate mb-1">
                         {event.title}
                       </h3>
-                      <div className="font-mono text-[10px] tracking-widest text-[var(--color-secondary)] opacity-40 uppercase truncate">
+                      <div className="font-mono text-xs tracking-widest text-[color:color-mix(in_srgb,var(--color-secondary)_72%,transparent)] uppercase truncate">
                         {event.venue} {event.location && `/ ${event.location}`}
                       </div>
                     </div>
 
-                    <div className="flex flex-col md:items-end justify-center shrink-0 w-32 font-mono opacity-60">
-                      <p className="text-xs text-[var(--color-secondary)] tracking-widest">
+                    <div className="flex flex-col md:items-end justify-center shrink-0 w-32 font-mono">
+                      <p className="text-xs text-[color:color-mix(in_srgb,var(--color-secondary)_72%,transparent)] tracking-widest">
                         {event.date}
                       </p>
                     </div>
@@ -170,7 +169,7 @@ const EventsPage = () => {
               <div className="pt-4 flex justify-center">
                 <button
                   onClick={handleLoadMore}
-                  className="px-8 py-3 border text-[var(--color-secondary)] text-sm tracking-widest hover:opacity-80 transition-all duration-300 cursor-pointer whitespace-nowrap"
+                  className="min-h-[44px] border px-8 py-3 text-base tracking-widest text-[var(--color-secondary)] transition-opacity duration-300 hover:opacity-80 cursor-pointer whitespace-nowrap"
                   style={borderMid}
                 >
                   {t("events_load_more")}

@@ -65,8 +65,7 @@ vi.mock('framer-motion', () => ({
 
 vi.mock('../home/CursorGlow', () => ({ default: () => null }));
 vi.mock('../home/LiveClock', () => ({ default: () => <span>12:00</span> }));
-vi.mock('./Scene3D', () => ({ default: () => null }));
-vi.mock('../base/CustomScrollbar', () => ({ default: () => null }));
+vi.mock('./HomeAmbientScene', () => ({ default: () => <span data-testid="home-ambient-scene" /> }));
 vi.mock('../base/SignalNet', () => ({ default: () => null }));
 
 const desktopBreakpointListeners = new Set<(event: MediaQueryListEvent) => void>();
@@ -147,5 +146,17 @@ describe('TerminalLayout public navigation', () => {
     rerender(<TerminalLayout><h1>Music</h1></TerminalLayout>);
 
     await waitFor(() => expect(screen.getByRole('main')).toHaveFocus());
+  });
+
+  it('keeps the optional ambient scene scoped to the home route', () => {
+    mocks.pathname = '/';
+    const { rerender } = render(<TerminalLayout><h1>Home</h1></TerminalLayout>);
+
+    expect(screen.getByTestId('home-ambient-scene')).toBeInTheDocument();
+
+    mocks.pathname = '/archive';
+    rerender(<TerminalLayout><h1>Archive</h1></TerminalLayout>);
+
+    expect(screen.queryByTestId('home-ambient-scene')).not.toBeInTheDocument();
   });
 });

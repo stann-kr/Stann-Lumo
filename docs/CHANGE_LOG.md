@@ -2,6 +2,15 @@
 
 공개 가능한 결과 중심 변경 요약이다. 항목은 일자 단위이며 최신 항목을 위에 둔다.
 
+## 2026-08-11 — 공개 화면 가독성과 모션 경계
+
+### Changed
+
+- 공개 본문과 메타 글자 크기, 보조 텍스트 대비, 주요 action의 최소 터치 영역을 정리했다.
+- 모든 공개 route의 cipher heading reveal을 즉시 표시로 전환하고 reduced-motion 환경에서 전환·로딩 animation을 최소화한다.
+- 3D와 cursor glow를 Home desktop의 선택적 ambient layer로 한정하고, 절전·저성능·WebGL 오류 환경에는 static fallback을 사용한다.
+- native scrollbar를 복원하고 사용자 운영체제의 스크롤 접근성 설정을 존중한다.
+
 ## 2026-08-11 — 공개 탐색 접근성
 
 ### Changed

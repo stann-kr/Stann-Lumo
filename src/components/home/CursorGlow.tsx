@@ -8,6 +8,9 @@ const CursorGlow = () => {
   const glowRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)');
+    if (!finePointer.matches) return;
+
     const handleMouseMove = (e: MouseEvent) => {
       if (!glowRef.current) return;
       glowRef.current.style.left = `${e.clientX}px`;
@@ -20,7 +23,7 @@ const CursorGlow = () => {
       glowRef.current.style.opacity = '0';
     };
 
-    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mousemove', handleMouseMove, { passive: true });
     window.addEventListener('mouseleave', handleMouseLeave);
 
     return () => {
@@ -32,7 +35,7 @@ const CursorGlow = () => {
   return (
     <div
       ref={glowRef}
-      className="pointer-events-none fixed z-0"
+      className="pointer-events-none fixed z-0 hidden lg:block"
       style={{
         width: '400px',
         height: '400px',

@@ -366,8 +366,10 @@ export default function Scene3D() {
     <div className="fixed inset-0 pointer-events-none z-[-10]">
       <Canvas
         camera={{ position: [0, 0, 5], fov: 75 }}
+        dpr={[1, 1.5]}
+        performance={{ min: 0.5 }}
         gl={{
-          antialias: true,
+          antialias: false,
           powerPreference: 'high-performance',
           toneMapping: THREE.NoToneMapping,
         }}

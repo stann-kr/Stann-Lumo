@@ -47,7 +47,7 @@ export default function PageSection({
           <div
             className="w-5 h-5 flex items-center justify-center font-mono text-[var(--color-accent)]"
           >
-            <i className={icon} />
+            <i aria-hidden="true" className={icon} />
           </div>
         )}
         <h2

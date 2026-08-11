@@ -132,7 +132,7 @@ const GridItem = ({ photo, settings }: GridItemProps) => {
 
           {/* 캡션 하단 표시 */}
           {settings.captionDisplay === 'below' && photo.caption && (
-            <p className="text-[var(--color-secondary)]/60 text-xs tracking-wider leading-relaxed pt-1.5 pb-1">
+            <p className="text-[var(--color-text-muted)] text-xs tracking-wider leading-relaxed pt-1.5 pb-1">
               {photo.caption}
             </p>
           )}
@@ -189,13 +189,13 @@ const GalleryPage = () => {
       {/* 사진 그리드 */}
       {isLoading ? (
         <div className="hud-panel flex items-center justify-center py-24">
-          <div className="text-[var(--color-secondary)]/40 text-sm font-mono tracking-widest animate-pulse">
+          <div className="text-[var(--color-text-muted)] text-sm font-mono tracking-widest animate-pulse">
             LOADING...
           </div>
         </div>
       ) : photos.length === 0 ? (
         <div className="hud-panel flex items-center justify-center py-24">
-          <p className="text-[var(--color-secondary)]/30 text-sm font-mono tracking-widest">
+          <p className="text-[var(--color-text-muted)] text-sm font-mono tracking-widest">
             {t('gallery_empty')}
           </p>
         </div>

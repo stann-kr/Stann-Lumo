@@ -100,7 +100,7 @@ const ContactPage = () => {
           </div>
           <div className="flex flex-col sm:flex-row sm:items-center gap-4 pt-2">
             <button type="submit" disabled={status === 'sending'}
-              className="px-8 py-3 border text-[var(--color-secondary)] text-xs tracking-widest hover:opacity-80 transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer whitespace-nowrap"
+              className="min-h-[44px] px-8 py-3 border text-[var(--color-secondary)] text-xs tracking-widest hover:opacity-80 transition-opacity duration-300 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer whitespace-nowrap"
               style={borderMid}>
               {status === 'sending' ? t('contact_btn_sending') : t('contact_btn_send')}
             </button>
@@ -128,18 +128,18 @@ const ContactPage = () => {
           {contactContent.contactInfo.map((item, index) => (
             <div key={index} className="space-y-3">
               <div className="w-8 h-8 flex items-center justify-center">
-                <i className={`text-lg text-[var(--color-accent)] ${item.icon}`}></i>
+                <i aria-hidden="true" className={`text-lg text-[var(--color-accent)] ${item.icon}`}></i>
               </div>
               <h3 className="text-xs font-mono text-[var(--color-accent)] tracking-widest">{item.label}</h3>
               {item.value.includes('@') ? (
                 <a
                   href={`mailto:${item.value}`}
-                  className="text-sm text-[var(--color-secondary)] opacity-80 hover:text-[var(--color-primary)] hover:opacity-100 transition-colors cursor-pointer"
+                  className="inline-flex min-h-[44px] items-center text-base text-[color:color-mix(in_srgb,var(--color-secondary)_80%,transparent)] transition-colors hover:text-[var(--color-primary)] cursor-pointer"
                 >
                   {item.value}
                 </a>
               ) : (
-                <p className="text-sm text-[var(--color-secondary)] opacity-80">{item.value}</p>
+                <p className="text-base text-[color:color-mix(in_srgb,var(--color-secondary)_80%,transparent)]">{item.value}</p>
               )}
             </div>
           ))}
@@ -155,12 +155,12 @@ const ContactPage = () => {
           {/* Set Duration */}
           <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <i className="ri-time-line text-base text-[var(--color-accent)]"></i>
+              <i aria-hidden="true" className="ri-time-line text-base text-[var(--color-accent)]"></i>
               <h3 className="text-xs font-mono text-[var(--color-accent)] tracking-widest">{t('events_set_duration')}</h3>
             </div>
             <div className="space-y-2">
               {eventsContent.eventsInfo.setDurations.map((duration, index) => (
-                <p key={index} className="text-sm text-[var(--color-secondary)] opacity-70">
+                <p key={index} className="text-base text-[color:color-mix(in_srgb,var(--color-secondary)_72%,transparent)]">
                   — {duration}
                 </p>
               ))}
@@ -170,12 +170,12 @@ const ContactPage = () => {
           {/* Technical Requirements */}
           <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <i className="ri-settings-3-line text-base text-[var(--color-accent)]"></i>
+              <i aria-hidden="true" className="ri-settings-3-line text-base text-[var(--color-accent)]"></i>
               <h3 className="text-xs font-mono text-[var(--color-accent)] tracking-widest">{t('events_technical')}</h3>
             </div>
             <div className="space-y-2">
               {eventsContent.eventsInfo.technicalRequirements.map((req, index) => (
-                <p key={index} className="text-sm text-[var(--color-secondary)] opacity-70">
+                <p key={index} className="text-base text-[color:color-mix(in_srgb,var(--color-secondary)_72%,transparent)]">
                   — {req}
                 </p>
               ))}
@@ -185,17 +185,17 @@ const ContactPage = () => {
           {/* Booking Contact */}
           <div className="space-y-4">
             <div className="flex items-center gap-2">
-              <i className="ri-mail-send-line text-base text-[var(--color-accent)]"></i>
+              <i aria-hidden="true" className="ri-mail-send-line text-base text-[var(--color-accent)]"></i>
               <h3 className="text-xs font-mono text-[var(--color-accent)] tracking-widest">{t('events_contact')}</h3>
             </div>
             <div className="space-y-3">
               <a
                 href={`mailto:${eventsContent.eventsInfo.contactEmail}`}
-                className="text-sm text-[var(--color-secondary)] opacity-80 hover:text-[var(--color-primary)] hover:opacity-100 transition-colors cursor-pointer block"
+                className="flex min-h-[44px] items-center text-base text-[color:color-mix(in_srgb,var(--color-secondary)_80%,transparent)] transition-colors hover:text-[var(--color-primary)] cursor-pointer"
               >
                 {eventsContent.eventsInfo.contactEmail}
               </a>
-              <p className="text-sm text-[var(--color-secondary)] opacity-70">
+              <p className="text-base text-[color:color-mix(in_srgb,var(--color-secondary)_72%,transparent)]">
                 {eventsContent.eventsInfo.responseTime}
               </p>
             </div>

@@ -64,12 +64,12 @@ const GalleryPhotoPage = () => {
     return (
       <PageLayout key="error" title="ERROR">
         <div className="space-y-4">
-          <p className="text-sm text-[var(--color-secondary)]/60 tracking-widest">
+          <p className="text-base text-[var(--color-text-muted)] tracking-widest">
             {t('gallery_load_error')}
           </p>
           <Link
             href="/archive"
-            className="inline-flex items-center gap-2 text-xs tracking-widest text-[var(--color-secondary)]/60 hover:text-[var(--color-secondary)] transition-colors"
+            className="inline-flex min-h-11 items-center gap-2 text-xs tracking-widest text-[var(--color-text-muted)] hover:text-[var(--color-secondary)] transition-colors"
           >
             <i className="ri-arrow-left-line" aria-hidden="true"></i>
             {t('gallery_back')}
@@ -84,7 +84,7 @@ const GalleryPhotoPage = () => {
       <PageLayout key="not-found" title="NOT FOUND">
         <Link
           href="/archive"
-          className="inline-flex items-center gap-2 text-xs tracking-widest text-[var(--color-secondary)]/60 hover:text-[var(--color-secondary)] transition-colors"
+          className="inline-flex min-h-11 items-center gap-2 text-xs tracking-widest text-[var(--color-text-muted)] hover:text-[var(--color-secondary)] transition-colors"
         >
           <i className="ri-arrow-left-line" aria-hidden="true"></i>
           {t('gallery_back')}
@@ -116,20 +116,20 @@ const GalleryPhotoPage = () => {
       <header className="flex items-center justify-between">
         <Link
           href="/archive"
-          className="inline-flex items-center gap-2 text-xs tracking-widest text-[var(--color-secondary)]/50 hover:text-[var(--color-secondary)] transition-colors"
+          className="inline-flex min-h-11 items-center gap-2 text-xs tracking-widest text-[var(--color-text-muted)] hover:text-[var(--color-secondary)] transition-colors"
         >
           <i className="ri-arrow-left-line" aria-hidden="true"></i>
           ARCHIVE
         </Link>
         <div className="flex items-center gap-4">
           {/* 카테고리 뱃지 */}
-          <span className="inline-flex items-center gap-1.5 text-[10px] tracking-widest px-2 py-1 border text-[var(--color-accent)] opacity-70"
+          <span className="inline-flex items-center gap-1.5 text-xs tracking-widest px-2 py-1 border text-[var(--color-accent)]"
             style={borderAccent}>
             <i className={`${categoryIcon} text-xs`} aria-hidden="true"></i>
             {categoryLabel}
           </span>
           {photos.length > 0 && (
-            <span className="text-xs text-[var(--color-secondary)]/30 tracking-widest">
+            <span className="text-xs text-[var(--color-text-muted)] tracking-widest">
               {currentIndex + 1} / {photos.length}
             </span>
           )}
@@ -193,7 +193,7 @@ const GalleryPhotoPage = () => {
       <div className="flex items-start justify-between gap-6 border-t pt-6" style={borderFaint}>
         <div className="space-y-2 flex-1">
           {photo.caption && (
-            <p className="text-sm text-[var(--color-secondary)]/70 tracking-wider leading-relaxed">
+            <p className="text-base text-[var(--color-text-muted)] tracking-wider leading-relaxed">
               {photo.caption}
             </p>
           )}
@@ -213,7 +213,7 @@ const GalleryPhotoPage = () => {
           {prevPhoto ? (
             <Link
               href={`/archive/${prevPhoto.id}`}
-              className="w-10 h-10 border flex items-center justify-center transition-colors text-[var(--color-secondary)] hover:bg-[var(--color-secondary)]/10 cursor-pointer"
+              className="w-11 h-11 border flex items-center justify-center transition-colors text-[var(--color-secondary)] hover:bg-[var(--color-secondary)]/10 cursor-pointer"
               style={borderMid}
               aria-label="Previous archive item"
               aria-keyshortcuts="ArrowLeft"
@@ -223,7 +223,7 @@ const GalleryPhotoPage = () => {
           ) : (
             <button
               type="button"
-              className="w-10 h-10 border flex items-center justify-center text-[var(--color-secondary)]/20 cursor-not-allowed"
+              className="w-11 h-11 border flex items-center justify-center text-[var(--color-text-muted)] cursor-not-allowed"
               style={borderMid}
               aria-label="No previous archive item"
               disabled
@@ -234,7 +234,7 @@ const GalleryPhotoPage = () => {
           {nextPhoto ? (
             <Link
               href={`/archive/${nextPhoto.id}`}
-              className="w-10 h-10 border flex items-center justify-center transition-colors text-[var(--color-secondary)] hover:bg-[var(--color-secondary)]/10 cursor-pointer"
+              className="w-11 h-11 border flex items-center justify-center transition-colors text-[var(--color-secondary)] hover:bg-[var(--color-secondary)]/10 cursor-pointer"
               style={borderMid}
               aria-label="Next archive item"
               aria-keyshortcuts="ArrowRight"
@@ -244,7 +244,7 @@ const GalleryPhotoPage = () => {
           ) : (
             <button
               type="button"
-              className="w-10 h-10 border flex items-center justify-center text-[var(--color-secondary)]/20 cursor-not-allowed"
+              className="w-11 h-11 border flex items-center justify-center text-[var(--color-text-muted)] cursor-not-allowed"
               style={borderMid}
               aria-label="No next archive item"
               disabled
@@ -256,7 +256,7 @@ const GalleryPhotoPage = () => {
       </div>
 
       {/* 키보드 힌트 */}
-      <p className="text-[var(--color-secondary)]/20 text-xs tracking-widest">
+      <p className="text-[var(--color-text-muted)] text-xs tracking-widest">
         ← → NAVIGATE · ESC BACK TO GALLERY
       </p>
       </article>
