@@ -2,6 +2,7 @@
 import { useContent } from '@/contexts/ContentContext';
 import AdminCard from '@/components/base/AdminCard';
 import AdminSectionHeader from '@/components/base/AdminSectionHeader';
+import SaveErrorMessage from '@/components/base/SaveErrorMessage';
 import FormInput from '@/components/base/FormInput';
 import SuccessMessage from '@/components/base/SuccessMessage';
 import DeleteConfirmModal from '@/components/base/DeleteConfirmModal';
@@ -18,6 +19,7 @@ import {
   sortEventsByDate,
 } from '@/utils/raApi';
 import { createBorderFaint } from '@/utils/colorMix';
+import { getFailedSaveAreas } from '@/utils/saveResult';
 import {
   updatePerformances as apiUpdatePerformances,
   updatePageMeta as apiUpdatePageMeta,
@@ -138,10 +140,13 @@ const AdminEventsPage = () => {
     setFetchError('');
 
     try {
-      const baseResults = await Promise.all([
-        apiUpdatePerformances(performances),
-        apiUpdatePageMeta(currentEditLanguage, pageMeta),
-      ]);
+      const failedAreas = await getFailedSaveAreas(
+        ['EVENTS', 'PAGE SETTINGS'],
+        [
+          apiUpdatePerformances(performances),
+          apiUpdatePageMeta(currentEditLanguage, pageMeta),
+        ],
+      );
 
       let raResult: Awaited<ReturnType<typeof apiUpdateRaApiConfig>> | null = null;
       if (shouldUpdateRaConfig) {
@@ -162,15 +167,19 @@ const AdminEventsPage = () => {
         }
       }
 
-      if (baseResults.some((result) => !result.success) || (raResult && !raResult.success)) {
-        setFetchError('일부 변경 사항을 저장하지 못했습니다. 다시 시도해 주세요.');
+      if (raResult && !raResult.success) {
+        failedAreas.push('RA API CONFIG');
+      }
+
+      if (failedAreas.length > 0) {
+        setFetchError(`${failedAreas.join(', ')} 저장에 실패했습니다. 입력한 내용은 유지됩니다. 다시 저장해 주세요.`);
         return;
       }
 
       updateContent({ performances, pageMeta });
       showNotification();
     } catch {
-      setFetchError('일부 변경 사항을 저장하지 못했습니다. 다시 시도해 주세요.');
+      setFetchError('저장 중 오류가 발생했습니다. 입력한 내용은 유지됩니다. 다시 저장해 주세요.');
     } finally {
       setIsSaving(false);
     }
@@ -445,7 +454,7 @@ const AdminEventsPage = () => {
                   RA API 설정을 불러오지 못했습니다. 설정 저장과 동기화가 비활성화됩니다.
                 </p>
               )}
-              {fetchError && <p role="alert" className="text-sm text-red-400 tracking-wider">{fetchError}</p>}
+              <SaveErrorMessage message={fetchError} />
               {fetchSuccess && <p role="status" className="text-sm text-green-400 tracking-wider">{fetchSuccess}</p>}
             </div>
           </div>

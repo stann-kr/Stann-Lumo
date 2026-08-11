@@ -5,7 +5,7 @@
  * 모든 메서드는 세션 쿠키를 자동으로 포함하여 인증함.
  */
 
-import { apiGet, apiPut } from './apiClient';
+import { apiGet, apiPut, apiRequest } from './apiClient';
 import type {
   ArtistInfoItem,
   DynamicSection,
@@ -87,12 +87,10 @@ export async function uploadEventPoster(
 ): Promise<{ success: boolean; data?: { photoId: string; eventId: string }; error?: { code: string; message: string } }> {
   const formData = new FormData();
   formData.append('file', file);
-  const res = await fetch(`/api/admin/events/${eventId}/poster`, {
+  return apiRequest<{ photoId: string; eventId: string }>(`/api/admin/events/${eventId}/poster`, {
     method: 'POST',
-    credentials: 'include',
     body: formData,
   });
-  return res.json();
 }
 
 /**
@@ -102,11 +100,9 @@ export async function uploadEventPoster(
 export async function deleteEventPoster(
   eventId: string,
 ): Promise<{ success: boolean; error?: { code: string; message: string } }> {
-  const res = await fetch(`/api/admin/events/${eventId}/poster`, {
+  return apiRequest<void>(`/api/admin/events/${eventId}/poster`, {
     method: 'DELETE',
-    credentials: 'include',
   });
-  return res.json();
 }
 
 // ---------- RA API 설정 ----------

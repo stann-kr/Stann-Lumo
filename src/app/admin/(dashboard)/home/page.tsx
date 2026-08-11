@@ -6,10 +6,12 @@ import AdminSectionHeader from '@/components/base/AdminSectionHeader';
 import FormInput from '@/components/base/FormInput';
 import FormTextarea from '@/components/base/FormTextarea';
 import SuccessMessage from '@/components/base/SuccessMessage';
+import SaveErrorMessage from '@/components/base/SaveErrorMessage';
 import DeleteConfirmModal from '@/components/base/DeleteConfirmModal';
 import RadioGroup from '@/components/base/RadioGroup';
 import { useSaveNotification } from '@/hooks/useSaveNotification';
 import { createBorderFaint, createBorderMid } from '@/utils/colorMix';
+import { runSave } from '@/utils/saveResult';
 import {
   updateHomeSections as apiUpdateHomeSections,
   updatePageMeta as apiUpdatePageMeta,
@@ -63,6 +65,7 @@ const AdminHomePage = () => {
   });
   const [showEmbedPreview, setShowEmbedPreview] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
   const [showDeleteModal, setShowDeleteModal] = useState<number | null>(null);
   const [iconSelectorOpen, setIconSelectorOpen] = useState<number | null>(null);
   const { isVisible: showSuccess, showNotification } = useSaveNotification();
@@ -167,29 +170,37 @@ const AdminHomePage = () => {
 
   const saveChanges = async () => {
     setIsSaving(true);
-    const results = await Promise.allSettled([
-      apiUpdateHomeSections(currentEditLanguage, homeSections),
-      apiUpdatePageMeta(currentEditLanguage, pageMeta),
-      updateTerminalConfig({
-        url:          terminalInfo.url,
-        description:  terminalInfo.description,
-        customFields: terminalCustomFields,
-        style:        terminalStyle,
-      }),
-      apiUpdateArtistInfo(currentEditLanguage, artistInfo),
-    ]);
-    const failed = results.filter((r) => r.status === 'rejected');
-    if (failed.length > 0) {
-      console.error('일부 저장 실패:', failed);
+    setSaveError('');
+    try {
+      await runSave(
+        ['HOME SECTIONS', 'PAGE SETTINGS', 'TERMINAL INFO', 'ARTIST INFO'],
+        [
+          apiUpdateHomeSections(currentEditLanguage, homeSections),
+          apiUpdatePageMeta(currentEditLanguage, pageMeta),
+          updateTerminalConfig({
+            url: terminalInfo.url,
+            description: terminalInfo.description,
+            customFields: terminalCustomFields,
+            style: terminalStyle,
+          }),
+          apiUpdateArtistInfo(currentEditLanguage, artistInfo),
+        ],
+        () => {
+          updateContent({
+            homeSections,
+            terminalInfo: { ...terminalInfo, customFields: terminalCustomFields, style: terminalStyle },
+            pageMeta,
+            artistInfo,
+          });
+          showNotification();
+        },
+        (failedAreas) => {
+          setSaveError(`${failedAreas.join(', ')} 저장에 실패했습니다. 입력한 내용은 유지됩니다. 다시 저장해 주세요.`);
+        },
+      );
+    } finally {
+      setIsSaving(false);
     }
-    updateContent({
-      homeSections,
-      terminalInfo: { ...terminalInfo, customFields: terminalCustomFields, style: terminalStyle },
-      pageMeta,
-      artistInfo,
-    });
-    showNotification();
-    setIsSaving(false);
   };
 
   return (
@@ -211,6 +222,7 @@ const AdminHomePage = () => {
         />
 
         <SuccessMessage message="변경 사항이 저장되었습니다" show={showSuccess} />
+        <SaveErrorMessage message={saveError} />
 
         {/* ARTIST INFO */}
         <div>

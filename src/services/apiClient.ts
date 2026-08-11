@@ -26,20 +26,51 @@ export async function apiRequest<T>(
   url: string,
   init?: RequestInit,
 ): Promise<ApiResponse<T>> {
+  let res: Response;
+
   try {
-    const res = await fetch(url, {
-      headers: { 'Content-Type': 'application/json', ...init?.headers },
+    const headers = new Headers(init?.headers);
+    if (!headers.has('Content-Type') && !(typeof FormData !== 'undefined' && init?.body instanceof FormData)) {
+      headers.set('Content-Type', 'application/json');
+    }
+
+    res = await fetch(url, {
       ...init,
+      headers,
     });
 
-    const json = (await res.json()) as ApiResponse<T>;
-    return json;
   } catch {
     return {
       success: false,
       error: { code: 'NETWORK_ERROR', message: 'Network request failed' },
     };
   }
+
+  if (!res.ok) {
+    return {
+      success: false,
+      error: { code: 'HTTP_ERROR', message: `Request failed with status ${res.status}` },
+    };
+  }
+
+  let json: unknown;
+  try {
+    json = await res.json();
+  } catch {
+    return {
+      success: false,
+      error: { code: 'INVALID_JSON', message: 'Server returned an invalid JSON response' },
+    };
+  }
+
+  if (!json || typeof json !== 'object' || typeof (json as ApiResponse<T>).success !== 'boolean') {
+    return {
+      success: false,
+      error: { code: 'INVALID_RESPONSE', message: 'Server returned an invalid response envelope' },
+    };
+  }
+
+  return json as ApiResponse<T>;
 }
 
 /**

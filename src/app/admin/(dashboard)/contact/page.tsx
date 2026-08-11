@@ -6,8 +6,10 @@ import AdminSectionHeader from '@/components/base/AdminSectionHeader';
 import FormInput from '@/components/base/FormInput';
 import ListItemEditor from '@/components/base/ListItemEditor';
 import SuccessMessage from '@/components/base/SuccessMessage';
+import SaveErrorMessage from '@/components/base/SaveErrorMessage';
 import { useSaveNotification } from '@/hooks/useSaveNotification';
 import { createBorderFaint, createBorderMid } from '@/utils/colorMix';
+import { runSave } from '@/utils/saveResult';
 import {
   updateContactInfo as apiUpdateContactInfo,
   updateEventsInfo as apiUpdateEventsInfo,
@@ -43,6 +45,7 @@ const AdminContactPage = () => {
   const [eventsInfo, setEventsInfo] = useState<EventsInfo>(content.eventsInfo);
   const [pageMeta, setPageMeta] = useState<PageMeta>(content.pageMeta);
   const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
   const [iconSelectorOpen, setIconSelectorOpen] = useState<number | null>(null);
   const { isVisible: showSuccess, showNotification } = useSaveNotification();
 
@@ -98,16 +101,26 @@ const AdminContactPage = () => {
 
   const saveChanges = async () => {
     setIsSaving(true);
-    const results = await Promise.allSettled([
-      apiUpdateContactInfo(currentEditLanguage, contactInfo),
-      apiUpdateEventsInfo(currentEditLanguage, eventsInfo),
-      apiUpdatePageMeta(currentEditLanguage, pageMeta),
-    ]);
-    const failed = results.filter((r) => r.status === 'rejected');
-    if (failed.length > 0) console.error('일부 저장 실패:', failed);
-    updateContent({ contactInfo, eventsInfo, pageMeta });
-    showNotification();
-    setIsSaving(false);
+    setSaveError('');
+    try {
+      await runSave(
+        ['CONTACT INFO', 'BOOKING INFO', 'PAGE SETTINGS'],
+        [
+          apiUpdateContactInfo(currentEditLanguage, contactInfo),
+          apiUpdateEventsInfo(currentEditLanguage, eventsInfo),
+          apiUpdatePageMeta(currentEditLanguage, pageMeta),
+        ],
+        () => {
+          updateContent({ contactInfo, eventsInfo, pageMeta });
+          showNotification();
+        },
+        (failedAreas) => {
+          setSaveError(`${failedAreas.join(', ')} 저장에 실패했습니다. 입력한 내용은 유지됩니다. 다시 저장해 주세요.`);
+        },
+      );
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -120,6 +133,7 @@ const AdminContactPage = () => {
         />
 
         <SuccessMessage message="변경 사항이 저장되었습니다" show={showSuccess} />
+        <SaveErrorMessage message={saveError} />
 
         {/* PAGE SETTINGS */}
         <div>

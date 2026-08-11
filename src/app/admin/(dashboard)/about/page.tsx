@@ -6,6 +6,7 @@ import AdminSectionHeader from "@/components/base/AdminSectionHeader";
 import FormInput from "@/components/base/FormInput";
 import FormTextarea from "@/components/base/FormTextarea";
 import SuccessMessage from "@/components/base/SuccessMessage";
+import SaveErrorMessage from "@/components/base/SaveErrorMessage";
 import { useAdminForm } from "@/hooks/useAdminForm";
 import {
   updateArtistInfo as apiUpdateArtistInfo,
@@ -19,20 +20,32 @@ import type {
   PhilosophyItem,
 } from "@/types/content";
 import { createBorderFaint } from "@/utils/colorMix";
+import { runSave } from "@/utils/saveResult";
 
 const AdminAboutPage = () => {
   const { allContent, updateContent, currentEditLanguage } = useContent();
   const content = allContent[currentEditLanguage];
+  const [saveError, setSaveError] = useState("");
 
   const handleSave = useCallback(
     async (data: ContentData) => {
-      const results = await Promise.allSettled([
-        apiUpdateArtistInfo(currentEditLanguage, data.artistInfo),
-        apiUpdateAboutSections(currentEditLanguage, data.aboutSections),
-      ]);
-      const failed = results.filter((r) => r.status === 'rejected');
-      if (failed.length > 0) console.error('일부 저장 실패:', failed);
-      updateContent(data);
+      setSaveError("");
+      let saveErrorMessage = "";
+      const saved = await runSave(
+        ["ARTIST INFO", "ABOUT SECTIONS"],
+        [
+          apiUpdateArtistInfo(currentEditLanguage, data.artistInfo),
+          apiUpdateAboutSections(currentEditLanguage, data.aboutSections),
+        ],
+        () => {
+          updateContent(data);
+        },
+        (failedAreas) => {
+          saveErrorMessage = `${failedAreas.join(", ")} 저장에 실패했습니다. 입력한 내용은 유지됩니다. 다시 저장해 주세요.`;
+          setSaveError(saveErrorMessage);
+        },
+      );
+      if (!saved) throw new Error(saveErrorMessage);
     },
     [currentEditLanguage, updateContent],
   );
@@ -257,6 +270,7 @@ const AdminAboutPage = () => {
       />
 
       <SuccessMessage message="변경 사항이 저장되었습니다" show={showSuccess} />
+      <SaveErrorMessage message={saveError} />
 
       {/* Artist Info — 동적 key-value 리스트 */}
       <div>

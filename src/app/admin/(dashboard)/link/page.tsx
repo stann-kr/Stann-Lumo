@@ -6,9 +6,11 @@ import AdminSectionHeader from '@/components/base/AdminSectionHeader';
 import FormInput from '@/components/base/FormInput';
 import FormTextarea from '@/components/base/FormTextarea';
 import SuccessMessage from '@/components/base/SuccessMessage';
+import SaveErrorMessage from '@/components/base/SaveErrorMessage';
 import DeleteConfirmModal from '@/components/base/DeleteConfirmModal';
 import { useSaveNotification } from '@/hooks/useSaveNotification';
 import { createBorderFaint } from '@/utils/colorMix';
+import { runSave } from '@/utils/saveResult';
 
 const AVAILABLE_ICONS = [
   { value: 'ri-soundcloud-line',   label: 'SoundCloud' },
@@ -59,6 +61,7 @@ const AdminLinkPage = () => {
   const [showDeleteModal, setShowDeleteModal] = useState<string | null>(null);
   const [iconSelectorOpen, setIconSelectorOpen] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
   const { isVisible: showSuccess, showNotification } = useSaveNotification();
 
   useEffect(() => {
@@ -103,16 +106,26 @@ const AdminLinkPage = () => {
 
   const saveChanges = async () => {
     setIsSaving(true);
-    const results = await Promise.allSettled([
-      apiUpdateLinkPlatforms(currentEditLanguage, linkPlatforms),
-      apiUpdatePageMeta(currentEditLanguage, pageMeta),
-      apiUpdateTerminalInfo(terminalInfo),
-    ]);
-    const failed = results.filter((r) => r.status === 'rejected');
-    if (failed.length > 0) console.error('일부 저장 실패:', failed);
-    updateContent({ linkPlatforms, terminalInfo, pageMeta });
-    showNotification();
-    setIsSaving(false);
+    setSaveError('');
+    try {
+      await runSave(
+        ['LINK PLATFORMS', 'PAGE SETTINGS', 'TERMINAL INFO'],
+        [
+          apiUpdateLinkPlatforms(currentEditLanguage, linkPlatforms),
+          apiUpdatePageMeta(currentEditLanguage, pageMeta),
+          apiUpdateTerminalInfo(terminalInfo),
+        ],
+        () => {
+          updateContent({ linkPlatforms, terminalInfo, pageMeta });
+          showNotification();
+        },
+        (failedAreas) => {
+          setSaveError(`${failedAreas.join(', ')} 저장에 실패했습니다. 입력한 내용은 유지됩니다. 다시 저장해 주세요.`);
+        },
+      );
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -134,6 +147,7 @@ const AdminLinkPage = () => {
         />
 
         <SuccessMessage message="변경 사항이 저장되었습니다" show={showSuccess} />
+        <SaveErrorMessage message={saveError} />
 
         {/* PAGE SETTINGS */}
         <div>

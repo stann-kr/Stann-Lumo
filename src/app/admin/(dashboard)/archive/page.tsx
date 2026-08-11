@@ -4,10 +4,13 @@ import AdminCard from '@/components/base/AdminCard';
 import AdminSectionHeader from '@/components/base/AdminSectionHeader';
 import FormInput from '@/components/base/FormInput';
 import SuccessMessage from '@/components/base/SuccessMessage';
+import SaveErrorMessage from '@/components/base/SaveErrorMessage';
 import DeleteConfirmModal from '@/components/base/DeleteConfirmModal';
 import { useSaveNotification } from '@/hooks/useSaveNotification';
 import { useDeleteConfirm } from '@/hooks/useDeleteConfirm';
 import { createBorderFaint } from '@/utils/colorMix';
+import { apiRequest } from '@/services/apiClient';
+import { runSave } from '@/utils/saveResult';
 import type { GalleryPhoto, Performance } from '@/types/content';
 
 // ─── YouTube URL 파싱 (클라이언트 전용) ───────────────────────────────────────
@@ -102,6 +105,7 @@ const AdminGalleryPage = () => {
   const [photos, setPhotos] = useState<GalleryPhoto[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState('');
 
@@ -167,15 +171,19 @@ const AdminGalleryPage = () => {
   // ─── 저장 (photos + settings 병렬) ──────────────────────────────────────
   const saveChanges = async () => {
     setIsSaving(true);
+    setSaveError('');
     try {
-      await fetch('/api/admin/archive', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ photos }),
-      });
-      showNotification();
-    } catch {
-      // 조용히 실패
+      await runSave(
+        ['ARCHIVE LAYOUT'],
+        [apiRequest<void>('/api/admin/archive', {
+          method: 'PUT',
+          body: JSON.stringify({ photos }),
+        })],
+        showNotification,
+        () => {
+          setSaveError('ARCHIVE LAYOUT 저장에 실패했습니다. 입력한 내용은 유지됩니다. 다시 저장해 주세요.');
+        },
+      );
     } finally {
       setIsSaving(false);
     }
@@ -189,13 +197,13 @@ const AdminGalleryPage = () => {
     const formData = new FormData();
     Array.from(files).forEach((file) => formData.append('files', file));
     try {
-      const res = await fetch('/api/admin/archive/upload', { method: 'POST', body: formData });
-      const json = (await res.json()) as { success: boolean; data: GalleryPhoto[]; error?: { message: string } };
-      if (json.success && json.data.length > 0) {
-        setPhotos((prev) => [...prev, ...json.data]);
+      const result = await apiRequest<GalleryPhoto[]>('/api/admin/archive/upload', { method: 'POST', body: formData });
+      const uploadedPhotos = result.data;
+      if (result.success && uploadedPhotos && uploadedPhotos.length > 0) {
+        setPhotos((prev) => [...prev, ...uploadedPhotos]);
         showNotification();
-      } else if (!json.success) {
-        setUploadError(json.error?.message ?? '업로드 실패');
+      } else {
+        setUploadError(result.error?.message ?? '업로드 실패. 다시 시도해 주세요.');
       }
     } catch {
       setUploadError('업로드 중 오류가 발생했습니다');
@@ -220,22 +228,21 @@ const AdminGalleryPage = () => {
     setIsAddingYoutube(true);
     setYoutubeError('');
     try {
-      const res = await fetch('/api/admin/archive/youtube', {
+      const result = await apiRequest<GalleryPhoto>('/api/admin/archive/youtube', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           youtubeUrl,
           ...(youtubeLinkedEventId && { linkedEventId: youtubeLinkedEventId }),
         }),
       });
-      const json = (await res.json()) as { success: boolean; data: GalleryPhoto; error?: { message: string } };
-      if (json.success) {
-        setPhotos((prev) => [...prev, json.data]);
+      const addedPhoto = result.data;
+      if (result.success && addedPhoto) {
+        setPhotos((prev) => [...prev, addedPhoto]);
         setYoutubeUrl('');
         setYoutubeLinkedEventId('');
         showNotification();
       } else {
-        setYoutubeError(json.error?.message ?? 'YouTube 추가 실패');
+        setYoutubeError(result.error?.message ?? 'YouTube 추가 실패. 다시 시도해 주세요.');
       }
     } catch {
       setYoutubeError('오류가 발생했습니다');
@@ -248,11 +255,16 @@ const AdminGalleryPage = () => {
   const handleDeletePhoto = async (index: number) => {
     const photo = photos[index];
     if (!photo) return;
+    setSaveError('');
     try {
-      await fetch(`/api/admin/archive/${photo.id}`, { method: 'DELETE' });
+      const result = await apiRequest<void>(`/api/admin/archive/${photo.id}`, { method: 'DELETE' });
+      if (!result.success) {
+        setSaveError('MEDIA DELETE에 실패했습니다. 현재 목록은 유지됩니다. 다시 시도해 주세요.');
+        return;
+      }
       setPhotos((prev) => prev.filter((_, i) => i !== index));
     } catch {
-      // 조용히 실패
+      setSaveError('MEDIA DELETE에 실패했습니다. 현재 목록은 유지됩니다. 다시 시도해 주세요.');
     }
   };
 
@@ -277,6 +289,7 @@ const AdminGalleryPage = () => {
       />
 
       <SuccessMessage message="변경 사항이 저장되었습니다" show={showSuccess} />
+      <SaveErrorMessage message={saveError} />
 
       {/* 파일 입력 (숨김) */}
       <input

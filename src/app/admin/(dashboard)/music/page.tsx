@@ -4,6 +4,7 @@ import AdminCard from '@/components/base/AdminCard';
 import AdminSectionHeader from '@/components/base/AdminSectionHeader';
 import FormInput from '@/components/base/FormInput';
 import SuccessMessage from '@/components/base/SuccessMessage';
+import SaveErrorMessage from '@/components/base/SaveErrorMessage';
 import DeleteConfirmModal from '@/components/base/DeleteConfirmModal';
 import { useListEditor } from '@/hooks/useListEditor';
 import { useDeleteConfirm } from '@/hooks/useDeleteConfirm';
@@ -11,6 +12,7 @@ import { useItemReorder } from '@/hooks/useItemReorder';
 import { useSaveNotification } from '@/hooks/useSaveNotification';
 import { useState, useEffect } from 'react';
 import { createBorderFaint } from '@/utils/colorMix';
+import { runSave } from '@/utils/saveResult';
 import {
   updateTracks as apiUpdateTracks,
   updatePageMeta as apiUpdatePageMeta,
@@ -49,6 +51,7 @@ const AdminMusicPage = () => {
   const { moveUp, moveDown } = useItemReorder(tracks, setTracks);
   const { isVisible: showSuccess, showNotification } = useSaveNotification();
   const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
   const [pageMeta, setPageMeta] = useState<PageMeta>(content.pageMeta);
 
   useEffect(() => {
@@ -78,15 +81,25 @@ const AdminMusicPage = () => {
 
   const saveChanges = async () => {
     setIsSaving(true);
-    const results = await Promise.allSettled([
-      apiUpdateTracks(currentEditLanguage, tracks),
-      apiUpdatePageMeta(currentEditLanguage, pageMeta),
-    ]);
-    const failed = results.filter((r) => r.status === 'rejected');
-    if (failed.length > 0) console.error('일부 저장 실패:', failed);
-    updateContent({ tracks, pageMeta });
-    showNotification();
-    setIsSaving(false);
+    setSaveError('');
+    try {
+      await runSave(
+        ['TRACKS', 'PAGE SETTINGS'],
+        [
+          apiUpdateTracks(currentEditLanguage, tracks),
+          apiUpdatePageMeta(currentEditLanguage, pageMeta),
+        ],
+        () => {
+          updateContent({ tracks, pageMeta });
+          showNotification();
+        },
+        (failedAreas) => {
+          setSaveError(`${failedAreas.join(', ')} 저장에 실패했습니다. 입력한 내용은 유지됩니다. 다시 저장해 주세요.`);
+        },
+      );
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -108,6 +121,7 @@ const AdminMusicPage = () => {
         />
 
         <SuccessMessage message="변경 사항이 저장되었습니다" show={showSuccess} />
+        <SaveErrorMessage message={saveError} />
 
         {/* PAGE SETTINGS */}
         <div>

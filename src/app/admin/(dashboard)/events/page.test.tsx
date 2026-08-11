@@ -314,7 +314,9 @@ describe('AdminEventsPage masked RA config boundary', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'SAVE CHANGES' }));
 
-    await screen.findByText(/일부 변경 사항을 저장하지 못했습니다/);
+    await screen.findByText(/RA API CONFIG 저장에 실패했습니다/);
     expect(mocks.showNotification).not.toHaveBeenCalled();
+    expect(mocks.updateContent).not.toHaveBeenCalled();
+    expect(screen.getByLabelText('events_api_option')).toHaveValue('3');
   });
 });
