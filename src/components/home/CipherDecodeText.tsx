@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react';
 import SplitType from 'split-type';
 import gsap from 'gsap';
+import { useMotionPreference } from '@/hooks/useMotionPreference';
 
 interface CipherDecodeTextProps {
   text: string;
@@ -12,16 +13,20 @@ interface CipherDecodeTextProps {
 
 export default function CipherDecodeText({ text, className = '', delay = 0 }: CipherDecodeTextProps) {
   const textRef = useRef<HTMLSpanElement>(null);
+  const { isResolved, prefersReducedMotion } = useMotionPreference();
 
   useEffect(() => {
-    if (!textRef.current || !text) return;
+    if (!isResolved || prefersReducedMotion || !textRef.current || !text) return;
 
     // Set exact text before splitting
     textRef.current.textContent = text;
 
     // Split text into characters
     const split = new SplitType(textRef.current, { types: 'chars' });
-    if (!split.chars) return;
+    if (!split.chars) {
+      split.revert();
+      return;
+    }
 
     const chars = split.chars;
     const originalTexts = chars.map(c => c.textContent || '');
@@ -59,13 +64,13 @@ export default function CipherDecodeText({ text, className = '', delay = 0 }: Ci
           },
         });
       });
-    });
+    }, textRef.current);
 
     return () => {
       ctx.revert();
       split.revert();
     };
-  }, [text, delay]);
+  }, [delay, isResolved, prefersReducedMotion, text]);
 
   return <span ref={textRef} className={className}>{text}</span>;
 }

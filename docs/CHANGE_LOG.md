@@ -2,6 +2,21 @@
 
 공개 가능한 결과 중심 변경 요약이다. 항목은 일자 단위이며 최신 항목을 위에 둔다.
 
+## 2026-08-11 — Lumo 시그니처 모션과 타이포그래피 복원
+
+### Changed
+
+- 각 공개 화면의 cipher heading과 stagger reveal, blur 기반 route transition을 복원했다.
+- ambient scene과 cursor glow를 공개 route 전반에서 유지한다.
+- reduced-motion을 선택한 환경에서는 모션을 생략하고 제목과 본문을 즉시 표시한다.
+
+## 2026-08-11 — 공개 route ambient 배경 범위 확장
+
+### Changed
+
+- Home에만 표시하던 선택적 ambient 배경을 모든 공개 route에서 유지한다.
+- reduced-motion, 절전·저성능 환경, WebGL 오류에서는 기존 static fallback을 계속 사용한다.
+
 ## 2026-08-11 — 공개 콘텐츠와 검색 메타데이터 전달 정비
 
 ### Changed

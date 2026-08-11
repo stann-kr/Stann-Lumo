@@ -140,7 +140,7 @@ describe('TerminalLayout public navigation', () => {
     await waitFor(() => expect(screen.getByRole('main')).toHaveFocus());
   });
 
-  it('keeps the optional ambient scene scoped to the home route', () => {
+  it('keeps the optional ambient scene available across public routes', () => {
     mocks.pathname = '/';
     const { rerender } = render(<TerminalLayout><h1>Home</h1></TerminalLayout>);
 
@@ -149,6 +149,6 @@ describe('TerminalLayout public navigation', () => {
     mocks.pathname = '/archive';
     rerender(<TerminalLayout><h1>Archive</h1></TerminalLayout>);
 
-    expect(screen.queryByTestId('home-ambient-scene')).not.toBeInTheDocument();
+    expect(screen.getByTestId('home-ambient-scene')).toBeInTheDocument();
   });
 });

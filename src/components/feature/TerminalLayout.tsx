@@ -156,9 +156,9 @@ const TerminalLayout = ({ children, artistName = SITE_NAME, sceneTracks = [] }: 
       >
         {skipLinkLabel}
       </a>
-      {/* Home desktop에만 저대비 ambient layer를 둔다. */}
-      {pathname === "/" && <HomeAmbientScene tracks={sceneTracks} />}
-      {pathname === "/" && !mobileMenuOpen && !disableMotion && <CursorGlow />}
+      {/* Public route 전체에 저대비 ambient layer를 유지한다. */}
+      <HomeAmbientScene tracks={sceneTracks} />
+      {!mobileMenuOpen && !disableMotion && <CursorGlow />}
 
       {/* Desktop Sidebar (HUD Left Panel) */}
       <aside className="hidden lg:flex lg:flex-col lg:w-64 lg:fixed lg:left-0 lg:top-0 lg:h-screen lg:border-r lg:border-[var(--color-muted)] lg:bg-[var(--color-bg-sidebar)]/80 lg:backdrop-blur-sm z-40">
@@ -473,10 +473,10 @@ const TerminalLayout = ({ children, artistName = SITE_NAME, sceneTracks = [] }: 
           ) : (
             <motion.div
               key={pathname}
-              initial={disableMotion ? false : { opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={disableMotion ? undefined : { opacity: 0, y: -6 }}
-              transition={{ duration: disableMotion ? 0 : 0.2, ease: "easeOut" }}
+              initial={disableMotion ? false : { opacity: 0, y: 10, filter: "blur(8px)" }}
+              animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+              exit={disableMotion ? undefined : { opacity: 0, y: -6, filter: "blur(6px)" }}
+              transition={{ duration: disableMotion ? 0 : 0.25, ease: "easeInOut" }}
               className="min-h-[calc(100dvh-4rem)] lg:min-h-[100dvh] p-4 md:p-8 lg:p-12 relative z-10"
             >
               {children}
