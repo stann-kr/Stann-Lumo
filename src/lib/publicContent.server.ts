@@ -174,13 +174,10 @@ async function localizedRows<T>(db: D1Database, sql: string, locale: PublicLocal
 
 async function localizedMetaRows(db: D1Database, locale: PublicLocale): Promise<PageMetaRow[]> {
   const primary = await rows<PageMetaRow>(db, 'SELECT page, key, value FROM page_meta WHERE lang = ?', locale);
-  if (locale !== 'ko') return primary;
-
-  const fallback = await rows<PageMetaRow>(db, 'SELECT page, key, value FROM page_meta WHERE lang = ?', 'en');
-  const merged = new Map<string, PageMetaRow>();
-  fallback.forEach((row) => merged.set(`${row.page}:${row.key}`, row));
-  primary.forEach((row) => merged.set(`${row.page}:${row.key}`, row));
-  return Array.from(merged.values());
+  if (locale === 'ko' && primary.length === 0) {
+    return rows<PageMetaRow>(db, 'SELECT page, key, value FROM page_meta WHERE lang = ?', 'en');
+  }
+  return primary;
 }
 
 function mapArtistInfo(rowsToMap: ArtistInfoRow[]): ArtistInfoItem[] {
