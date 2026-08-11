@@ -5,7 +5,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { useLanguage } from "../../contexts/LanguageContext";
-import { useContent } from "../../contexts/ContentContext";
 import { SITE_NAME, SITE_VERSION, TERMINAL_URL, HUB_URL } from "../../constants/site";
 import CursorGlow from "../home/CursorGlow";
 import LiveClock from "../home/LiveClock";
@@ -13,18 +12,20 @@ import HomeAmbientScene from "./HomeAmbientScene";
 import SignalNet from "../base/SignalNet";
 import { SELF_NODE_ID } from "../../constants/signalNet";
 import { useMotionPreference } from "../../hooks/useMotionPreference";
+import type { Track } from "@/types/content";
 
 interface TerminalLayoutProps {
   children: ReactNode;
+  artistName?: string;
+  sceneTracks?: Track[];
 }
 
-const TerminalLayout = ({ children }: TerminalLayoutProps) => {
+const TerminalLayout = ({ children, artistName = SITE_NAME, sceneTracks = [] }: TerminalLayoutProps) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
   const pathname = usePathname();
   const { t } = useTranslation();
   const { language, setLanguage } = useLanguage();
-  const { content, isLoading, isError } = useContent();
   const { isResolved: isMotionPreferenceResolved, prefersReducedMotion } = useMotionPreference();
   const mainRef = useRef<HTMLElement | null>(null);
   const mobileMenuButtonRef = useRef<HTMLButtonElement | null>(null);
@@ -58,7 +59,7 @@ const TerminalLayout = ({ children }: TerminalLayoutProps) => {
   }, [pathname]);
 
   useEffect(() => {
-    if (!shouldFocusMainRef.current || isLoading || isNavigating || isError) return;
+    if (!shouldFocusMainRef.current || isNavigating) return;
 
     const frame = window.requestAnimationFrame(() => {
       mainRef.current?.focus();
@@ -66,7 +67,7 @@ const TerminalLayout = ({ children }: TerminalLayoutProps) => {
     });
 
     return () => window.cancelAnimationFrame(frame);
-  }, [isError, isLoading, isNavigating, pathname]);
+  }, [isNavigating, pathname]);
 
   useEffect(() => {
     if (mobileMenuOpen) {
@@ -114,14 +115,6 @@ const TerminalLayout = ({ children }: TerminalLayoutProps) => {
     { label: "HUB", path: HUB_URL, external: true },
   ];
 
-  const artistName = (() => {
-    if (!Array.isArray(content.artistInfo)) return SITE_NAME;
-    const item = content.artistInfo.find(
-      (i) => i.key === "Name" || i.key === "이름",
-    );
-    return item?.value || SITE_NAME;
-  })();
-
   const handleNavClick = (path: string) => {
     if (path === pathname) {
       closeMobileMenu();
@@ -164,7 +157,7 @@ const TerminalLayout = ({ children }: TerminalLayoutProps) => {
         {skipLinkLabel}
       </a>
       {/* Home desktop에만 저대비 ambient layer를 둔다. */}
-      {pathname === "/" && <HomeAmbientScene />}
+      {pathname === "/" && <HomeAmbientScene tracks={sceneTracks} />}
       {pathname === "/" && !mobileMenuOpen && !disableMotion && <CursorGlow />}
 
       {/* Desktop Sidebar (HUD Left Panel) */}
@@ -179,15 +172,11 @@ const TerminalLayout = ({ children }: TerminalLayoutProps) => {
             onClick={() => handleNavClick("/")}
             className="block mt-4 text-2xl font-bold tracking-[0.2em] text-[var(--color-primary)] hover:text-[var(--color-accent)] transition-colors"
           >
-            {isLoading ? (
-              <span className="opacity-0 select-none">—</span>
-            ) : (
-              artistName.split(" ").map((word, i) => (
-                <span key={i} className="block">
-                  {word}
-                </span>
-              ))
-            )}
+            {artistName.split(" ").map((word, i) => (
+              <span key={i} className="block">
+                {word}
+              </span>
+            ))}
           </Link>
           <div className="mt-2 text-xs font-mono text-[var(--color-text-muted)] uppercase tracking-widest">
             <span aria-hidden="true" className="w-2 h-2 inline-block bg-[var(--color-accent)] mr-2 animate-pulse"></span>
@@ -317,7 +306,7 @@ const TerminalLayout = ({ children }: TerminalLayoutProps) => {
             onClick={() => handleNavClick("/")}
             className="text-lg font-bold font-sans tracking-[0.2em] text-[var(--color-primary)]"
           >
-            {isLoading ? "" : artistName}
+            {artistName}
           </Link>
           <button
             ref={mobileMenuButtonRef}
@@ -457,7 +446,7 @@ const TerminalLayout = ({ children }: TerminalLayoutProps) => {
         ref={mainRef}
         id="main-content"
         tabIndex={-1}
-        aria-busy={isLoading || isNavigating}
+        aria-busy={isNavigating}
         className="flex-1 lg:ml-64 relative mobile-header-offset overflow-x-hidden"
       >
         {/* HUD Viewport Brackets at the corners of Main space */}
@@ -467,7 +456,7 @@ const TerminalLayout = ({ children }: TerminalLayoutProps) => {
         <div aria-hidden="true" className="hidden lg:block absolute bottom-8 right-8 w-4 h-4 border-b border-r border-[var(--color-muted)] pointer-events-none"></div>
 
         <AnimatePresence mode="wait">
-          {isLoading || isNavigating ? (
+          {isNavigating ? (
             <motion.div
               key="spinner"
               initial={disableMotion ? false : { opacity: 0 }}
@@ -479,33 +468,6 @@ const TerminalLayout = ({ children }: TerminalLayoutProps) => {
               <div className="font-mono text-xs tracking-[0.2em] text-[var(--color-primary)] flex flex-col items-center gap-2">
                 <div className="w-8 h-8 border border-[var(--color-primary)] border-t-transparent animate-spin"></div>
                 <span className="animate-pulse">FETCHING DATA...</span>
-              </div>
-            </motion.div>
-          ) : isError ? (
-            <motion.div
-              key="error"
-              initial={disableMotion ? false : { opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={disableMotion ? undefined : { opacity: 0 }}
-              transition={{ duration: disableMotion ? 0 : 0.2, ease: "easeInOut" }}
-              className="min-h-[calc(100dvh-4rem)] lg:min-h-[100dvh] flex items-center justify-center"
-            >
-              <div className="font-mono flex flex-col items-center gap-4 text-center px-8">
-                <div className="text-xs tracking-[0.2em] text-[var(--color-text-muted)] uppercase">
-                  SYS.ERR — CONNECTION FAILED
-                </div>
-                <div className="w-8 h-[1px] bg-[var(--color-muted)]"></div>
-                <p className="text-xs text-[var(--color-text-muted)] tracking-widest max-w-xs leading-relaxed">
-                  일시적인 서버 오류가 발생했습니다.
-                  <br />
-                  잠시 후 다시 시도해 주세요.
-                </p>
-                <button
-                  onClick={() => window.location.reload()}
-                  className="mt-2 min-h-11 border border-[var(--color-muted)] px-6 py-2 text-xs font-mono tracking-[0.2em] text-[var(--color-text-muted)] hover:text-[var(--color-primary)] hover:border-[var(--color-primary)] transition-colors cursor-pointer"
-                >
-                  RETRY
-                </button>
               </div>
             </motion.div>
           ) : (

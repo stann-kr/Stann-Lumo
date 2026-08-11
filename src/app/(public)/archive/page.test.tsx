@@ -1,8 +1,8 @@
 import type { ComponentProps, ReactNode } from 'react';
 import { render, screen } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type { GalleryPhoto } from '@/types/content';
-import GalleryPage from './page';
+import ArchivePageClient from '@/components/public/ArchivePageClient';
 
 vi.mock('next/link', () => ({
   default: ({ href, children, ...props }: ComponentProps<'a'> & { href: string }) => (
@@ -53,21 +53,10 @@ const photos: GalleryPhoto[] = [
 ];
 
 describe('GalleryPage', () => {
-  beforeEach(() => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({ success: true, data: { photos } }),
-    }));
-  });
+  it('renders each archive tile as an article containing a named native link', () => {
+    const { container } = render(<ArchivePageClient photos={photos} />);
 
-  afterEach(() => {
-    vi.unstubAllGlobals();
-  });
-
-  it('renders each archive tile as an article containing a named native link', async () => {
-    const { container } = render(<GalleryPage />);
-
-    const nightSignal = await screen.findByRole('link', { name: 'Open archive item: Night Signal' });
+    const nightSignal = screen.getByRole('link', { name: 'Open archive item: Night Signal' });
     const liveCut = screen.getByRole('link', { name: 'Open archive item: Live performance clip' });
 
     expect(screen.getByRole('list')).toContainElement(nightSignal.closest('li'));
@@ -77,10 +66,8 @@ describe('GalleryPage', () => {
     expect(container.querySelectorAll('div[onclick]')).toHaveLength(0);
   });
 
-  it('keeps non-interactive media affordances out of the accessibility tree', async () => {
-    const { container } = render(<GalleryPage />);
-
-    await screen.findByRole('link', { name: 'Open archive item: Night Signal' });
+  it('keeps non-interactive media affordances out of the accessibility tree', () => {
+    const { container } = render(<ArchivePageClient photos={photos} />);
 
     expect(container.querySelector('video')).toHaveAttribute('aria-hidden', 'true');
     for (const icon of container.querySelectorAll('i')) {

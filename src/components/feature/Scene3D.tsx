@@ -6,8 +6,8 @@ import { Ring, Text, Line } from '@react-three/drei';
 import { EffectComposer, Bloom, Noise, ChromaticAberration, Vignette } from '@react-three/postprocessing';
 import { BlendFunction } from 'postprocessing';
 import * as THREE from 'three';
-import { useContent } from '../../contexts/ContentContext';
 import { COLORS } from '../../styles/colors';
+import type { Track } from '@/types/content';
 
 // ─── 궤도 파라미터 타입 ───────────────────────────────────────────────────────
 
@@ -335,8 +335,7 @@ const CameraRig = () => {
 
 // ─── Scene3D ──────────────────────────────────────────────────────────────────
 
-export default function Scene3D() {
-  const { musicContent } = useContent();
+export default function Scene3D({ tracks }: { tracks: Track[] }) {
   const accentColor = COLORS.scene3d.accent;
   const mutedColor  = COLORS.scene3d.muted;
 
@@ -346,8 +345,8 @@ export default function Scene3D() {
   // — 분류 코드: track.type 앞 ASCII 3자(대문자) + 인덱스, 비ASCII 타입은 'TRK' 사용
   // — 부제목: track.title 앞 11자(ASCII 정제 후), 비ASCII는 플랫폼명 사용
   const vesselData = useMemo<VesselData[]>(() => {
-    const tracks = musicContent.tracks.slice(0, VESSEL_ORBITAL_POOL.length);
-    return tracks.map((track, i) => {
+    const visibleTracks = tracks.slice(0, VESSEL_ORBITAL_POOL.length);
+    return visibleTracks.map((track, i) => {
       const slot = VESSEL_ORBITAL_POOL[i];
       const asciiType = track.type.replace(/[^\x20-\x7E]/g, '').trim();
       const prefix = asciiType.replace(/\s+/g, '').toUpperCase().slice(0, 3) || 'TRK';
@@ -360,7 +359,7 @@ export default function Scene3D() {
         sublabel,
       };
     });
-  }, [musicContent.tracks]);
+  }, [tracks]);
 
   return (
     <div className="fixed inset-0 pointer-events-none z-[-10]">

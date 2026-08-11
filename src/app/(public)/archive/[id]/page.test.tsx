@@ -1,15 +1,13 @@
 import type { ComponentProps, ReactNode } from 'react';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { GalleryPhoto } from '@/types/content';
-import GalleryPhotoPage from './page';
+import ArchiveDetailPageClient from '@/components/public/ArchiveDetailPageClient';
 
-let activeId = 'middle';
 const push = vi.fn();
 
 vi.mock('next/navigation', () => ({
-  useParams: () => ({ id: activeId }),
   useRouter: () => ({ push }),
 }));
 
@@ -30,10 +28,6 @@ vi.mock('@/components/feature/PageLayout', () => ({
       {children}
     </main>
   ),
-}));
-
-vi.mock('@/components/base/HudSpinner', () => ({
-  default: () => <span>Loading archive item</span>,
 }));
 
 const photos: GalleryPhoto[] = [
@@ -80,22 +74,13 @@ const photos: GalleryPhoto[] = [
 
 describe('GalleryPhotoPage', () => {
   beforeEach(() => {
-    activeId = 'middle';
     push.mockReset();
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({ success: true, data: { photos } }),
-    }));
   });
 
-  afterEach(() => {
-    vi.unstubAllGlobals();
-  });
+  it('provides labelled previous and next controls in an archive navigation landmark', () => {
+    render(<ArchiveDetailPageClient photo={photos[1]} previous={photos[0]} next={photos[2]} index={1} total={photos.length} />);
 
-  it('provides labelled previous and next controls in an archive navigation landmark', async () => {
-    render(<GalleryPhotoPage />);
-
-    const article = await screen.findByRole('article', { name: 'Archive item: Middle Signal' });
+    const article = screen.getByRole('article', { name: 'Archive item: Middle Signal' });
     const navigation = within(article).getByRole('navigation', { name: 'Archive navigation' });
     const previous = within(navigation).getByRole('link', { name: 'Previous archive item' });
     const next = within(navigation).getByRole('link', { name: 'Next archive item' });
@@ -108,10 +93,9 @@ describe('GalleryPhotoPage', () => {
 
   it('supports its announced keyboard shortcuts and does not expose an unavailable item as a link', async () => {
     const user = userEvent.setup();
-    activeId = 'first';
-    const { container } = render(<GalleryPhotoPage />);
+    const { container } = render(<ArchiveDetailPageClient photo={photos[0]} previous={null} next={photos[1]} index={0} total={photos.length} />);
 
-    const article = await screen.findByRole('article', { name: 'Archive item: First Signal' });
+    const article = screen.getByRole('article', { name: 'Archive item: First Signal' });
     const navigation = within(article).getByRole('navigation', { name: 'Archive navigation' });
 
     expect(within(navigation).queryByRole('link', { name: 'Previous archive item' })).not.toBeInTheDocument();

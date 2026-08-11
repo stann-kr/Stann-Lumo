@@ -3,6 +3,7 @@
 import dynamic from 'next/dynamic';
 import { Component, type ReactNode, useEffect, useState } from 'react';
 import { useMotionPreference } from '@/hooks/useMotionPreference';
+import type { Track } from '@/types/content';
 
 const Scene3D = dynamic(() => import('./Scene3D'), {
   loading: () => null,
@@ -54,7 +55,7 @@ const StaticSceneFallback = () => <div className="home-scene-fallback" aria-hidd
  * Home-only ambient layer. It keeps a quiet static fallback available while
  * the optional WebGL scene is unavailable, reduced, or too costly to render.
  */
-export default function HomeAmbientScene() {
+export default function HomeAmbientScene({ tracks }: { tracks: Track[] }) {
   const { isResolved, prefersReducedMotion } = useMotionPreference();
   const [isDesktop, setIsDesktop] = useState(false);
 
@@ -80,7 +81,7 @@ export default function HomeAmbientScene() {
       <StaticSceneFallback />
       {canRenderScene && (
         <SceneErrorBoundary>
-          <Scene3D />
+          <Scene3D tracks={tracks} />
         </SceneErrorBoundary>
       )}
     </>

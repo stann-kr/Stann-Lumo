@@ -43,14 +43,6 @@ vi.mock('@/contexts/LanguageContext', () => ({
   }),
 }));
 
-vi.mock('@/contexts/ContentContext', () => ({
-  useContent: () => ({
-    content: { artistInfo: [{ key: 'Name', value: 'STANN LUMO' }] },
-    isError: false,
-    isLoading: false,
-  }),
-}));
-
 vi.mock('framer-motion', () => ({
   AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   motion: {
