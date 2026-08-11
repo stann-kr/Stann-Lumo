@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import type { AdminFormReturn } from '../types/admin';
+import { useUnsavedChanges } from './useUnsavedChanges';
 
 export function useAdminForm<T extends object>(
   initialData: T,
@@ -9,6 +10,7 @@ export function useAdminForm<T extends object>(
   const [isSaving, setIsSaving] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [showError, setShowError] = useState(false);
+  const { markSaved } = useUnsavedChanges(formData, initialData);
 
   // 언어 전환 시 initialData가 바뀌면 formData도 갱신
   useEffect(() => {
@@ -23,6 +25,7 @@ export function useAdminForm<T extends object>(
     setIsSaving(true);
     try {
       await onSave(formData);
+      markSaved();
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 3000);
     } catch (error) {
@@ -32,7 +35,7 @@ export function useAdminForm<T extends object>(
     } finally {
       setIsSaving(false);
     }
-  }, [formData, onSave]);
+  }, [formData, markSaved, onSave]);
 
   const resetForm = useCallback(() => {
     setFormData(initialData);

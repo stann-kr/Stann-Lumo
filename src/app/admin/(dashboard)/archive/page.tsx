@@ -3,11 +3,13 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import AdminCard from '@/components/base/AdminCard';
 import AdminSectionHeader from '@/components/base/AdminSectionHeader';
 import FormInput from '@/components/base/FormInput';
+import FormSelect from '@/components/base/FormSelect';
 import SuccessMessage from '@/components/base/SuccessMessage';
 import SaveErrorMessage from '@/components/base/SaveErrorMessage';
 import DeleteConfirmModal from '@/components/base/DeleteConfirmModal';
 import { useSaveNotification } from '@/hooks/useSaveNotification';
 import { useDeleteConfirm } from '@/hooks/useDeleteConfirm';
+import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
 import { createBorderFaint } from '@/utils/colorMix';
 import { apiRequest } from '@/services/apiClient';
 import { runSave } from '@/utils/saveResult';
@@ -82,12 +84,10 @@ interface EventSelectProps {
 }
 function EventSelect({ value, performances, onChange, label = 'LINKED EVENT' }: EventSelectProps) {
   return (
-    <div>
-      <label className="block text-xs text-[var(--color-accent)] tracking-widest mb-2">{label}</label>
-      <select
+      <FormSelect
+        label={label}
         value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-full bg-[var(--color-bg)] border-b border-[var(--color-secondary)]/30 text-[var(--color-secondary)] text-sm tracking-wider py-2 focus:outline-none focus:border-[var(--color-accent)] cursor-pointer"
+        onChange={onChange}
       >
         <option value="">— 없음 —</option>
         {performances.map((p) => (
@@ -95,8 +95,7 @@ function EventSelect({ value, performances, onChange, label = 'LINKED EVENT' }: 
             {p.date} · {p.title}
           </option>
         ))}
-      </select>
-    </div>
+      </FormSelect>
   );
 }
 
@@ -117,6 +116,7 @@ const AdminGalleryPage = () => {
   const [youtubeLinkedEventId, setYoutubeLinkedEventId] = useState('');
   const [isAddingYoutube, setIsAddingYoutube] = useState(false);
   const [youtubeError, setYoutubeError] = useState('');
+  const [savedDataVersion, setSavedDataVersion] = useState(0);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { isVisible: showSuccess, showNotification } = useSaveNotification();
@@ -149,6 +149,8 @@ const AdminGalleryPage = () => {
     setYoutubeError('');
   }, [youtubeUrl]);
 
+  useUnsavedChanges(photos, `${isLoading}:${savedDataVersion}`);
+
   // ─── 사진 메타 필드 업데이트 ─────────────────────────────────────────────
   const updatePhotoField = (index: number, field: keyof Pick<GalleryPhoto, 'altText' | 'caption' | 'linkedEventId'>, value: string) => {
     setPhotos((prev) => prev.map((p, i) => i === index ? { ...p, [field]: value || undefined } : p));
@@ -179,7 +181,10 @@ const AdminGalleryPage = () => {
           method: 'PUT',
           body: JSON.stringify({ photos }),
         })],
-        showNotification,
+        () => {
+          setSavedDataVersion((version) => version + 1);
+          showNotification();
+        },
         () => {
           setSaveError('ARCHIVE LAYOUT 저장에 실패했습니다. 입력한 내용은 유지됩니다. 다시 저장해 주세요.');
         },
@@ -201,6 +206,7 @@ const AdminGalleryPage = () => {
       const uploadedPhotos = result.data;
       if (result.success && uploadedPhotos && uploadedPhotos.length > 0) {
         setPhotos((prev) => [...prev, ...uploadedPhotos]);
+        setSavedDataVersion((version) => version + 1);
         showNotification();
       } else {
         setUploadError(result.error?.message ?? '업로드 실패. 다시 시도해 주세요.');
@@ -240,6 +246,7 @@ const AdminGalleryPage = () => {
         setPhotos((prev) => [...prev, addedPhoto]);
         setYoutubeUrl('');
         setYoutubeLinkedEventId('');
+        setSavedDataVersion((version) => version + 1);
         showNotification();
       } else {
         setYoutubeError(result.error?.message ?? 'YouTube 추가 실패. 다시 시도해 주세요.');
@@ -263,6 +270,7 @@ const AdminGalleryPage = () => {
         return;
       }
       setPhotos((prev) => prev.filter((_, i) => i !== index));
+      setSavedDataVersion((version) => version + 1);
     } catch {
       setSaveError('MEDIA DELETE에 실패했습니다. 현재 목록은 유지됩니다. 다시 시도해 주세요.');
     }
@@ -503,7 +511,9 @@ const AdminGalleryPage = () => {
                       <i className="ri-arrow-down-s-line"></i>
                     </button>
                     <button
+                      type="button"
                       onClick={() => openConfirm(index)}
+                      aria-label={`미디어 ${photo.filename} 삭제`}
                       className="w-8 h-8 flex items-center justify-center border border-red-900/30 text-red-400 hover:bg-red-900/20 transition-colors cursor-pointer"
                       title="삭제"
                     >

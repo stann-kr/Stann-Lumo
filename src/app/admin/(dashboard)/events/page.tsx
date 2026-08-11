@@ -4,11 +4,13 @@ import AdminCard from '@/components/base/AdminCard';
 import AdminSectionHeader from '@/components/base/AdminSectionHeader';
 import SaveErrorMessage from '@/components/base/SaveErrorMessage';
 import FormInput from '@/components/base/FormInput';
+import FormSelect from '@/components/base/FormSelect';
 import SuccessMessage from '@/components/base/SuccessMessage';
 import DeleteConfirmModal from '@/components/base/DeleteConfirmModal';
 import { useListEditor } from '@/hooks/useListEditor';
 import { useDeleteConfirm } from '@/hooks/useDeleteConfirm';
 import { useSaveNotification } from '@/hooks/useSaveNotification';
+import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Performance, PageMeta } from '@/types/content';
@@ -41,7 +43,7 @@ const EMPTY_RA_API_CONFIG: RAApiConfigView = {
 
 const AdminEventsPage = () => {
   const { t } = useTranslation();
-  const { allContent, updateContent, currentEditLanguage } = useContent();
+  const { allContent, updateContent, currentEditLanguage, isLoading } = useContent();
   const content = allContent[currentEditLanguage];
 
   const {
@@ -118,6 +120,11 @@ const AdminEventsPage = () => {
     setPageMeta(allContent[currentEditLanguage].pageMeta);
   }, [currentEditLanguage, allContent, setPerformances]);
 
+  const { markSaved } = useUnsavedChanges(
+    { clearApiKey, pageMeta, performances, raApiConfig, replacementApiKey },
+    `${currentEditLanguage}:${isLoading}:${isRaConfigLoading}`,
+  );
+
   const updatePageMetaField = (field: keyof PageMeta['events'], value: string) => {
     setPageMeta(prev => ({ ...prev, events: { ...prev.events, [field]: value } }));
   };
@@ -177,6 +184,7 @@ const AdminEventsPage = () => {
       }
 
       updateContent({ performances, pageMeta });
+      markSaved();
       showNotification();
     } catch {
       setFetchError('저장 중 오류가 발생했습니다. 입력한 내용은 유지됩니다. 다시 저장해 주세요.');
@@ -387,29 +395,22 @@ const AdminEventsPage = () => {
                 placeholder="123456"
                 disabled={isRaConfigReadOnly}
               />
-              <div>
-                <label
-                  htmlFor="ra-api-option"
-                  className="block text-xs text-[var(--color-accent)] tracking-widest mb-2"
-                >
-                  {t('events_api_option')}
-                </label>
-                <select
+              <FormSelect
                   id="ra-api-option"
+                  name="raApiOption"
+                  label={t('events_api_option')}
                   value={raApiConfig.option}
-                  onChange={(e) => updateRaApiConfigField(
+                  onChange={(value) => updateRaApiConfigField(
                     'option',
-                    e.target.value as RAApiConfigView['option'],
+                    value as RAApiConfigView['option'],
                   )}
                   disabled={isRaConfigReadOnly}
-                  className="w-full bg-[var(--color-bg)] border-b border-[var(--color-secondary)]/30 text-[var(--color-secondary)] text-sm tracking-wider py-2 focus:outline-none focus:border-[var(--color-accent)] cursor-pointer"
                 >
                   <option value="1">{t('events_api_option_1')}</option>
                   <option value="2">{t('events_api_option_2')}</option>
                   <option value="3">{t('events_api_option_3')}</option>
                   <option value="4">{t('events_api_option_4')}</option>
-                </select>
-              </div>
+              </FormSelect>
               <FormInput
                 label="YEAR (선택사항, 미입력시 올해 기준)"
                 value={raApiConfig.year ?? ''}
@@ -518,22 +519,17 @@ const AdminEventsPage = () => {
                       onChange={(value) => updatePerformanceField(index, 'location', value)}
                     />
                     <div className="md:col-span-2">
-                      <label
-                        htmlFor={`performance-status-${performance.id}`}
-                        className="block text-xs text-[var(--color-accent)] tracking-widest mb-2"
-                      >
-                        STATUS
-                      </label>
-                      <select
+                      <FormSelect
                         id={`performance-status-${performance.id}`}
+                        name={`performanceStatus-${performance.id}`}
+                        label="STATUS"
                         value={performance.status}
-                        onChange={(e) => updatePerformanceField(index, 'status', e.target.value)}
-                        className="w-full bg-[var(--color-bg)] border-b border-[var(--color-secondary)]/30 text-[var(--color-secondary)] text-sm tracking-wider py-2 focus:outline-none focus:border-[var(--color-accent)] cursor-pointer"
+                        onChange={(value) => updatePerformanceField(index, 'status', value)}
                       >
                         <option value="Announced">Announced</option>
                         <option value="TBA">TBA</option>
                         <option value="Cancelled">Cancelled</option>
-                      </select>
+                      </FormSelect>
                     </div>
                     {performance.raEventId && (
                       <div className="md:col-span-2">
@@ -593,7 +589,9 @@ const AdminEventsPage = () => {
                     </div>
                   </div>
                   <button
+                    type="button"
                     onClick={() => openDeleteConfirm(index)}
+                    aria-label={`이벤트 ${performance.title} 삭제`}
                     className="w-8 h-8 flex items-center justify-center border border-red-900/30 text-red-400 hover:bg-red-900/20 transition-colors cursor-pointer shrink-0"
                     title="Delete"
                   >

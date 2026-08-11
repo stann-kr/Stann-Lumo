@@ -9,6 +9,7 @@ import SuccessMessage from '@/components/base/SuccessMessage';
 import SaveErrorMessage from '@/components/base/SaveErrorMessage';
 import DeleteConfirmModal from '@/components/base/DeleteConfirmModal';
 import { useSaveNotification } from '@/hooks/useSaveNotification';
+import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
 import { createBorderFaint } from '@/utils/colorMix';
 import { runSave } from '@/utils/saveResult';
 
@@ -53,7 +54,7 @@ import {
 import type { PageMeta } from '@/types/content';
 
 const AdminLinkPage = () => {
-  const { allContent, updateContent, currentEditLanguage } = useContent();
+  const { allContent, updateContent, currentEditLanguage, isLoading } = useContent();
   const content = allContent[currentEditLanguage];
   const [linkPlatforms, setLinkPlatforms] = useState(content.linkPlatforms);
   const [terminalInfo, setTerminalInfo] = useState(content.terminalInfo);
@@ -69,6 +70,11 @@ const AdminLinkPage = () => {
     setTerminalInfo(allContent[currentEditLanguage].terminalInfo);
     setPageMeta(allContent[currentEditLanguage].pageMeta);
   }, [currentEditLanguage, allContent]);
+
+  const { markSaved } = useUnsavedChanges(
+    { linkPlatforms, pageMeta, terminalInfo },
+    `${currentEditLanguage}:${isLoading}`,
+  );
 
   const addNewPlatform = () => {
     setLinkPlatforms([
@@ -117,6 +123,7 @@ const AdminLinkPage = () => {
         ],
         () => {
           updateContent({ linkPlatforms, terminalInfo, pageMeta });
+          markSaved();
           showNotification();
         },
         (failedAreas) => {
@@ -230,7 +237,9 @@ const AdminLinkPage = () => {
                       <i className="ri-arrow-down-line"></i>
                     </button>
                     <button
+                      type="button"
                       onClick={() => setShowDeleteModal(platform.id)}
+                      aria-label={`플랫폼 ${platform.platform} 삭제`}
                       className="w-8 h-8 flex items-center justify-center border border-red-900/30 text-red-400 hover:bg-red-900/20 transition-colors cursor-pointer"
                     >
                       <i className="ri-delete-bin-line"></i>

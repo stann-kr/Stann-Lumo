@@ -2,6 +2,7 @@ import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ContentData, PageMeta } from '@/types/content';
 import type { RAApiConfigView } from '@/types/admin';
+import { AdminEditGuardProvider } from '@/contexts/AdminEditGuardContext';
 import AdminEventsPage from './page';
 
 const mocks = vi.hoisted(() => ({
@@ -83,6 +84,12 @@ function deferred<T>() {
   return { promise, resolve };
 }
 
+const renderPage = () => render(
+  <AdminEditGuardProvider>
+    <AdminEventsPage />
+  </AdminEditGuardProvider>,
+);
+
 describe('AdminEventsPage masked RA config boundary', () => {
   beforeEach(() => {
     mocks.currentEditLanguage = 'en';
@@ -113,7 +120,7 @@ describe('AdminEventsPage masked RA config boundary', () => {
     const pending = deferred<{ success: true; data: RAApiConfigView }>();
     mocks.fetchRaApiConfig.mockReturnValue(pending.promise);
 
-    const { rerender } = render(<AdminEventsPage />);
+    const { rerender } = renderPage();
 
     const pendingSaveButton = screen.getByRole('button', { name: 'SAVE CHANGES' });
     expect(pendingSaveButton).toBeDisabled();
@@ -137,7 +144,11 @@ describe('AdminEventsPage masked RA config boundary', () => {
     expect(screen.getByText('API 키 저장됨')).toBeInTheDocument();
 
     mocks.currentEditLanguage = 'ko';
-    rerender(<AdminEventsPage />);
+    rerender(
+      <AdminEditGuardProvider>
+        <AdminEventsPage />
+      </AdminEditGuardProvider>,
+    );
 
     expect(screen.getByLabelText('events_api_key')).toHaveValue('');
     expect(mocks.fetchRaApiConfig).toHaveBeenCalledTimes(1);
@@ -149,7 +160,7 @@ describe('AdminEventsPage masked RA config boundary', () => {
       error: { code: 'NETWORK_ERROR', message: 'test-only failure' },
     });
 
-    render(<AdminEventsPage />);
+    renderPage();
 
     await screen.findByText(/RA API 설정을 불러오지 못했습니다/);
     expect(screen.getByRole('button', { name: 'SAVE CHANGES' })).toBeEnabled();
@@ -181,7 +192,7 @@ describe('AdminEventsPage masked RA config boundary', () => {
       },
     });
 
-    render(<AdminEventsPage />);
+    renderPage();
 
     const syncButton = await screen.findByRole('button', { name: 'events_fetch_from_ra' });
     expect(syncButton).toBeDisabled();
@@ -222,7 +233,7 @@ describe('AdminEventsPage masked RA config boundary', () => {
       },
     });
 
-    render(<AdminEventsPage />);
+    renderPage();
     await screen.findByText('저장된 API 키 없음');
 
     fireEvent.click(screen.getByRole('button', { name: 'SAVE CHANGES' }));
@@ -253,7 +264,7 @@ describe('AdminEventsPage masked RA config boundary', () => {
     }>();
     mocks.updateRaApiConfig.mockReturnValue(pending.promise);
 
-    render(<AdminEventsPage />);
+    renderPage();
     await screen.findByText('API 키 저장됨');
 
     fireEvent.change(screen.getByLabelText('events_api_key'), {
@@ -305,7 +316,7 @@ describe('AdminEventsPage masked RA config boundary', () => {
       error: { code: 'INTERNAL_ERROR', message: 'test-only failure' },
     });
 
-    render(<AdminEventsPage />);
+    renderPage();
     await screen.findByText('API 키 저장됨');
 
     fireEvent.change(screen.getByLabelText('events_api_option'), {

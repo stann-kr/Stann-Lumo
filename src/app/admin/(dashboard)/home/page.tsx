@@ -5,11 +5,13 @@ import AdminCard from '@/components/base/AdminCard';
 import AdminSectionHeader from '@/components/base/AdminSectionHeader';
 import FormInput from '@/components/base/FormInput';
 import FormTextarea from '@/components/base/FormTextarea';
+import FormSelect from '@/components/base/FormSelect';
 import SuccessMessage from '@/components/base/SuccessMessage';
 import SaveErrorMessage from '@/components/base/SaveErrorMessage';
 import DeleteConfirmModal from '@/components/base/DeleteConfirmModal';
 import RadioGroup from '@/components/base/RadioGroup';
 import { useSaveNotification } from '@/hooks/useSaveNotification';
+import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
 import { createBorderFaint, createBorderMid } from '@/utils/colorMix';
 import { runSave } from '@/utils/saveResult';
 import {
@@ -48,7 +50,7 @@ const AVAILABLE_ICONS = [
 ];
 
 const AdminHomePage = () => {
-  const { allContent, updateContent, currentEditLanguage } = useContent();
+  const { allContent, updateContent, currentEditLanguage, isLoading } = useContent();
   const content = allContent[currentEditLanguage];
 
   const [homeSections, setHomeSections] = useState<HomeSection[]>(content.homeSections);
@@ -63,10 +65,12 @@ const AdminHomePage = () => {
     showEmbed: false,
     embedHeight: '400px',
   });
+  const [terminalConfigVersion, setTerminalConfigVersion] = useState(0);
   const [showEmbedPreview, setShowEmbedPreview] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
   const [showDeleteModal, setShowDeleteModal] = useState<number | null>(null);
+  const [customFieldDeleteIndex, setCustomFieldDeleteIndex] = useState<number | null>(null);
   const [iconSelectorOpen, setIconSelectorOpen] = useState<number | null>(null);
   const { isVisible: showSuccess, showNotification } = useSaveNotification();
 
@@ -78,13 +82,20 @@ const AdminHomePage = () => {
   }, [currentEditLanguage, allContent]);
 
   useEffect(() => {
-    fetchTerminalConfig().then((res) => {
-      if (res.success && res.data) {
-        setTerminalCustomFields(res.data.customFields ?? []);
-        if (res.data.style) setTerminalStyle(res.data.style);
-      }
-    });
+    void fetchTerminalConfig()
+      .then((res) => {
+        if (res.success && res.data) {
+          setTerminalCustomFields(res.data.customFields ?? []);
+          if (res.data.style) setTerminalStyle(res.data.style);
+        }
+      })
+      .finally(() => setTerminalConfigVersion((version) => version + 1));
   }, []);
+
+  const { markSaved } = useUnsavedChanges(
+    { artistInfo, homeSections, pageMeta, terminalCustomFields, terminalInfo, terminalStyle },
+    `${currentEditLanguage}:${isLoading}:${terminalConfigVersion}`,
+  );
 
   const updateSectionField = (index: number, field: keyof HomeSection, value: string) => {
     setHomeSections(prev =>
@@ -192,6 +203,7 @@ const AdminHomePage = () => {
             pageMeta,
             artistInfo,
           });
+          markSaved();
           showNotification();
         },
         (failedAreas) => {
@@ -221,8 +233,19 @@ const AdminHomePage = () => {
           }
         />
 
-        <SuccessMessage message="변경 사항이 저장되었습니다" show={showSuccess} />
-        <SaveErrorMessage message={saveError} />
+      <SuccessMessage message="변경 사항이 저장되었습니다" show={showSuccess} />
+      <SaveErrorMessage message={saveError} />
+      {customFieldDeleteIndex !== null && (
+        <DeleteConfirmModal
+          show={true}
+          itemName={terminalCustomFields[customFieldDeleteIndex]?.fieldKey || 'CUSTOM FIELD'}
+          onConfirm={() => {
+            removeCustomField(customFieldDeleteIndex);
+            setCustomFieldDeleteIndex(null);
+          }}
+          onCancel={() => setCustomFieldDeleteIndex(null)}
+        />
+      )}
 
         {/* ARTIST INFO */}
         <div>
@@ -422,23 +445,24 @@ const AdminHomePage = () => {
                           onChange={(v) => updateCustomField(index, { fieldValue: v })}
                           placeholder="Content"
                         />
-                        <div>
-                          <label className="block text-xs text-[var(--color-accent)] tracking-widest mb-2">TYPE</label>
-                          <select
-                            value={field.fieldType}
-                            onChange={(e) => updateCustomField(index, { fieldType: e.target.value as TerminalCustomField['fieldType'] })}
-                            className="w-full bg-[var(--color-bg)] border-b border-[var(--color-secondary)]/30 text-[var(--color-secondary)] text-sm tracking-wider py-2 focus:outline-none focus:border-[var(--color-accent)] cursor-pointer"
+                        <FormSelect
+                          id={`terminal-custom-field-type-${field.id}`}
+                          name={`terminalCustomFieldType-${field.id}`}
+                          label="TYPE"
+                          value={field.fieldType}
+                          onChange={(value) => updateCustomField(index, { fieldType: value as TerminalCustomField['fieldType'] })}
                           >
                             <option value="text">TEXT</option>
                             <option value="url">URL (링크)</option>
                             <option value="badge">BADGE</option>
-                          </select>
-                        </div>
+                        </FormSelect>
                       </div>
 
                       {/* 삭제 */}
                       <button
-                        onClick={() => removeCustomField(index)}
+                        type="button"
+                        onClick={() => setCustomFieldDeleteIndex(index)}
+                        aria-label={`커스텀 필드 ${field.fieldKey || index + 1} 삭제`}
                         className="w-7 h-7 flex items-center justify-center border border-red-900/30 text-red-400 hover:bg-red-900/20 transition-colors cursor-pointer shrink-0 mt-5"
                       >
                         <i className="ri-delete-bin-line text-sm"></i>
@@ -501,7 +525,9 @@ const AdminHomePage = () => {
                           <i className="ri-arrow-down-line" />
                         </button>
                         <button
+                          type="button"
                           onClick={() => setShowDeleteModal(index)}
+                          aria-label={`홈 카드 ${section.title} 삭제`}
                           className="w-8 h-8 flex items-center justify-center border border-red-900/30 text-red-400 hover:bg-red-900/20 transition-colors cursor-pointer"
                           title="삭제"
                         >

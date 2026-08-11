@@ -15,6 +15,9 @@ const SuccessMessage = ({ message, show }: SuccessMessageProps) => {
 
   return (
     <div
+      role="status"
+      aria-live="polite"
+      aria-atomic="true"
       className="bg-[var(--color-accent)]/20 border p-4"
       style={createBorderAccent()}
     >

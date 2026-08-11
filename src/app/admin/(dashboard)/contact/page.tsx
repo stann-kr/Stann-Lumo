@@ -7,7 +7,9 @@ import FormInput from '@/components/base/FormInput';
 import ListItemEditor from '@/components/base/ListItemEditor';
 import SuccessMessage from '@/components/base/SuccessMessage';
 import SaveErrorMessage from '@/components/base/SaveErrorMessage';
+import DeleteConfirmModal from '@/components/base/DeleteConfirmModal';
 import { useSaveNotification } from '@/hooks/useSaveNotification';
+import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
 import { createBorderFaint, createBorderMid } from '@/utils/colorMix';
 import { runSave } from '@/utils/saveResult';
 import {
@@ -39,7 +41,7 @@ const AVAILABLE_ICONS = [
 ];
 
 const AdminContactPage = () => {
-  const { allContent, updateContent, currentEditLanguage } = useContent();
+  const { allContent, updateContent, currentEditLanguage, isLoading } = useContent();
   const content = allContent[currentEditLanguage];
   const [contactInfo, setContactInfo] = useState<ContactItem[]>(content.contactInfo);
   const [eventsInfo, setEventsInfo] = useState<EventsInfo>(content.eventsInfo);
@@ -47,6 +49,7 @@ const AdminContactPage = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
   const [iconSelectorOpen, setIconSelectorOpen] = useState<number | null>(null);
+  const [deleteContactIndex, setDeleteContactIndex] = useState<number | null>(null);
   const { isVisible: showSuccess, showNotification } = useSaveNotification();
 
   useEffect(() => {
@@ -54,6 +57,11 @@ const AdminContactPage = () => {
     setEventsInfo(allContent[currentEditLanguage].eventsInfo);
     setPageMeta(allContent[currentEditLanguage].pageMeta);
   }, [currentEditLanguage, allContent]);
+
+  const { markSaved } = useUnsavedChanges(
+    { contactInfo, eventsInfo, pageMeta },
+    `${currentEditLanguage}:${isLoading}`,
+  );
 
   const updateContactItemField = (index: number, field: keyof ContactItem, value: string) => {
     setContactInfo(prev => prev.map((item, i) => i === index ? { ...item, [field]: value } : item));
@@ -112,6 +120,7 @@ const AdminContactPage = () => {
         ],
         () => {
           updateContent({ contactInfo, eventsInfo, pageMeta });
+          markSaved();
           showNotification();
         },
         (failedAreas) => {
@@ -132,8 +141,19 @@ const AdminContactPage = () => {
           isSaving={isSaving}
         />
 
-        <SuccessMessage message="변경 사항이 저장되었습니다" show={showSuccess} />
-        <SaveErrorMessage message={saveError} />
+      <SuccessMessage message="변경 사항이 저장되었습니다" show={showSuccess} />
+      <SaveErrorMessage message={saveError} />
+      {deleteContactIndex !== null && (
+        <DeleteConfirmModal
+          show={true}
+          itemName={contactInfo[deleteContactIndex]?.label || 'CONTACT ITEM'}
+          onConfirm={() => {
+            deleteContactItem(deleteContactIndex);
+            setDeleteContactIndex(null);
+          }}
+          onCancel={() => setDeleteContactIndex(null)}
+        />
+      )}
 
         {/* PAGE SETTINGS */}
         <div>
@@ -271,7 +291,9 @@ const AdminContactPage = () => {
                         <i className="ri-arrow-down-line"></i>
                       </button>
                       <button
-                        onClick={() => deleteContactItem(index)}
+                        type="button"
+                        onClick={() => setDeleteContactIndex(index)}
+                        aria-label={`연락처 ${item.label || index + 1} 삭제`}
                         className="w-8 h-8 flex items-center justify-center border border-red-900/30 text-red-400 hover:bg-red-900/20 transition-colors cursor-pointer"
                         title="삭제"
                       >

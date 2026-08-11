@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import type { DeleteConfirmReturn } from '../types/admin';
 
 /**
@@ -25,12 +25,14 @@ export function useDeleteConfirm(): DeleteConfirmReturn & {
 } {
   const [isOpen, setIsOpen] = useState(false);
   const [pendingIndex, setPendingIndex] = useState<number | null>(null);
+  const triggerRef = useRef<HTMLElement | null>(null);
 
   /**
    * 삭제 확인 모달 열기
    * @param index - 삭제 대상 항목의 인덱스
    */
   const openConfirm = useCallback((index: number) => {
+    triggerRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     setPendingIndex(index);
     setIsOpen(true);
   }, []);
@@ -40,8 +42,14 @@ export function useDeleteConfirm(): DeleteConfirmReturn & {
    * - 모달 상태 및 대기 중인 인덱스 초기화
    */
   const closeConfirm = useCallback(() => {
+    const trigger = triggerRef.current;
+    triggerRef.current = null;
     setIsOpen(false);
     setPendingIndex(null);
+
+    window.requestAnimationFrame(() => {
+      if (trigger?.isConnected) trigger.focus();
+    });
   }, []);
 
   /**

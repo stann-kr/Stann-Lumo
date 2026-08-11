@@ -3,6 +3,7 @@ import { useContent } from '@/contexts/ContentContext';
 import AdminCard from '@/components/base/AdminCard';
 import AdminSectionHeader from '@/components/base/AdminSectionHeader';
 import FormInput from '@/components/base/FormInput';
+import FormSelect from '@/components/base/FormSelect';
 import SuccessMessage from '@/components/base/SuccessMessage';
 import SaveErrorMessage from '@/components/base/SaveErrorMessage';
 import DeleteConfirmModal from '@/components/base/DeleteConfirmModal';
@@ -10,6 +11,7 @@ import { useListEditor } from '@/hooks/useListEditor';
 import { useDeleteConfirm } from '@/hooks/useDeleteConfirm';
 import { useItemReorder } from '@/hooks/useItemReorder';
 import { useSaveNotification } from '@/hooks/useSaveNotification';
+import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
 import { useState, useEffect } from 'react';
 import { createBorderFaint } from '@/utils/colorMix';
 import { runSave } from '@/utils/saveResult';
@@ -30,7 +32,7 @@ interface Track {
 }
 
 const AdminMusicPage = () => {
-  const { allContent, updateContent, currentEditLanguage } = useContent();
+  const { allContent, updateContent, currentEditLanguage, isLoading } = useContent();
   const content = allContent[currentEditLanguage];
 
   const {
@@ -57,6 +59,11 @@ const AdminMusicPage = () => {
   useEffect(() => {
     setPageMeta(allContent[currentEditLanguage].pageMeta);
   }, [currentEditLanguage, allContent]);
+
+  const { markSaved } = useUnsavedChanges(
+    { pageMeta, tracks },
+    `${currentEditLanguage}:${isLoading}`,
+  );
 
   const updatePageMetaField = (field: keyof PageMeta['music'], value: string) => {
     setPageMeta(prev => ({ ...prev, music: { ...prev.music, [field]: value } }));
@@ -91,6 +98,7 @@ const AdminMusicPage = () => {
         ],
         () => {
           updateContent({ tracks, pageMeta });
+          markSaved();
           showNotification();
         },
         (failedAreas) => {
@@ -165,19 +173,18 @@ const AdminMusicPage = () => {
                         value={track.title}
                         onChange={(value) => updateTrackField(index, 'title', value)}
                       />
-                      <div>
-                        <label className="block text-xs text-[var(--color-accent)] tracking-widest mb-2">TYPE</label>
-                        <select
+                      <FormSelect
+                        id={`track-type-${track.id}`}
+                        name={`trackType-${track.id}`}
+                        label="TYPE"
                           value={track.type}
-                          onChange={(e) => updateTrackField(index, 'type', e.target.value)}
-                          className="w-full bg-[var(--color-bg)] border-b border-[var(--color-secondary)]/30 text-[var(--color-secondary)] text-sm tracking-wider py-2 focus:outline-none focus:border-[var(--color-accent)] cursor-pointer"
+                        onChange={(value) => updateTrackField(index, 'type', value)}
                         >
                           <option value="Original">Original</option>
                           <option value="Live Set">Live Set</option>
                           <option value="DJ Mix">DJ Mix</option>
                           <option value="Remix">Remix</option>
-                        </select>
-                      </div>
+                      </FormSelect>
                       <FormInput
                         label="DURATION"
                         value={track.duration}
@@ -189,20 +196,19 @@ const AdminMusicPage = () => {
                         value={track.year}
                         onChange={(value) => updateTrackField(index, 'year', value)}
                       />
-                      <div>
-                        <label className="block text-xs text-[var(--color-accent)] tracking-widest mb-2">PLATFORM</label>
-                        <select
+                      <FormSelect
+                        id={`track-platform-${track.id}`}
+                        name={`trackPlatform-${track.id}`}
+                        label="PLATFORM"
                           value={track.platform}
-                          onChange={(e) => updateTrackField(index, 'platform', e.target.value)}
-                          className="w-full bg-[var(--color-bg)] border-b border-[var(--color-secondary)]/30 text-[var(--color-secondary)] text-sm tracking-wider py-2 focus:outline-none focus:border-[var(--color-accent)] cursor-pointer"
+                        onChange={(value) => updateTrackField(index, 'platform', value)}
                         >
                           <option value="SoundCloud">SoundCloud</option>
                           <option value="Bandcamp">Bandcamp</option>
                           <option value="Spotify">Spotify</option>
                           <option value="Mixcloud">Mixcloud</option>
                           <option value="YouTube">YouTube</option>
-                        </select>
-                      </div>
+                      </FormSelect>
                       <FormInput
                         label="LINK"
                         value={track.link}
@@ -230,7 +236,9 @@ const AdminMusicPage = () => {
                         <i className="ri-arrow-down-line"></i>
                       </button>
                       <button
+                        type="button"
                         onClick={() => openDeleteConfirm(index)}
+                        aria-label={`트랙 ${track.title} 삭제`}
                         className="w-8 h-8 flex items-center justify-center border border-red-900/30 text-red-400 hover:bg-red-900/20 transition-colors cursor-pointer"
                         title="Delete"
                       >
