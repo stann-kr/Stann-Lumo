@@ -17,6 +17,8 @@ npm install
 npm run dev
 ```
 
+개발 서버는 항상 `http://localhost:3004`에서 실행한다.
+
 Docker 환경에서는 다음 명령을 사용한다.
 
 ```bash
@@ -27,6 +29,7 @@ docker compose up --build
 
 ```bash
 npm run lint
+npm run test:local-config
 npm run type-check
 npm run build
 ```

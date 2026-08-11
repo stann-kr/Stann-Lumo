@@ -24,6 +24,8 @@ npm install
 npm run dev
 ```
 
+개발 서버는 항상 `http://localhost:3004`에서 실행한다.
+
 ## 기술 스택
 
 | 영역 | 내용 |

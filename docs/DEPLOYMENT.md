@@ -30,6 +30,7 @@
 npm run lint
 npm test
 npm run test:env
+npm run test:local-config
 npm run type-check
 npm run build:cloudflare
 ```

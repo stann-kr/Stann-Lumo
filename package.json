@@ -11,6 +11,7 @@
     "lint": "eslint src --report-unused-disable-directives --max-warnings 0",
     "test": "vitest run",
     "test:env": "node --test scripts/check-opennext-env.test.mjs",
+    "test:local-config": "node --test scripts/check-local-server-config.test.mjs",
     "test:watch": "vitest",
     "type-check": "tsc --noEmit",
     "env:check:opennext": "node scripts/check-opennext-env.mjs source",
