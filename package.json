@@ -3,11 +3,11 @@
   "private": true,
   "version": "0.0.0",
   "scripts": {
-    "dev": "next dev --port 3000",
+    "dev": "next dev --port 3004",
     "prebuild": "node scripts/check-token-sync.mjs",
     "build": "NODE_ENV=production next build",
     "build:cloudflare": "node scripts/check-token-sync.mjs && npm run env:check:opennext && opennextjs-cloudflare build && npm run env:check:opennext-artifact",
-    "start": "next start --port 3000",
+    "start": "next start --port 3004",
     "lint": "eslint src --report-unused-disable-directives --max-warnings 0",
     "test": "vitest run",
     "test:env": "node --test scripts/check-opennext-env.test.mjs",

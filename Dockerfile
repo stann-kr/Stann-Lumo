@@ -10,6 +10,6 @@ RUN npm install
 # 소스 복사
 COPY . .
 
-EXPOSE 3000
+EXPOSE 3004
 
 CMD ["npm", "run", "dev"]
