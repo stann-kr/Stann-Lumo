@@ -29,12 +29,13 @@
     "isolatedModules": true
   },
   "include": [
+    "*.mts",
     "*.ts",
     "*.tsx",
-    "*.mts",
+    ".next/types/**/*.ts",
     "next-env.d.ts",
     "src/**/*",
-    ".next/types/**/*.ts"
+    ".next-build/types/**/*.ts"
   ],
   "exclude": [
     "node_modules"

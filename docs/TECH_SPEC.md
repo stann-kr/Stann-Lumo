@@ -79,6 +79,8 @@ Cloudflare resources:
 | 항목 | 설명 | 공개 가능 여부 |
 |---|---|---|
 | `NODE_ENV` | build/dev mode | 가능 |
+| `.env` | Next.js/OpenNext 공개 URL 설정 | allowlist 값만 가능 |
+| `.dev.vars` | 로컬 개발 서버 전용 secret/config | 파일명·키 이름만 가능 |
 | `DB` | Cloudflare D1 binding | binding 이름만 가능 |
 | `MEDIA` | Cloudflare R2 binding | binding 이름만 가능 |
 | Cloudflare token/account | 배포 인증 | 실값 금지 |

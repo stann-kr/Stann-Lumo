@@ -14,10 +14,12 @@ Stann Lumo의 음악, 공연, 비주얼 아카이브를 제공하는 아티스�
 
 ```bash
 npm install
+cp .env.example .env
+cp .dev.vars.example .dev.vars
 npm run dev
 ```
 
-개발 서버는 항상 `http://localhost:3004`에서 실행한다.
+개발 서버는 항상 `http://localhost:3004`에서 실행한다. 공개 URL은 `.env`, 로컬 서버 전용 값은 git-ignored `.dev.vars`에 둔다.
 
 Docker 환경에서는 다음 명령을 사용한다.
 
@@ -33,6 +35,8 @@ npm run test:local-config
 npm run type-check
 npm run build
 ```
+
+`npm run dev`는 `.next`, `npm run build`는 `.next-build`를 사용하므로 개발 서버를 유지한 채 표준 빌드 검증을 실행해도 서로의 산출물을 덮어쓰지 않습니다. `npm run start`는 `npm run build`가 만든 `.next-build`를 실행합니다.
 
 ## 문서
 

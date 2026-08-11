@@ -21,10 +21,14 @@ docker compose up --build
 
 ```bash
 npm install
+cp .env.example .env
+cp .dev.vars.example .dev.vars
 npm run dev
 ```
 
-개발 서버는 항상 `http://localhost:3004`에서 실행한다.
+개발 서버는 항상 `http://localhost:3004`에서 실행한다. 공개 URL은 `.env`, 로컬 서버 전용 값은 git-ignored `.dev.vars`에 둔다.
+
+`npm run dev`는 `.next`, `npm run build`는 `.next-build`를 사용한다. 따라서 개발 서버를 유지한 상태에서도 표준 빌드 산출물이 충돌하지 않으며, `npm run start`는 `.next-build`를 실행한다.
 
 ## 기술 스택
 
