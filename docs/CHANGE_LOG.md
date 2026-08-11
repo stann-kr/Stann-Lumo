@@ -2,6 +2,14 @@
 
 공개 가능한 결과 중심 변경 요약이다. 항목은 일자 단위이며 최신 항목을 위에 둔다.
 
+## 2026-08-11 — 공개 탐색 접근성
+
+### Changed
+
+- 본문 바로가기, 현재 route 표기, route 전환 뒤 본문 focus, EN/KO 문서 언어 동기화를 추가했다.
+- 모바일 navigation을 닫힌 상태에서 tab 순서에 남지 않는 focus 경계로 바꾸고 Escape, backdrop, desktop breakpoint 뒤 trigger focus를 복원한다.
+- Archive 목록과 상세를 semantic link·article·이름 있는 이전/다음 탐색으로 정리하고 장식 아이콘을 보조 기술에서 제외했다.
+
 ## 2026-08-11 — 관리자 편집 안전성과 접근성
 
 ### Changed

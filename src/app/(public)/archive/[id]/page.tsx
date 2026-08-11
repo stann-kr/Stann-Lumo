@@ -71,7 +71,7 @@ const GalleryPhotoPage = () => {
             href="/archive"
             className="inline-flex items-center gap-2 text-xs tracking-widest text-[var(--color-secondary)]/60 hover:text-[var(--color-secondary)] transition-colors"
           >
-            <i className="ri-arrow-left-line"></i>
+            <i className="ri-arrow-left-line" aria-hidden="true"></i>
             {t('gallery_back')}
           </Link>
         </div>
@@ -86,7 +86,7 @@ const GalleryPhotoPage = () => {
           href="/archive"
           className="inline-flex items-center gap-2 text-xs tracking-widest text-[var(--color-secondary)]/60 hover:text-[var(--color-secondary)] transition-colors"
         >
-          <i className="ri-arrow-left-line"></i>
+          <i className="ri-arrow-left-line" aria-hidden="true"></i>
           {t('gallery_back')}
         </Link>
       </PageLayout>
@@ -111,20 +111,21 @@ const GalleryPhotoPage = () => {
 
   return (
     <PageLayout key={photo.id} title={pageTitle}>
+      <article className="space-y-10" aria-label={`Archive item: ${pageTitle}`}>
       {/* 상단 — 뒤로가기 + 카테고리 + 인덱스 */}
-      <div className="flex items-center justify-between">
+      <header className="flex items-center justify-between">
         <Link
           href="/archive"
           className="inline-flex items-center gap-2 text-xs tracking-widest text-[var(--color-secondary)]/50 hover:text-[var(--color-secondary)] transition-colors"
         >
-          <i className="ri-arrow-left-line"></i>
+          <i className="ri-arrow-left-line" aria-hidden="true"></i>
           ARCHIVE
         </Link>
         <div className="flex items-center gap-4">
           {/* 카테고리 뱃지 */}
           <span className="inline-flex items-center gap-1.5 text-[10px] tracking-widest px-2 py-1 border text-[var(--color-accent)] opacity-70"
             style={borderAccent}>
-            <i className={`${categoryIcon} text-xs`}></i>
+            <i className={`${categoryIcon} text-xs`} aria-hidden="true"></i>
             {categoryLabel}
           </span>
           {photos.length > 0 && (
@@ -133,7 +134,7 @@ const GalleryPhotoPage = () => {
             </span>
           )}
         </div>
-      </div>
+      </header>
 
       {/* 미디어 + 좌우 화살표 오버레이 */}
       <div className="relative">
@@ -152,6 +153,7 @@ const GalleryPhotoPage = () => {
             src={`/api/media/${photo.id}`}
             controls
             className="w-full max-h-[70vh] object-contain"
+            aria-label={pageTitle}
           />
         ) : (
           <img
@@ -166,10 +168,11 @@ const GalleryPhotoPage = () => {
         {prevPhoto && (
           <Link
             href={`/archive/${prevPhoto.id}`}
-            className="absolute left-0 top-0 bottom-0 w-16 flex items-center justify-start pl-3 opacity-0 hover:opacity-100 transition-opacity bg-gradient-to-r from-[var(--color-bg)]/60 to-transparent"
-            aria-label="Previous photo"
+            className="absolute left-0 top-0 bottom-0 w-16 flex items-center justify-start pl-3 opacity-0 hover:opacity-100 focus-visible:opacity-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--color-accent)] transition-opacity bg-gradient-to-r from-[var(--color-bg)]/60 to-transparent"
+            aria-label="Previous archive item"
+            aria-keyshortcuts="ArrowLeft"
           >
-            <i className="ri-arrow-left-s-line text-3xl text-[var(--color-secondary)]"></i>
+            <i className="ri-arrow-left-s-line text-3xl text-[var(--color-secondary)]" aria-hidden="true"></i>
           </Link>
         )}
 
@@ -177,10 +180,11 @@ const GalleryPhotoPage = () => {
         {nextPhoto && (
           <Link
             href={`/archive/${nextPhoto.id}`}
-            className="absolute right-0 top-0 bottom-0 w-16 flex items-center justify-end pr-3 opacity-0 hover:opacity-100 transition-opacity bg-gradient-to-l from-[var(--color-bg)]/60 to-transparent"
-            aria-label="Next photo"
+            className="absolute right-0 top-0 bottom-0 w-16 flex items-center justify-end pr-3 opacity-0 hover:opacity-100 focus-visible:opacity-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--color-accent)] transition-opacity bg-gradient-to-l from-[var(--color-bg)]/60 to-transparent"
+            aria-label="Next archive item"
+            aria-keyshortcuts="ArrowRight"
           >
-            <i className="ri-arrow-right-s-line text-3xl text-[var(--color-secondary)]"></i>
+            <i className="ri-arrow-right-s-line text-3xl text-[var(--color-secondary)]" aria-hidden="true"></i>
           </Link>
         )}
       </div>
@@ -198,45 +202,64 @@ const GalleryPhotoPage = () => {
               href={`/events/${photo.linkedEventId}`}
               className="inline-flex items-center gap-2 text-xs tracking-widest text-[var(--color-accent)] hover:opacity-70 transition-opacity"
             >
-              <i className="ri-calendar-event-line"></i>
+              <i className="ri-calendar-event-line" aria-hidden="true"></i>
               VIEW EVENT
             </Link>
           )}
         </div>
 
         {/* 이전/다음 버튼 */}
-        <div className="flex items-center gap-2 shrink-0">
-          <Link
-            href={prevPhoto ? `/archive/${prevPhoto.id}` : '/archive'}
-            className={`w-10 h-10 border flex items-center justify-center transition-colors ${
-              prevPhoto
-                ? 'text-[var(--color-secondary)] hover:bg-[var(--color-secondary)]/10 cursor-pointer'
-                : 'text-[var(--color-secondary)]/20 cursor-not-allowed pointer-events-none'
-            }`}
-            style={borderMid}
-            aria-disabled={!prevPhoto}
-          >
-            <i className="ri-arrow-left-line text-sm"></i>
-          </Link>
-          <Link
-            href={nextPhoto ? `/archive/${nextPhoto.id}` : '/archive'}
-            className={`w-10 h-10 border flex items-center justify-center transition-colors ${
-              nextPhoto
-                ? 'text-[var(--color-secondary)] hover:bg-[var(--color-secondary)]/10 cursor-pointer'
-                : 'text-[var(--color-secondary)]/20 cursor-not-allowed pointer-events-none'
-            }`}
-            style={borderMid}
-            aria-disabled={!nextPhoto}
-          >
-            <i className="ri-arrow-right-line text-sm"></i>
-          </Link>
-        </div>
+        <nav className="flex items-center gap-2 shrink-0" aria-label="Archive navigation">
+          {prevPhoto ? (
+            <Link
+              href={`/archive/${prevPhoto.id}`}
+              className="w-10 h-10 border flex items-center justify-center transition-colors text-[var(--color-secondary)] hover:bg-[var(--color-secondary)]/10 cursor-pointer"
+              style={borderMid}
+              aria-label="Previous archive item"
+              aria-keyshortcuts="ArrowLeft"
+            >
+              <i className="ri-arrow-left-line text-sm" aria-hidden="true"></i>
+            </Link>
+          ) : (
+            <button
+              type="button"
+              className="w-10 h-10 border flex items-center justify-center text-[var(--color-secondary)]/20 cursor-not-allowed"
+              style={borderMid}
+              aria-label="No previous archive item"
+              disabled
+            >
+              <i className="ri-arrow-left-line text-sm" aria-hidden="true"></i>
+            </button>
+          )}
+          {nextPhoto ? (
+            <Link
+              href={`/archive/${nextPhoto.id}`}
+              className="w-10 h-10 border flex items-center justify-center transition-colors text-[var(--color-secondary)] hover:bg-[var(--color-secondary)]/10 cursor-pointer"
+              style={borderMid}
+              aria-label="Next archive item"
+              aria-keyshortcuts="ArrowRight"
+            >
+              <i className="ri-arrow-right-line text-sm" aria-hidden="true"></i>
+            </Link>
+          ) : (
+            <button
+              type="button"
+              className="w-10 h-10 border flex items-center justify-center text-[var(--color-secondary)]/20 cursor-not-allowed"
+              style={borderMid}
+              aria-label="No next archive item"
+              disabled
+            >
+              <i className="ri-arrow-right-line text-sm" aria-hidden="true"></i>
+            </button>
+          )}
+        </nav>
       </div>
 
       {/* 키보드 힌트 */}
       <p className="text-[var(--color-secondary)]/20 text-xs tracking-widest">
         ← → NAVIGATE · ESC BACK TO GALLERY
       </p>
+      </article>
     </PageLayout>
   );
 };

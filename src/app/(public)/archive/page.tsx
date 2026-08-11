@@ -1,6 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import type { GalleryPhoto, GallerySettings, GalleryData } from '@/types/content';
 
@@ -46,14 +46,15 @@ function buildHoverClass(effect: GallerySettings['hoverEffect']): string {
 interface GridItemProps {
   photo: GalleryPhoto;
   settings: GallerySettings;
-  onClick: () => void;
 }
 
-const GridItem = ({ photo, settings, onClick }: GridItemProps) => {
+const GridItem = ({ photo, settings }: GridItemProps) => {
   const aspectClass = settings.layoutMode === 'grid' ? ASPECT_MAP[settings.aspectRatio] : '';
   const hoverClass = buildHoverClass(settings.hoverEffect);
+  const itemLabel = photo.caption || photo.altText || photo.filename;
 
-  const wrapperClass = `${settings.layoutMode === 'masonry' ? `break-inside-avoid ${MB_MAP[settings.gapSize]}` : ''} group cursor-pointer relative overflow-hidden`;
+  const wrapperClass = `${settings.layoutMode === 'masonry' ? `break-inside-avoid ${MB_MAP[settings.gapSize]}` : ''}`;
+  const linkClass = 'group relative block overflow-hidden focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-accent)]';
   const mediaClass = `w-full ${aspectClass ? aspectClass + ' object-cover' : 'block'} transition-transform duration-500 ${hoverClass}`;
 
   let mediaEl: React.ReactNode;
@@ -68,7 +69,7 @@ const GridItem = ({ photo, settings, onClick }: GridItemProps) => {
         />
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="w-12 h-12 bg-[var(--color-accent)]/80 rounded-full flex items-center justify-center">
-            <i className="ri-play-fill text-white text-xl ml-0.5"></i>
+            <i className="ri-play-fill text-white text-xl ml-0.5" aria-hidden="true"></i>
           </div>
         </div>
       </div>
@@ -82,10 +83,11 @@ const GridItem = ({ photo, settings, onClick }: GridItemProps) => {
           preload="metadata"
           muted
           playsInline
+          aria-hidden="true"
         />
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="w-10 h-10 bg-[var(--color-bg)]/70 flex items-center justify-center">
-            <i className="ri-play-fill text-[var(--color-secondary)] text-lg"></i>
+            <i className="ri-play-fill text-[var(--color-secondary)] text-lg" aria-hidden="true"></i>
           </div>
         </div>
       </div>
@@ -103,32 +105,40 @@ const GridItem = ({ photo, settings, onClick }: GridItemProps) => {
   }
 
   return (
-    <div className={wrapperClass} onClick={onClick}>
-      {mediaEl}
+    <li className={wrapperClass}>
+      <article>
+        <Link
+          href={`/archive/${photo.id}`}
+          className={linkClass}
+          aria-label={`Open archive item: ${itemLabel}`}
+        >
+          {mediaEl}
 
-      {/* 캡션 오버레이 */}
-      {settings.captionDisplay === 'overlay' && photo.caption && (
-        <div className="absolute inset-0 bg-[var(--color-bg)]/80 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-3">
-          <p className="text-[var(--color-secondary)] text-xs tracking-wider leading-relaxed line-clamp-3">
-            {photo.caption}
-          </p>
-        </div>
-      )}
+          {/* 캡션 오버레이 */}
+          {settings.captionDisplay === 'overlay' && photo.caption && (
+            <div className="absolute inset-0 bg-[var(--color-bg)]/80 opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 transition-opacity duration-300 flex items-end p-3">
+              <p className="text-[var(--color-secondary)] text-xs tracking-wider leading-relaxed line-clamp-3">
+                {photo.caption}
+              </p>
+            </div>
+          )}
 
-      {/* 확대 아이콘 */}
-      {settings.lightboxEnabled && (
-        <div className="absolute top-3 right-3 w-7 h-7 bg-[var(--color-bg)]/70 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-          <i className="ri-zoom-in-line text-[var(--color-secondary)] text-sm"></i>
-        </div>
-      )}
+          {/* 상세 열기 아이콘 */}
+          {settings.lightboxEnabled && (
+            <div className="absolute top-3 right-3 w-7 h-7 bg-[var(--color-bg)]/70 flex items-center justify-center opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 transition-opacity duration-300" aria-hidden="true">
+              <i className="ri-zoom-in-line text-[var(--color-secondary)] text-sm" aria-hidden="true"></i>
+            </div>
+          )}
 
-      {/* 캡션 하단 표시 */}
-      {settings.captionDisplay === 'below' && photo.caption && (
-        <p className="text-[var(--color-secondary)]/60 text-xs tracking-wider leading-relaxed pt-1.5 pb-1">
-          {photo.caption}
-        </p>
-      )}
-    </div>
+          {/* 캡션 하단 표시 */}
+          {settings.captionDisplay === 'below' && photo.caption && (
+            <p className="text-[var(--color-secondary)]/60 text-xs tracking-wider leading-relaxed pt-1.5 pb-1">
+              {photo.caption}
+            </p>
+          )}
+        </Link>
+      </article>
+    </li>
   );
 };
 
@@ -148,7 +158,6 @@ const ARCHIVE_SETTINGS: GallerySettings = {
 // ─── 메인 갤러리 페이지 ──────────────────────────────────────────────────────
 const GalleryPage = () => {
   const { t } = useTranslation();
-  const router = useRouter();
   const [photos, setPhotos] = useState<GalleryPhoto[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -191,16 +200,15 @@ const GalleryPage = () => {
           </p>
         </div>
       ) : (
-        <div className={containerClasses}>
+        <ul className={containerClasses}>
           {photos.map((photo) => (
             <GridItem
               key={photo.id}
               photo={photo}
               settings={ARCHIVE_SETTINGS}
-              onClick={() => router.push(`/archive/${photo.id}`)}
             />
           ))}
-        </div>
+        </ul>
       )}
 
     </PageLayout>

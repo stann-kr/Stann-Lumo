@@ -43,6 +43,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   // i18next를 언어 상태에 동기화 (setState 아님 — 외부 라이브러리 API 호출)
   useEffect(() => {
     i18n.changeLanguage(language);
+    document.documentElement.lang = language;
   }, [language]);
 
   const setLanguage = useCallback((lang: Language) => {
