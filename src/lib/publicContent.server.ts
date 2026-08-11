@@ -152,13 +152,11 @@ interface GalleryPhotoRow {
   linked_event_id: string | null;
 }
 
-const EMPTY_META: PageMeta = {
-  home: { navTitle: '' },
-  music: { title: '', subtitle: '' },
-  events: { title: '', subtitle: '', upcomingTitle: '', pastTitle: '' },
-  contact: { title: '', subtitle: '', guestbookTitle: '', directTitle: '', bookingTitle: '' },
-  link: { title: '', subtitle: '', terminalTitle: '' },
-};
+function getPublicDB(): D1Database {
+  const db = getDB();
+  if (!db) throw new Error('Public content is unavailable');
+  return db;
+}
 
 async function rows<T>(db: D1Database, sql: string, ...params: unknown[]): Promise<T[]> {
   const statement = params.length > 0 ? db.prepare(sql).bind(...params) : db.prepare(sql);
@@ -311,21 +309,13 @@ async function getTerminalInfo(db: D1Database): Promise<TerminalInfo> {
   };
 }
 
-const EMPTY_TERMINAL_INFO: TerminalInfo = {
-  url: '',
-  description: '',
-  customFields: [],
-  style: { fontSize: 'md', animationSpeed: 'normal', promptText: '>', showEmbed: false, embedHeight: '400px' },
-};
-
 export interface PublicShellProjection {
   artistName: string;
   sceneTracks: Track[];
 }
 
 export const getPublicShellProjection = cache(async (locale: PublicLocale): Promise<PublicShellProjection> => {
-  const db = getDB();
-  if (!db) return { artistName: 'STANN LUMO', sceneTracks: [] };
+  const db = getPublicDB();
 
   const [artistRows, trackRows] = await Promise.all([
     localizedRows<ArtistInfoRow>(db, 'SELECT id, key, value FROM artist_info WHERE lang = ? ORDER BY sort_order', locale),
@@ -345,8 +335,7 @@ export interface HomeProjection {
 }
 
 export const getHomeProjection = cache(async (locale: PublicLocale): Promise<HomeProjection> => {
-  const db = getDB();
-  if (!db) return { artistInfo: [], pageMeta: { home: EMPTY_META.home }, homeSections: [], terminalInfo: EMPTY_TERMINAL_INFO };
+  const db = getPublicDB();
 
   const [artistRows, metaRows, homeRows, terminalInfo] = await Promise.all([
     localizedRows<ArtistInfoRow>(db, 'SELECT id, key, value FROM artist_info WHERE lang = ? ORDER BY sort_order', locale),
@@ -370,8 +359,7 @@ export interface AboutProjection {
 }
 
 export const getAboutProjection = cache(async (locale: PublicLocale): Promise<AboutProjection> => {
-  const db = getDB();
-  if (!db) return { artistInfo: [], aboutSections: [] };
+  const db = getPublicDB();
   const [artistRows, sections, paragraphs, philosophy] = await Promise.all([
     localizedRows<ArtistInfoRow>(db, 'SELECT id, key, value FROM artist_info WHERE lang = ? ORDER BY sort_order', locale),
     localizedRows<AboutSectionRow>(db, 'SELECT id, title, type, section_order FROM about_sections WHERE lang = ? ORDER BY section_order', locale),
@@ -389,8 +377,7 @@ export interface MusicProjection {
 }
 
 export const getMusicProjection = cache(async (locale: PublicLocale): Promise<MusicProjection> => {
-  const db = getDB();
-  if (!db) return { pageMeta: { music: EMPTY_META.music }, tracks: [] };
+  const db = getPublicDB();
   const [metaRows, trackRows] = await Promise.all([
     localizedMetaRows(db, locale),
     localizedRows<TrackRow>(db, 'SELECT id, title, type, duration, year, platform, link FROM tracks WHERE lang = ? ORDER BY sort_order', locale),
@@ -406,8 +393,7 @@ export interface EventsProjection {
 }
 
 export const getEventsProjection = cache(async (locale: PublicLocale): Promise<EventsProjection> => {
-  const db = getDB();
-  if (!db) return { pageMeta: { events: EMPTY_META.events }, performances: [] };
+  const db = getPublicDB();
   const [metaRows, performanceRows] = await Promise.all([
     localizedMetaRows(db, locale),
     rows<PerformanceRow>(db, 'SELECT * FROM performances ORDER BY date DESC, sort_order'),
@@ -424,14 +410,7 @@ export interface ContactProjection {
 }
 
 export const getContactProjection = cache(async (locale: PublicLocale): Promise<ContactProjection> => {
-  const db = getDB();
-  if (!db) {
-    return {
-      pageMeta: { contact: EMPTY_META.contact },
-      contactInfo: [],
-      eventsInfo: { setDurations: [], technicalRequirements: [], contactEmail: '', responseTime: '' },
-    };
-  }
+  const db = getPublicDB();
   const [metaRows, contactRows, eventInfoRow, durations, requirements] = await Promise.all([
     localizedMetaRows(db, locale),
     localizedRows<ContactInfoRow>(db, 'SELECT label, value, icon FROM contact_info WHERE lang = ? ORDER BY sort_order', locale),
@@ -460,8 +439,7 @@ export interface LinkProjection {
 }
 
 export const getLinkProjection = cache(async (locale: PublicLocale): Promise<LinkProjection> => {
-  const db = getDB();
-  if (!db) return { pageMeta: { link: EMPTY_META.link }, linkPlatforms: [], terminalInfo: EMPTY_TERMINAL_INFO };
+  const db = getPublicDB();
   const [metaRows, platformRows, terminalInfo] = await Promise.all([
     localizedMetaRows(db, locale),
     localizedRows<LinkPlatformRow>(db, 'SELECT id, platform, url, icon, description FROM link_platforms WHERE lang = ? ORDER BY sort_order', locale),
@@ -473,8 +451,7 @@ export const getLinkProjection = cache(async (locale: PublicLocale): Promise<Lin
 });
 
 export const getArchivePhotos = cache(async (): Promise<GalleryPhoto[]> => {
-  const db = getDB();
-  if (!db) return [];
+  const db = getPublicDB();
   const photoRows = await rows<GalleryPhotoRow>(db, 'SELECT * FROM gallery_photos ORDER BY sort_order ASC, created_at DESC');
   const photos = photoRows.map(mapGalleryPhoto);
   assertPublicPayloadSafe(photos);
@@ -482,8 +459,7 @@ export const getArchivePhotos = cache(async (): Promise<GalleryPhoto[]> => {
 });
 
 export const getEventDetail = cache(async (id: string): Promise<{ event: Performance; posterPhoto?: GalleryPhoto } | null> => {
-  const db = getDB();
-  if (!db) return null;
+  const db = getPublicDB();
   const eventRow = await db.prepare('SELECT * FROM performances WHERE id = ?').bind(id).first<PerformanceRow>();
   if (!eventRow) return null;
   const event = mapPerformances([eventRow])[0];

@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { D1Database, D1PreparedStatement } from '@/lib/db';
 import { getDB } from '@/lib/db';
 import { assertPublicPayloadSafe } from '@/lib/security/publicPayload';
-import { getArchiveDetail, getHomeProjection } from './publicContent.server';
+import { getArchiveDetail, getHomeProjection, getMusicProjection } from './publicContent.server';
 
 vi.mock('@/lib/db', () => ({ getDB: vi.fn() }));
 
@@ -65,5 +65,11 @@ describe('public server content projections', () => {
 
     await expect(getArchiveDetail('missing-item')).resolves.toBeNull();
     expect(prepared.some((statement) => /ra_api_config|admin_password|token/i.test(statement.sql))).toBe(false);
+  });
+
+  it('fails into the public route error boundary when the public database is unavailable', async () => {
+    vi.mocked(getDB).mockReturnValue(null);
+
+    await expect(getMusicProjection('en')).rejects.toThrow('Public content is unavailable');
   });
 });
