@@ -23,6 +23,7 @@
 - 필요한 secret과 환경 변수 실값은 배포 환경에만 저장한다.
 - token sync 검사가 통과해야 한다.
 - OpenNext가 읽는 `.env*`에는 허용된 공개 URL 설정만 둔다. 로컬 Node/Docker 개발의 서버 전용 값은 git-ignored `.dev.vars`, production 값은 Cloudflare secret 또는 binding으로 제공한다.
+- 표준 `npm run build`는 `.next-build`를 사용하지만, OpenNext 호환을 위해 `npm run build:cloudflare`는 `.next`를 생성한다.
 
 ## 로컬 검증
 

@@ -5,8 +5,8 @@
   "scripts": {
     "dev": "node --env-file-if-exists=.dev.vars ./node_modules/next/dist/bin/next dev --port 3004",
     "prebuild": "node scripts/check-token-sync.mjs",
-    "build": "NEXT_DIST_DIR=.next-build NODE_ENV=production next build && next typegen",
-    "build:cloudflare": "node scripts/check-token-sync.mjs && npm run env:check:opennext && opennextjs-cloudflare build && npm run env:check:opennext-artifact",
+    "build": "NEXT_DIST_DIR=${NEXT_DIST_DIR:-.next-build} NODE_ENV=production next build && next typegen",
+    "build:cloudflare": "node scripts/check-token-sync.mjs && npm run env:check:opennext && NEXT_DIST_DIR=.next opennextjs-cloudflare build && npm run env:check:opennext-artifact",
     "start": "NEXT_DIST_DIR=.next-build node --env-file-if-exists=.dev.vars ./node_modules/next/dist/bin/next start --port 3004",
     "lint": "eslint src --report-unused-disable-directives --max-warnings 0",
     "test": "vitest run",
