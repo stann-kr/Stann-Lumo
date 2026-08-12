@@ -6,8 +6,27 @@ import { fileURLToPath } from 'node:url';
 
 const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
+function readPackageJson() {
+  return JSON.parse(fs.readFileSync(path.join(repositoryRoot, 'package.json'), 'utf8'));
+}
+
+function readLockfile() {
+  return JSON.parse(fs.readFileSync(path.join(repositoryRoot, 'package-lock.json'), 'utf8'));
+}
+
+test('Cloudflare build tools remain production dependencies', () => {
+  const packageJson = readPackageJson();
+  const lockfile = readLockfile();
+
+  for (const packageName of ['@opennextjs/cloudflare', 'esbuild', 'wrangler']) {
+    assert.ok(packageJson.dependencies?.[packageName], `${packageName} must be a production dependency.`);
+    assert.equal(packageJson.devDependencies?.[packageName], undefined, `${packageName} must not be development-only.`);
+    assert.ok(lockfile.packages[''].dependencies?.[packageName], `${packageName} must be recorded as a production dependency in the lockfile.`);
+  }
+});
+
 test('the lockfile includes every optional Sharp platform package', () => {
-  const lockfile = JSON.parse(fs.readFileSync(path.join(repositoryRoot, 'package-lock.json'), 'utf8'));
+  const lockfile = readLockfile();
   const rootPackage = lockfile.packages[''];
   const sharpPackage = lockfile.packages['node_modules/sharp'];
 
