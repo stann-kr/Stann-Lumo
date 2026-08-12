@@ -260,17 +260,6 @@ export interface GalleryData {
 }
 
 /**
- * RA API 설정 타입
- */
-export interface RAApiConfig {
-  userId: string;
-  apiKey: string;
-  djId: string;
-  option: '1' | '2' | '3' | '4'; // 1: upcoming, 2: previous 50, 3: all dates by year, 4: most recent 100
-  year?: string;
-}
-
-/**
  * 전체 콘텐츠 데이터 타입
  */
 export interface ContentData {
@@ -285,7 +274,6 @@ export interface ContentData {
   terminalInfo: TerminalInfo;
   contactInfo: ContactItem[];
   themeColors?: ThemeColors;
-  raApiConfig?: RAApiConfig;
 }
 
 /**

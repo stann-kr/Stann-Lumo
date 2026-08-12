@@ -2,6 +2,7 @@
 import { useState, ReactNode } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useContent } from '../../contexts/ContentContext';
+import { AdminEditGuardProvider, useAdminEditGuard } from '../../contexts/AdminEditGuardContext';
 import { createColorMixStyle } from '../../utils/colorMix';
 import { COLOR_VARS } from '../../constants/colors';
 import { TRANSITION } from '../../constants/styles';
@@ -21,24 +22,43 @@ const ADMIN_NAV_ITEMS = [
   { label: 'THEME', path: '/admin/theme' },
 ];
 
-const AdminLayout = ({ children }: AdminLayoutProps) => {
+const AdminLayoutContent = ({ children }: AdminLayoutProps) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
   const { currentEditLanguage, setCurrentEditLanguage } = useContent();
+  const { requestExit } = useAdminEditGuard();
 
   const handleNavClick = (path: string) => {
-    router.push(path);
-    setMobileMenuOpen(false);
+    if (pathname === path) {
+      setMobileMenuOpen(false);
+      return;
+    }
+
+    requestExit(() => {
+      router.push(path);
+      setMobileMenuOpen(false);
+    });
   };
 
-  const handleLogout = async () => {
+  const logout = async () => {
     await fetch('/api/auth/logout', { method: 'POST' });
     router.push('/admin');
   };
 
+  const handleLogout = () => {
+    requestExit(() => {
+      void logout();
+    });
+  };
+
   const handleBackToSite = () => {
-    router.push('/');
+    requestExit(() => router.push('/'));
+  };
+
+  const handleLanguageChange = (language: 'en' | 'ko') => {
+    if (language === currentEditLanguage) return;
+    requestExit(() => setCurrentEditLanguage(language));
   };
 
   const borderStyle = createColorMixStyle(COLOR_VARS.SECONDARY, 15);
@@ -62,7 +82,8 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
             <span className="text-xs text-[var(--color-muted)]/60 tracking-wider">EDITING:</span>
             <div className="inline-flex items-center gap-1 bg-[var(--color-secondary)]/5 px-2 py-1 rounded">
               <button
-                onClick={() => setCurrentEditLanguage('en')}
+                type="button"
+                onClick={() => handleLanguageChange('en')}
                 className={`px-2 py-0.5 text-xs tracking-widest transition-all cursor-pointer whitespace-nowrap ${
                   currentEditLanguage === 'en'
                     ? 'text-[var(--color-accent)] font-bold'
@@ -73,7 +94,8 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
               </button>
               <span className="text-[var(--color-secondary)]/30">|</span>
               <button
-                onClick={() => setCurrentEditLanguage('ko')}
+                type="button"
+                onClick={() => handleLanguageChange('ko')}
                 className={`px-2 py-0.5 text-xs tracking-widest transition-all cursor-pointer whitespace-nowrap ${
                   currentEditLanguage === 'ko'
                     ? 'text-[var(--color-accent)] font-bold'
@@ -94,6 +116,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
               return (
                 <li key={item.path}>
                   <button
+                    type="button"
                     onClick={() => handleNavClick(item.path)}
                     className={`w-full text-left px-4 py-3 cursor-pointer whitespace-nowrap relative group ${
                       isActive
@@ -116,6 +139,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
         {/* Footer Actions */}
         <div className="p-6 border-t space-y-2" style={borderStyle}>
           <button
+            type="button"
             onClick={handleBackToSite}
             className="w-full px-4 py-2 text-sm tracking-widest text-[var(--color-secondary)]/70 hover:text-[var(--color-secondary)] hover:bg-[var(--color-secondary)]/5 cursor-pointer whitespace-nowrap"
             style={{ transition: `${TRANSITION.DURATION.DEFAULT} ${TRANSITION.TIMING.EASE_IN_OUT}` }}
@@ -124,6 +148,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
             BACK TO SITE
           </button>
           <button
+            type="button"
             onClick={handleLogout}
             className="w-full px-4 py-2 text-sm tracking-widest text-[var(--color-secondary)]/70 hover:text-[var(--color-secondary)] hover:bg-[var(--color-secondary)]/5 cursor-pointer whitespace-nowrap"
             style={{ transition: `${TRANSITION.DURATION.DEFAULT} ${TRANSITION.TIMING.EASE_IN_OUT}` }}
@@ -147,7 +172,8 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
             <div className="flex items-center gap-2 mt-1">
               <span className="text-xs text-[var(--color-muted)]/60 tracking-wider">EDITING:</span>
               <button
-                onClick={() => setCurrentEditLanguage(currentEditLanguage === 'en' ? 'ko' : 'en')}
+                type="button"
+                onClick={() => handleLanguageChange(currentEditLanguage === 'en' ? 'ko' : 'en')}
                 className="text-xs text-[var(--color-accent)] font-bold tracking-widest cursor-pointer"
               >
                 {currentEditLanguage.toUpperCase()}
@@ -155,9 +181,12 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
             </div>
           </div>
           <button
+            type="button"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             className="w-10 h-10 flex flex-col items-center justify-center gap-1.5 cursor-pointer"
             aria-label="Toggle menu"
+            aria-expanded={mobileMenuOpen}
+            aria-controls="admin-mobile-navigation"
           >
             <span className={`w-6 h-0.5 bg-[var(--color-secondary)] ${mobileMenuOpen ? 'rotate-45 translate-y-2' : ''}`} style={{ transition: `${TRANSITION.DURATION.MEDIUM} ${TRANSITION.TIMING.EASE_IN_OUT}` }}></span>
             <span className={`w-6 h-0.5 bg-[var(--color-secondary)] ${mobileMenuOpen ? 'opacity-0' : ''}`} style={{ transition: `${TRANSITION.DURATION.MEDIUM} ${TRANSITION.TIMING.EASE_IN_OUT}` }}></span>
@@ -167,6 +196,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
 
         {/* Mobile Menu */}
         <nav
+          id="admin-mobile-navigation"
           className={`absolute top-full left-0 right-0 bg-[var(--color-bg)] border-b ${
             mobileMenuOpen ? 'max-h-screen opacity-100' : 'max-h-0 opacity-0 overflow-hidden'
           }`}
@@ -178,6 +208,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
               return (
                 <li key={item.path}>
                   <button
+                    type="button"
                     onClick={() => handleNavClick(item.path)}
                     className={`w-full text-left px-6 py-4 cursor-pointer ${
                       isActive
@@ -196,6 +227,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
             })}
             <li className="mt-4 pt-4 border-t" style={borderStyle}>
               <button
+                type="button"
                 onClick={handleBackToSite}
                 className="w-full text-left px-6 py-3 text-sm tracking-widest text-[var(--color-secondary)]/70 hover:text-[var(--color-secondary)] hover:bg-[var(--color-secondary)]/5 cursor-pointer whitespace-nowrap"
                 style={{ transition: `${TRANSITION.DURATION.DEFAULT} ${TRANSITION.TIMING.EASE_IN_OUT}` }}
@@ -206,6 +238,7 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
             </li>
             <li>
               <button
+                type="button"
                 onClick={handleLogout}
                 className="w-full text-left px-6 py-3 text-sm tracking-widest text-[var(--color-secondary)]/70 hover:text-[var(--color-secondary)] hover:bg-[var(--color-secondary)]/5 cursor-pointer whitespace-nowrap"
                 style={{ transition: `${TRANSITION.DURATION.DEFAULT} ${TRANSITION.TIMING.EASE_IN_OUT}` }}
@@ -227,5 +260,11 @@ const AdminLayout = ({ children }: AdminLayoutProps) => {
     </div>
   );
 };
+
+const AdminLayout = ({ children }: AdminLayoutProps) => (
+  <AdminEditGuardProvider>
+    <AdminLayoutContent>{children}</AdminLayoutContent>
+  </AdminEditGuardProvider>
+);
 
 export default AdminLayout;

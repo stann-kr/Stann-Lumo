@@ -1,0 +1,7 @@
+# 서버 전용 로컬 개발 값 — .env가 아닌 이 파일에만 둔다.
+ADMIN_PASSWORD=
+CLOUDFLARE_ACCOUNT_ID=
+CLOUDFLARE_API_TOKEN=
+
+# 기본값은 비활성이다. 필요 시에만 true로 설정하고 migration 완료 후 제거한다.
+MIGRATE_ENABLED=false

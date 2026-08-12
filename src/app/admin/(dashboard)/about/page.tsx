@@ -5,7 +5,10 @@ import AdminCard from "@/components/base/AdminCard";
 import AdminSectionHeader from "@/components/base/AdminSectionHeader";
 import FormInput from "@/components/base/FormInput";
 import FormTextarea from "@/components/base/FormTextarea";
+import FormSelect from "@/components/base/FormSelect";
 import SuccessMessage from "@/components/base/SuccessMessage";
+import SaveErrorMessage from "@/components/base/SaveErrorMessage";
+import DeleteConfirmModal from "@/components/base/DeleteConfirmModal";
 import { useAdminForm } from "@/hooks/useAdminForm";
 import {
   updateArtistInfo as apiUpdateArtistInfo,
@@ -19,20 +22,36 @@ import type {
   PhilosophyItem,
 } from "@/types/content";
 import { createBorderFaint } from "@/utils/colorMix";
+import { runSave } from "@/utils/saveResult";
+
+type PendingDelete =
+  | { kind: "artist"; id: string; name: string }
+  | { kind: "section"; id: string; name: string };
 
 const AdminAboutPage = () => {
   const { allContent, updateContent, currentEditLanguage } = useContent();
   const content = allContent[currentEditLanguage];
+  const [saveError, setSaveError] = useState("");
 
   const handleSave = useCallback(
     async (data: ContentData) => {
-      const results = await Promise.allSettled([
-        apiUpdateArtistInfo(currentEditLanguage, data.artistInfo),
-        apiUpdateAboutSections(currentEditLanguage, data.aboutSections),
-      ]);
-      const failed = results.filter((r) => r.status === 'rejected');
-      if (failed.length > 0) console.error('일부 저장 실패:', failed);
-      updateContent(data);
+      setSaveError("");
+      let saveErrorMessage = "";
+      const saved = await runSave(
+        ["ARTIST INFO", "ABOUT SECTIONS"],
+        [
+          apiUpdateArtistInfo(currentEditLanguage, data.artistInfo),
+          apiUpdateAboutSections(currentEditLanguage, data.aboutSections),
+        ],
+        () => {
+          updateContent(data);
+        },
+        (failedAreas) => {
+          saveErrorMessage = `${failedAreas.join(", ")} 저장에 실패했습니다. 입력한 내용은 유지됩니다. 다시 저장해 주세요.`;
+          setSaveError(saveErrorMessage);
+        },
+      );
+      if (!saved) throw new Error(saveErrorMessage);
     },
     [currentEditLanguage, updateContent],
   );
@@ -41,6 +60,7 @@ const AdminAboutPage = () => {
     useAdminForm(content, handleSave);
 
   const [addSectionOpen, setAddSectionOpen] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState<PendingDelete | null>(null);
 
   // ──────────────────────────────────────────
   // Artist Info 관리
@@ -105,6 +125,17 @@ const AdminAboutPage = () => {
       .filter((s) => s.id !== id)
       .map((s, i) => ({ ...s, order: i }));
     updateField("aboutSections", filtered);
+  };
+
+  const confirmDelete = () => {
+    if (!pendingDelete) return;
+
+    if (pendingDelete.kind === "artist") {
+      removeArtistInfoItem(pendingDelete.id);
+    } else {
+      removeSection(pendingDelete.id);
+    }
+    setPendingDelete(null);
   };
 
   const updateSectionTitle = (id: string, title: string) => {
@@ -257,6 +288,15 @@ const AdminAboutPage = () => {
       />
 
       <SuccessMessage message="변경 사항이 저장되었습니다" show={showSuccess} />
+      <SaveErrorMessage message={saveError} />
+      {pendingDelete && (
+        <DeleteConfirmModal
+          show={true}
+          itemName={pendingDelete.name}
+          onConfirm={confirmDelete}
+          onCancel={() => setPendingDelete(null)}
+        />
+      )}
 
       {/* Artist Info — 동적 key-value 리스트 */}
       <div>
@@ -284,7 +324,11 @@ const AdminAboutPage = () => {
                 {artistInfoItems.length > 1 && (
                   <button
                     type="button"
-                    onClick={() => removeArtistInfoItem(item.id)}
+                    onClick={() => setPendingDelete({
+                      kind: "artist",
+                      id: item.id,
+                      name: item.key || "FIELD",
+                    })}
                     className="flex items-center gap-1 px-3 py-1 text-xs tracking-widest border border-red-500/40 text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer whitespace-nowrap"
                   >
                     <i className="ri-delete-bin-line" />
@@ -387,24 +431,32 @@ const AdminAboutPage = () => {
 
                 <div className="flex items-center gap-2">
                   {/* 타입 선택 */}
-                  <select
+                  <FormSelect
+                    id={`about-section-type-${section.id}`}
+                    name={`aboutSectionType-${section.id}`}
+                    label="SECTION TYPE"
+                    labelClassName="sr-only"
                     value={section.type}
-                    onChange={(e) =>
+                    onChange={(value) =>
                       updateSectionType(
                         section.id,
-                        e.target.value as DynamicSectionType,
+                        value as DynamicSectionType,
                       )
                     }
                     className="bg-[var(--color-bg)] border border-[var(--color-secondary)]/30 text-[var(--color-secondary)] text-xs tracking-wider px-3 py-1.5 focus:outline-none focus:border-[var(--color-accent)] cursor-pointer"
                   >
                     <option value="paragraphs">paragraphs</option>
                     <option value="philosophy-items">philosophy-items</option>
-                  </select>
+                  </FormSelect>
 
                   {sections.length > 1 && (
                     <button
                       type="button"
-                      onClick={() => removeSection(section.id)}
+                      onClick={() => setPendingDelete({
+                        kind: "section",
+                        id: section.id,
+                        name: section.title || "SECTION",
+                      })}
                       className="flex items-center gap-1 px-3 py-1.5 text-xs tracking-widest border border-red-500/40 text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer whitespace-nowrap"
                     >
                       <i className="ri-delete-bin-line" />

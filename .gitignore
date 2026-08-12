@@ -5,9 +5,11 @@ node_modules/
 out/
 dist/
 .next/
+.next-build/
 
 # 환경 변수 (민감 정보 포함)
 .env
+.dev.vars
 .env.local
 .env.production
 
@@ -28,6 +30,9 @@ npm-debug.log*
 
 # Wrangler (Cloudflare)
 .wrangler/
+
+# Git worktrees (Claude 전용이 아닌 범용 작업 트리)
+/.worktrees/
 
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
@@ -68,4 +73,19 @@ next-env.d.ts
 
 .open-next
 
-.docs/private/
+# --- 프로젝트 문서 정책 ---
+# docs/ = GitHub에 올릴 공개 프로젝트 문서
+# .docs/ = Obsidian 동기화/개인 작업/AI handoff 문서 (GitHub 업로드 금지)
+/.docs/
+!/docs/
+!/docs/**/*.md
+
+# 에이전트 지침 및 로컬 설정 (공개 금지)
+/CLAUDE.md
+/AGENTS.md
+/.claude/
+/.agents/
+/.codex/
+
+# 작업 로그는 비공개 레이어에서만 관리한다
+/WORK_LOG.md

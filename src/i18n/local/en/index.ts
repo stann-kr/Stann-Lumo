@@ -190,6 +190,7 @@ export default {
   // Footer
   footer_version: 'Version',
   footer_language: 'Language',
+  footer_signal_net_aria: 'Navigate between STANN OS surfaces',
   
   // Time
   time_seoul: 'Seoul Time',

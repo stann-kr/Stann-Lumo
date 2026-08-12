@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import "./globals.css";
 import Providers from "./Providers";
+import LegacyPublicStorageCleanup from "@/components/security/LegacyPublicStorageCleanup";
+import { getRequestLocale } from '@/lib/publicContent.server';
 
 export const metadata: Metadata = {
   title: "STANN LUMO",
@@ -14,9 +16,10 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({ children }: { children: ReactNode }) {
+export default async function RootLayout({ children }: { children: ReactNode }) {
+  const initialLanguage = await getRequestLocale();
   return (
-    <html lang="ko" suppressHydrationWarning>
+    <html lang={initialLanguage} suppressHydrationWarning>
       <head>
         <meta
           name="viewport"
@@ -30,7 +33,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         />
       </head>
       <body>
-        <Providers>{children}</Providers>
+        <LegacyPublicStorageCleanup />
+        <Providers initialLanguage={initialLanguage}>{children}</Providers>
       </body>
     </html>
   );

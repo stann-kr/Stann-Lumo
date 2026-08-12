@@ -4,6 +4,8 @@ out
 .DS_Store
 *.log
 .env
+.dev.vars
 .env.local
 .next
+.next-build
 .open-next

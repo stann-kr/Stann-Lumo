@@ -7,6 +7,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getDB } from '@/lib/db';
+import { assertPublicPayloadSafe } from '@/lib/security/publicPayload';
 import type {
   ContentData,
   ArtistInfoItem,
@@ -20,10 +21,16 @@ import type {
   EventsInfo,
   LinkPlatform,
   ContactItem,
-  RAApiConfig,
   TerminalInfo,
   TerminalCustomField,
 } from '@/types/content';
+
+const PUBLIC_NO_STORE_HEADERS = { 'Cache-Control': 'no-store, max-age=0' } as const;
+
+function publicJson(payload: unknown, status = 200) {
+  assertPublicPayloadSafe(payload);
+  return NextResponse.json(payload, { status, headers: PUBLIC_NO_STORE_HEADERS });
+}
 
 // ---------- DB 행 타입 ----------
 
@@ -79,9 +86,6 @@ interface SiteConfigRow {
 
 interface TerminalCustomFieldRow {
   id: string; field_key: string; field_value: string; field_type: string; sort_order: number;
-}
-interface RAApiConfigRow {
-  id: number; user_id: string | null; api_key: string | null; dj_id: string | null; option: string; year: string | null;
 }
 // ---------- 헬퍼: page_meta 행 → PageMeta 객체 ----------
 
@@ -153,17 +157,17 @@ export async function GET(
   const { lang } = await params;
 
   if (lang !== 'en' && lang !== 'ko') {
-    return NextResponse.json(
+    return publicJson(
       { success: false, error: { code: 'BAD_REQUEST', message: 'lang must be "en" or "ko"' } },
-      { status: 400 },
+      400,
     );
   }
 
   const db = getDB();
   if (!db) {
-    return NextResponse.json(
+    return publicJson(
       { success: false, error: { code: 'DB_UNAVAILABLE', message: 'Database not available' } },
-      { status: 503 },
+      503,
     );
   }
 
@@ -182,7 +186,6 @@ export async function GET(
       db.prepare('SELECT * FROM events_tech_requirements WHERE lang = ? ORDER BY sort_order').bind(lang),
       db.prepare('SELECT * FROM link_platforms WHERE lang = ? ORDER BY sort_order').bind(lang),
       db.prepare('SELECT * FROM contact_info WHERE lang = ? ORDER BY sort_order').bind(lang),
-      db.prepare('SELECT * FROM ra_api_config WHERE id = 1'),
       db.prepare('SELECT * FROM site_config WHERE id = 1'),
       db.prepare('SELECT * FROM terminal_custom_fields ORDER BY sort_order ASC'),
     ];
@@ -214,33 +217,88 @@ export async function GET(
       return primary;
     };
 
-    const artistInfoRows    = getRows<ArtistInfoRow>(0, 16);
-    const aboutSectionRows  = getRows<AboutSectionRow>(1, 17);
-    const aboutParaRows     = getRows<AboutSectionParagraphRow>(2, 18);
-    const aboutPhilRows     = getRows<AboutSectionPhilosophyItemRow>(3, 19);
+    const queryIndex = {
+      artistInfo: 0,
+      aboutSections: 1,
+      aboutParagraphs: 2,
+      aboutPhilosophy: 3,
+      pageMeta: 4,
+      homeSections: 5,
+      tracks: 6,
+      performances: 7,
+      eventsInfo: 8,
+      eventDurations: 9,
+      eventRequirements: 10,
+      linkPlatforms: 11,
+      contactInfo: 12,
+      siteConfig: 13,
+      terminalFields: 14,
+      fallbackArtistInfo: 15,
+      fallbackAboutSections: 16,
+      fallbackAboutParagraphs: 17,
+      fallbackAboutPhilosophy: 18,
+      fallbackPageMeta: 19,
+      fallbackHomeSections: 20,
+      fallbackTracks: 21,
+      fallbackEventDurations: 22,
+      fallbackEventRequirements: 23,
+      fallbackLinkPlatforms: 24,
+      fallbackContactInfo: 25,
+    } as const;
+
+    const artistInfoRows = getRows<ArtistInfoRow>(
+      queryIndex.artistInfo,
+      queryIndex.fallbackArtistInfo,
+    );
+    const aboutSectionRows = getRows<AboutSectionRow>(
+      queryIndex.aboutSections,
+      queryIndex.fallbackAboutSections,
+    );
+    const aboutParaRows = getRows<AboutSectionParagraphRow>(
+      queryIndex.aboutParagraphs,
+      queryIndex.fallbackAboutParagraphs,
+    );
+    const aboutPhilRows = getRows<AboutSectionPhilosophyItemRow>(
+      queryIndex.aboutPhilosophy,
+      queryIndex.fallbackAboutPhilosophy,
+    );
 
     // PageMeta는 병합 처리
-    let pageMetaRows: PageMetaRow[] = (res[4].results as PageMetaRow[]);
+    let pageMetaRows: PageMetaRow[] = (res[queryIndex.pageMeta].results as PageMetaRow[]);
     if (lang === 'ko') {
-      const enMetaRows = (res[20].results as PageMetaRow[]);
+      const enMetaRows = (res[queryIndex.fallbackPageMeta].results as PageMetaRow[]);
       const metaMap = new Map<string, PageMetaRow>();
       enMetaRows.forEach(r => metaMap.set(`${r.page}:${r.key}`, r));
       pageMetaRows.forEach(r => metaMap.set(`${r.page}:${r.key}`, r));
       pageMetaRows = Array.from(metaMap.values());
     }
 
-    const homeSectionRows   = getRows<HomeSectionRow>(5, 21);
-    const trackRows         = getRows<TrackRow>(6, 22);
-    const performanceRows   = (res[7].results as PerformanceRow[]);
-    const eventsInfoRow     = (res[8].results[0] as EventsInfoRow | undefined);
-    const setDurationRows   = getRows<EventsListRow>(9, 23);
-    const techReqRows       = getRows<EventsListRow>(10, 24);
-    const linkPlatformRows  = getRows<LinkPlatformRow>(11, 25);
-    const contactInfoRows   = getRows<ContactInfoRow>(12, 26);
+    const homeSectionRows = getRows<HomeSectionRow>(
+      queryIndex.homeSections,
+      queryIndex.fallbackHomeSections,
+    );
+    const trackRows = getRows<TrackRow>(queryIndex.tracks, queryIndex.fallbackTracks);
+    const performanceRows = (res[queryIndex.performances].results as PerformanceRow[]);
+    const eventsInfoRow = (res[queryIndex.eventsInfo].results[0] as EventsInfoRow | undefined);
+    const setDurationRows = getRows<EventsListRow>(
+      queryIndex.eventDurations,
+      queryIndex.fallbackEventDurations,
+    );
+    const techReqRows = getRows<EventsListRow>(
+      queryIndex.eventRequirements,
+      queryIndex.fallbackEventRequirements,
+    );
+    const linkPlatformRows = getRows<LinkPlatformRow>(
+      queryIndex.linkPlatforms,
+      queryIndex.fallbackLinkPlatforms,
+    );
+    const contactInfoRows = getRows<ContactInfoRow>(
+      queryIndex.contactInfo,
+      queryIndex.fallbackContactInfo,
+    );
 
-    const raRow             = (res[13].results[0] as RAApiConfigRow | undefined);
-    const siteRow           = (res[14].results[0] as SiteConfigRow | undefined);
-    const terminalFieldRows = (res[15].results as TerminalCustomFieldRow[]);
+    const siteRow = (res[queryIndex.siteConfig].results[0] as SiteConfigRow | undefined);
+    const terminalFieldRows = (res[queryIndex.terminalFields].results as TerminalCustomFieldRow[]);
 
     // ArtistInfo
     const artistInfo: ArtistInfoItem[] = artistInfoRows.map((r) => ({
@@ -331,18 +389,6 @@ export async function GET(
       label: r.label, value: r.value, icon: r.icon,
     }));
 
-    // RAApiConfig
-    const raApiConfig: RAApiConfig | undefined =
-      raRow?.user_id
-        ? {
-            userId:  raRow.user_id  ?? '',
-            apiKey:  raRow.api_key  ?? '',
-            djId:    raRow.dj_id    ?? '',
-            option:  (raRow.option as RAApiConfig['option']) ?? '1',
-            year:    raRow.year     ?? '',
-          }
-        : undefined;
-
     const data: ContentData = {
       artistInfo,
       aboutSections,
@@ -354,16 +400,13 @@ export async function GET(
       linkPlatforms,
       terminalInfo,
       contactInfo,
-      ...(raApiConfig && { raApiConfig }),
     };
 
-    return NextResponse.json({ success: true, data }, {
-      headers: { 'Cache-Control': 'public, max-age=60, s-maxage=300, stale-while-revalidate=600' },
-    });
+    return publicJson({ success: true, data });
   } catch {
-    return NextResponse.json(
+    return publicJson(
       { success: false, error: { code: 'INTERNAL_ERROR', message: 'Failed to fetch content' } },
-      { status: 500 },
+      500,
     );
   }
 }

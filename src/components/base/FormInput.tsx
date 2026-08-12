@@ -1,22 +1,22 @@
-import { useState } from 'react';
+import { useId, useState } from 'react';
+import type { InputHTMLAttributes } from 'react';
 import { createBorderMid, createBorderAccent } from '../../utils/colorMix';
 
 /**
  * FormInput Props 정의
  */
-interface FormInputProps {
+interface FormInputProps extends Omit<
+  InputHTMLAttributes<HTMLInputElement>,
+  'value' | 'onChange'
+> {
   /** 입력 필드 라벨 */
   label: string;
-  /** 입력 필드 타입 (기본값: 'text') */
-  type?: string;
   /** 현재 입력값 */
   value: string;
   /** 값 변경 시 호출될 콜백 함수 */
   onChange: (value: string) => void;
   /** 플레이스홀더 텍스트 */
   placeholder?: string;
-  /** 읽기 전용 여부 */
-  readOnly?: boolean;
 }
 
 /**
@@ -40,29 +40,44 @@ interface FormInputProps {
  */
 const FormInput = ({
   label,
-  type = 'text',
   value,
   onChange,
-  placeholder,
-  readOnly = false,
+  id: suppliedId,
+  name: suppliedName,
+  className,
+  onFocus,
+  onBlur,
+  ...inputProps
 }: FormInputProps) => {
   const [isFocused, setIsFocused] = useState(false);
+  const generatedId = useId();
+  const inputId = suppliedId ?? generatedId;
+  const inputName = suppliedName ?? inputId;
 
   return (
     <div>
-      <label className="block text-xs text-[var(--color-accent)] tracking-widest mb-2">
+      <label
+        htmlFor={inputId}
+        className="block text-xs text-[var(--color-accent)] tracking-widest mb-2"
+      >
         {label}
       </label>
       <input
-        type={type}
+        id={inputId}
+        name={inputName}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        readOnly={readOnly}
-        className="w-full bg-transparent border-b text-[var(--color-secondary)] text-sm tracking-wider py-2 focus:outline-none transition-colors"
+        {...inputProps}
+        className={`w-full bg-transparent border-b text-[var(--color-secondary)] text-sm tracking-wider py-2 focus:outline-none transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${className ?? ''}`}
         style={isFocused ? createBorderAccent() : createBorderMid()}
-        onFocus={() => setIsFocused(true)}
-        onBlur={() => setIsFocused(false)}
+        onFocus={(event) => {
+          setIsFocused(true);
+          onFocus?.(event);
+        }}
+        onBlur={(event) => {
+          setIsFocused(false);
+          onBlur?.(event);
+        }}
       />
     </div>
   );
