@@ -36,7 +36,7 @@ npm run type-check
 npm run build
 ```
 
-`npm run dev`는 `.next`, `npm run build`는 `.next-build`를 사용하므로 개발 서버를 유지한 채 표준 빌드 검증을 실행해도 서로의 산출물을 덮어쓰지 않습니다. `npm run start`는 `npm run build`가 만든 `.next-build`를 실행합니다. Cloudflare용 `npm run build:cloudflare`는 OpenNext 호환을 위해 `.next`를 사용합니다.
+`npm run dev`는 `.next`, `npm run build`는 `.next-build`를 사용하므로 개발 서버를 유지한 채 표준 빌드 검증을 실행해도 서로의 산출물을 덮어쓰지 않습니다. `npm run start`는 `npm run build`가 만든 `.next-build`를 실행합니다. Cloudflare Workers Builds에서는 OpenNext 호환을 위해 같은 build 명령이 `.next`를 사용합니다.
 
 ## 문서
 

@@ -14,7 +14,7 @@ test('local Node scripts use the fixed port 3004', () => {
   const packageJson = JSON.parse(readRepositoryFile('package.json'));
 
   assert.equal(packageJson.scripts.dev, 'node --env-file-if-exists=.dev.vars ./node_modules/next/dist/bin/next dev --port 3004');
-  assert.equal(packageJson.scripts.build, 'NEXT_DIST_DIR=${NEXT_DIST_DIR:-.next-build} NODE_ENV=production next build && next typegen');
+  assert.equal(packageJson.scripts.build, 'NEXT_DIST_DIR=$(node scripts/resolve-build-dist-dir.mjs) NODE_ENV=production next build && next typegen');
   assert.equal(packageJson.scripts.start, 'NEXT_DIST_DIR=.next-build node --env-file-if-exists=.dev.vars ./node_modules/next/dist/bin/next start --port 3004');
   assert.match(packageJson.scripts['build:cloudflare'], /NEXT_DIST_DIR=\.next opennextjs-cloudflare build/);
 });

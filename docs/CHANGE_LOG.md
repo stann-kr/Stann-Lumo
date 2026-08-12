@@ -7,7 +7,7 @@
 ### Fixed
 
 - 로컬 서버 전용 환경 값은 git-ignored `.dev.vars`로 분리하고, Next.js/OpenNext가 읽는 `.env`에는 공개 URL만 둘 수 있게 했다.
-- 개발 서버와 표준 프로덕션 빌드는 각각 `.next`, `.next-build`를 사용하도록 분리해, 동시에 실행해도 산출물을 덮어쓰지 않게 했다. OpenNext용 Cloudflare build는 호환성을 위해 `.next`를 명시적으로 사용한다.
+- 개발 서버와 표준 프로덕션 빌드는 각각 `.next`, `.next-build`를 사용하도록 분리해, 동시에 실행해도 산출물을 덮어쓰지 않게 했다. Cloudflare Workers Builds는 OpenNext 호환을 위해 `.next`를 사용한다.
 - `npm run start`는 표준 빌드 산출물을 `3004`에서 실행하며, 빌드 후 개발용 route type을 자동으로 갱신한다.
 
 ## 2026-08-11 — 로컬 개발 서버 포트 계약
