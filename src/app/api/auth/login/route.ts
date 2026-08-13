@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getEnv } from '@/lib/db';
-import { createSession, buildSessionCookieHeader } from '@/lib/auth';
+import {
+  createSession,
+  buildSessionCookieHeader,
+  SessionStorageUnavailableError,
+} from '@/lib/auth';
 
 /**
  * Web Crypto API 기반 상수 시간 문자열 비교
@@ -48,7 +52,14 @@ export async function POST(request: NextRequest) {
     response.headers.set('Set-Cookie', buildSessionCookieHeader(sessionId));
 
     return response;
-  } catch {
+  } catch (error) {
+    if (error instanceof SessionStorageUnavailableError) {
+      return NextResponse.json(
+        { success: false, error: { code: 'DB_UNAVAILABLE', message: 'Admin session storage is unavailable' } },
+        { status: 503 },
+      );
+    }
+
     return NextResponse.json(
       { success: false, error: { code: 'BAD_REQUEST', message: 'Bad request' } },
       { status: 400 },

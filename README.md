@@ -19,7 +19,7 @@ cp .dev.vars.example .dev.vars
 npm run dev
 ```
 
-개발 서버는 항상 `http://localhost:3004`에서 실행한다. 공개 URL은 `.env`, 로컬 서버 전용 값은 git-ignored `.dev.vars`에 둔다.
+개발 서버는 항상 `http://localhost:3004`에서 실행한다. `npm run dev`는 OpenNext artifact를 만든 뒤 Wrangler local preview로 실행되어 local D1/R2 binding만 사용하며, 시작 전에 local D1 migration을 적용한다. 실행 wrapper는 `.dev.vars`에서 관리자 비밀번호만 일회성 환경 파일로 전달하고 Cloudflare credential을 포함한 나머지 키를 배제한다. 공개 URL은 `.env`, 로컬 서버 전용 값은 git-ignored `.dev.vars`에 둔다.
 
 Docker 환경에서는 다음 명령을 사용한다.
 
@@ -32,11 +32,12 @@ docker compose up --build
 ```bash
 npm run lint
 npm run test:local-config
+npm run test:local-worker
 npm run type-check
 npm run build
 ```
 
-`npm run dev`는 `.next`, `npm run build`는 `.next-build`를 사용하므로 개발 서버를 유지한 채 표준 빌드 검증을 실행해도 서로의 산출물을 덮어쓰지 않습니다. `npm run start`는 `npm run build`가 만든 `.next-build`를 실행합니다. Cloudflare Workers Builds에서는 OpenNext 호환을 위해 같은 build 명령이 `.next`를 사용합니다.
+`npm run dev`는 OpenNext artifact `.next`와 Wrangler local runtime을 사용하고, `npm run build`는 `.next-build`를 사용한다. `npm run start`는 `npm run build`가 만든 `.next-build`를 실행한다. Worker binding이 필요 없는 빠른 UI 확인에는 `npm run dev:next`를 쓸 수 있지만 D1/R2 API는 의도적으로 fail-closed 한다. Cloudflare Workers Builds에서는 OpenNext 호환을 위해 같은 build 명령이 `.next`를 사용한다.
 
 ## 문서
 

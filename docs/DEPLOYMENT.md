@@ -22,7 +22,7 @@
 - R2 bucket `stann-lumo-media`가 존재해야 한다.
 - 필요한 secret과 환경 변수 실값은 배포 환경에만 저장한다.
 - token sync 검사가 통과해야 한다.
-- OpenNext가 읽는 `.env*`에는 허용된 공개 URL 설정만 둔다. 로컬 Node/Docker 개발의 서버 전용 값은 git-ignored `.dev.vars`, production 값은 Cloudflare secret 또는 binding으로 제공한다.
+- OpenNext가 읽는 `.env*`에는 허용된 공개 URL 설정만 둔다. local wrapper는 git-ignored `.dev.vars`에서 관리자 비밀번호만 일회성 Worker 환경으로 전달하고 Cloudflare credential을 배제한다. production 값은 Cloudflare secret 또는 binding으로 제공한다.
 - 표준 `npm run build`는 `.next-build`를 사용하지만, Cloudflare Workers Builds에서는 OpenNext 호환을 위해 `.next`를 생성한다.
 
 ## 로컬 검증

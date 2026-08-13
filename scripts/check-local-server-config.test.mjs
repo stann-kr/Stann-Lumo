@@ -13,9 +13,19 @@ function readRepositoryFile(relativePath) {
 test('local Node scripts use the fixed port 3004', () => {
   const packageJson = JSON.parse(readRepositoryFile('package.json'));
 
-  assert.equal(packageJson.scripts.dev, 'node --env-file-if-exists=.dev.vars ./node_modules/next/dist/bin/next dev --port 3004');
+  assert.equal(
+    packageJson.scripts.dev,
+    'node scripts/run-local-worker.mjs --ip 127.0.0.1',
+  );
+  assert.equal(
+    packageJson.scripts['dev:docker'],
+    'node scripts/run-local-worker.mjs --ip 0.0.0.0',
+  );
+  assert.equal(packageJson.scripts['dev:next'], 'node scripts/run-local-worker.mjs --next --ip 127.0.0.1');
+  assert.equal(packageJson.scripts['local:d1:apply'], 'wrangler d1 migrations apply stann-lumo-db --local');
+  assert.equal(packageJson.scripts['local:prepare'], 'node scripts/run-local-worker.mjs --prepare-only');
   assert.equal(packageJson.scripts.build, 'NEXT_DIST_DIR=$(node scripts/resolve-build-dist-dir.mjs) NODE_ENV=production next build && next typegen');
-  assert.equal(packageJson.scripts.start, 'NEXT_DIST_DIR=.next-build node --env-file-if-exists=.dev.vars ./node_modules/next/dist/bin/next start --port 3004');
+  assert.equal(packageJson.scripts.start, 'NEXT_DIST_DIR=.next-build node ./node_modules/next/dist/bin/next start --hostname 127.0.0.1 --port 3004');
   assert.match(packageJson.scripts['build:cloudflare'], /NEXT_DIST_DIR=\.next opennextjs-cloudflare build/);
 });
 
@@ -25,13 +35,14 @@ test('development and standard production builds use separate output directories
   assert.match(nextConfig, /distDir:\s*process\.env\.NEXT_DIST_DIR\s*\?\?\s*'\.next'/);
 });
 
-test('Docker exposes and maps the same fixed port 3004', () => {
+test('Docker binds the local Worker preview to loopback on port 3004', () => {
   const dockerfile = readRepositoryFile('Dockerfile');
   const compose = readRepositoryFile('docker-compose.yml');
 
   assert.match(dockerfile, /^EXPOSE 3004$/m);
-  assert.match(compose, /^\s+- "3004:3004"$/m);
+  assert.match(dockerfile, /^CMD \["npm", "run", "dev:docker"\]$/m);
+  assert.match(compose, /^\s+- "127\.0\.0\.1:3004:3004"$/m);
   assert.match(compose, /^\s+- \.env$/m);
-  assert.match(compose, /^\s+- \.dev\.vars$/m);
+  assert.doesNotMatch(compose, /^\s+- \.dev\.vars$/m);
   assert.doesNotMatch(`${dockerfile}\n${compose}`, /\b3000\b/);
 });
