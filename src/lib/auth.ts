@@ -15,22 +15,22 @@ const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 /** 쿠키 이름 */
 export const SESSION_COOKIE_NAME = 'admin_session';
 
-/** Docker 개발 환경 폴백 세션 값 */
-export const DEV_SESSION_VALUE = 'dev-session';
+export class SessionStorageUnavailableError extends Error {
+  constructor() {
+    super('Admin session storage is unavailable');
+    this.name = 'SessionStorageUnavailableError';
+  }
+}
 
 /**
  * D1에 새 세션 생성 후 세션 ID 반환
- * DB가 없는 개발 환경에서는 DEV_SESSION_VALUE 반환
+ * D1 binding이 없는 실행 환경에서는 세션을 발급하지 않는다.
  */
 export async function createSession(): Promise<string> {
   const db = getDB();
 
   if (!db) {
-    // Docker 개발 환경 전용 폴백 — 프로덕션에서는 DB 없이 세션 생성 불가
-    if (process.env.NODE_ENV === 'production') {
-      throw new Error('DB unavailable in production — cannot create session');
-    }
-    return DEV_SESSION_VALUE;
+    throw new SessionStorageUnavailableError();
   }
 
   const sessionId = crypto.randomUUID();
@@ -50,12 +50,6 @@ export async function createSession(): Promise<string> {
  * @returns 유효하면 true, 만료/미존재 시 false
  */
 export async function validateSession(sessionId: string): Promise<boolean> {
-  // 개발 환경 전용 폴백 — 프로덕션에서는 절대 허용 안 함
-  if (sessionId === DEV_SESSION_VALUE) {
-    if (process.env.NODE_ENV === 'production') return false;
-    return true;
-  }
-
   const db = getDB();
   if (!db) return false;
 
@@ -73,8 +67,6 @@ export async function validateSession(sessionId: string): Promise<boolean> {
  * @param sessionId 삭제할 세션 ID
  */
 export async function deleteSession(sessionId: string): Promise<void> {
-  if (sessionId === DEV_SESSION_VALUE) return;
-
   const db = getDB();
   if (!db) return;
 

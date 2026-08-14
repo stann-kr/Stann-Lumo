@@ -2,6 +2,14 @@
 
 공개 가능한 결과 중심 변경 요약이다. 항목은 일자 단위이며 최신 항목을 위에 둔다.
 
+## 2026-08-14 — Cloudflare development와 production 배포 분리
+
+### Changed
+
+- feature branch preview와 `dev` 배포를 고정 development Worker 및 별도 D1·R2 resource로 분리했다.
+- `main`만 production Worker를 배포하도록 Workers Builds branch 계약과 deploy guard를 추가했다.
+- 모호한 수동 production deploy 경로를 제거하고 development bootstrap과 migration을 명시적 명령으로 분리했다.
+
 ## 2026-08-11 — 로컬 환경 경계와 빌드 산출물 격리
 
 ### Fixed

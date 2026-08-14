@@ -2,12 +2,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
+import { REMOTE_CLOUDFLARE_CREDENTIAL_KEYS } from './check-local-server-env.mjs';
 
 export const LOCAL_SERVER_ENV_KEYS = new Set([
   'ADMIN_PASSWORD',
-  'CLOUDFLARE_ACCOUNT_ID',
-  'CLOUDFLARE_API_TOKEN',
-  'MIGRATE_ENABLED',
 ]);
 
 function lineKey(line) {
@@ -39,8 +37,15 @@ export function migrateLocalServerEnvironment(rootDirectory) {
   if (!fs.existsSync(sourcePath)) throw new Error('Local .env file is required.');
   if (fs.existsSync(destinationPath)) throw new Error('Refusing to overwrite existing .dev.vars.');
 
-  const { moved, retained, seen } = splitLocalServerEnvironment(fs.readFileSync(sourcePath, 'utf8'));
-  const missing = [...LOCAL_SERVER_ENV_KEYS].filter((key) => key !== 'MIGRATE_ENABLED' && !seen.has(key));
+  const source = fs.readFileSync(sourcePath, 'utf8');
+  const sourceKeys = new Set((source.match(/.*(?:\r?\n|$)/g) ?? []).map(lineKey).filter(Boolean));
+  const remoteCredentialIssues = [...sourceKeys].filter((key) => REMOTE_CLOUDFLARE_CREDENTIAL_KEYS.has(key));
+  if (remoteCredentialIssues.length > 0) {
+    throw new Error(`Remote D1 credentials are not supported in local app configuration: ${remoteCredentialIssues.join(', ')}`);
+  }
+
+  const { moved, retained, seen } = splitLocalServerEnvironment(source);
+  const missing = [...LOCAL_SERVER_ENV_KEYS].filter((key) => !seen.has(key));
   if (missing.length > 0) throw new Error(`Missing required local server keys: ${missing.join(', ')}`);
   if (moved.length === 0) throw new Error('No local server keys found in .env.');
 
