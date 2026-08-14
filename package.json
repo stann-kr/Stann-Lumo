@@ -13,7 +13,7 @@
     "lint": "eslint src --report-unused-disable-directives --max-warnings 0",
     "test": "vitest run",
     "test:env": "node --test scripts/check-opennext-env.test.mjs",
-    "test:local-config": "npm run local:config:check && node --test scripts/check-local-server-env.test.mjs scripts/run-local-worker.test.mjs scripts/check-local-server-config.test.mjs scripts/migrate-local-server-env.test.mjs scripts/resolve-build-dist-dir.test.mjs scripts/check-lockfile.test.mjs",
+    "test:local-config": "npm run local:config:check && node --test scripts/check-local-server-env.test.mjs scripts/run-local-worker.test.mjs scripts/check-local-server-config.test.mjs scripts/check-cloudflare-deploy-config.test.mjs scripts/check-cloudflare-deploy-target.test.mjs scripts/migrate-local-server-env.test.mjs scripts/resolve-build-dist-dir.test.mjs scripts/check-lockfile.test.mjs",
     "test:local-worker": "node scripts/smoke-local-worker.mjs",
     "local:config:check": "node scripts/check-local-server-env.mjs",
     "local:d1:apply": "wrangler d1 migrations apply stann-lumo-db --local",
@@ -23,7 +23,11 @@
     "env:check:opennext": "node scripts/check-opennext-env.mjs source",
     "env:check:opennext-artifact": "node scripts/check-opennext-env.mjs artifact",
     "migrate:local-env": "node scripts/migrate-local-server-env.mjs",
-    "deploy": "npm run build:cloudflare && wrangler deploy"
+    "d1:dev:apply": "wrangler d1 migrations apply DB --remote --env dev",
+    "deploy:dev": "npm run build:cloudflare && ALLOW_MANUAL_CLOUDFLARE_DEPLOY=dev npm run deploy:dev:artifact",
+    "deploy:dev:artifact": "node scripts/check-cloudflare-deploy-target.mjs dev && wrangler deploy .open-next/worker.js --env dev",
+    "deploy:preview:artifact": "node scripts/check-cloudflare-deploy-target.mjs preview && wrangler versions upload .open-next/worker.js --env dev",
+    "deploy:production:artifact": "node scripts/check-cloudflare-deploy-target.mjs production && wrangler deploy .open-next/worker.js --env=\"\""
   },
   "dependencies": {
     "@opennextjs/cloudflare": "^1.17.1",

@@ -1,4 +1,5 @@
 {
+  "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "stann-lumo",
   "routes": [
     {
@@ -25,5 +26,29 @@
       "bucket_name": "stann-lumo-media"
     }
   ],
-  "vars": {}
+  "vars": {},
+  "env": {
+    "dev": {
+      "workers_dev": true,
+      "preview_urls": true,
+      "routes": [],
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "stann-lumo-db-dev",
+          "database_id": "dfa422fd-796f-4cdc-a054-8bb97b49d035"
+        }
+      ],
+      "r2_buckets": [
+        {
+          "binding": "MEDIA",
+          "bucket_name": "stann-lumo-media-dev"
+        }
+      ],
+      "vars": {
+        "MIGRATE_ENABLED": "false",
+        "NEXTJS_ENV": "development"
+      }
+    }
+  }
 }

@@ -39,6 +39,8 @@ npm run build
 
 `npm run dev`는 OpenNext artifact `.next`와 Wrangler local runtime을 사용하고, `npm run build`는 `.next-build`를 사용한다. `npm run start`는 `npm run build`가 만든 `.next-build`를 실행한다. Worker binding이 필요 없는 빠른 UI 확인에는 `npm run dev:next`를 쓸 수 있지만 D1/R2 API는 의도적으로 fail-closed 한다. Cloudflare Workers Builds에서는 OpenNext 호환을 위해 같은 build 명령이 `.next`를 사용한다.
 
+원격 배포는 Cloudflare Workers Builds가 담당한다. feature branch는 development Worker preview, `dev`는 고정 development Worker, `main`은 production Worker로 분리되며 각 환경은 별도 D1·R2 binding을 사용한다. 로컬에서 production deploy를 직접 실행하는 경로는 제공하지 않는다.
+
 ## 문서
 
 - [프로젝트 문서](docs/README.md)
