@@ -16,8 +16,6 @@ import type {
   EventsInfo,
   LinkPlatform,
   ContactItem,
-  TerminalCustomField,
-  TerminalStyleConfig,
 } from '@/types/content';
 import type { RAApiConfigUpdate, RAApiConfigView } from '@/types/admin';
 import type { SiteConfigData } from '@/app/api/admin/site-config/route';
@@ -152,19 +150,8 @@ export function updateSiteConfig(siteConfig: SiteConfigData) {
 
 // ---------- 터미널 통합 설정 ----------
 
-export interface TerminalConfigData {
-  url:          string;
-  description:  string;
-  customFields: TerminalCustomField[];
-  style:        TerminalStyleConfig;
-}
-
-export function fetchTerminalConfig() {
-  return apiGet<TerminalConfigData>('/api/admin/terminal-config');
-}
-export function updateTerminalConfig(config: TerminalConfigData) {
-  return apiPut<void>('/api/admin/terminal-config', { config });
-}
+export type { TerminalConfigData } from '@/capabilities/terminal/terminalConfig';
+export { fetchTerminalConfig, updateTerminalConfig } from '@/capabilities/terminal/terminalConfig.client';
 
 /**
  * 하위 호환: 기존 호출부에서 사용 중인 updateTerminalInfo
