@@ -9,9 +9,9 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   return (
     <ProtectedRoute>
       <ContentProvider>
-        <AdminContentGate>
-          <AdminLayout>{children}</AdminLayout>
-        </AdminContentGate>
+        <AdminLayout>
+          <AdminContentGate>{children}</AdminContentGate>
+        </AdminLayout>
       </ContentProvider>
     </ProtectedRoute>
   );

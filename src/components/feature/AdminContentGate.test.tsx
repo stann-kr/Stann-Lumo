@@ -66,11 +66,13 @@ describe('AdminContentGate', () => {
 
   it('fails closed when either locale fails, focuses the retryable error, and recovers only after both retry loads succeed', async () => {
     const user = userEvent.setup();
+    const retryEn = deferred<ContentData | null>();
+    const retryKo = deferred<ContentData | null>();
     vi.mocked(fetchContent)
       .mockRejectedValueOnce(new Error('test-only EN failure'))
       .mockResolvedValueOnce(content)
-      .mockResolvedValueOnce(content)
-      .mockResolvedValueOnce(content);
+      .mockReturnValueOnce(retryEn.promise)
+      .mockReturnValueOnce(retryKo.promise);
     const saveRequest = renderGate();
 
     const error = await screen.findByRole('alert');
@@ -81,7 +83,18 @@ describe('AdminContentGate', () => {
     await user.click(screen.getByRole('button', { name: 'RETRY CONTENT LOAD' }));
 
     await waitFor(() => expect(fetchContent).toHaveBeenCalledTimes(4));
+    const loading = screen.getByRole('status');
+    expect(loading).toHaveAttribute('aria-busy', 'true');
+    expect(loading).toHaveFocus();
+    expect(screen.queryByRole('button', { name: 'SAVE CONTENT' })).not.toBeInTheDocument();
+    expect(saveRequest).not.toHaveBeenCalled();
+
+    retryEn.resolve(content);
+    retryKo.resolve(content);
     expect(await screen.findByRole('button', { name: 'SAVE CONTENT' })).toBeInTheDocument();
+    const readyAnnouncement = screen.getByRole('status');
+    expect(readyAnnouncement).toHaveTextContent('CONTENT READY. EDITOR AVAILABLE.');
+    expect(readyAnnouncement).not.toHaveFocus();
     expect(saveRequest).toHaveBeenCalledTimes(1);
   });
 

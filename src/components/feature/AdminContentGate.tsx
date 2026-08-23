@@ -10,18 +10,32 @@ interface AdminContentGateProps {
 
 export default function AdminContentGate({ children }: AdminContentGateProps) {
   const { contentStatus, retryContent } = useContent();
-  const errorRef = useRef<HTMLElement | null>(null);
+  const statusRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
-    if (contentStatus === 'error') errorRef.current?.focus();
+    if (contentStatus === 'error') statusRef.current?.focus();
   }, [contentStatus]);
 
-  if (contentStatus === 'ready') return <>{children}</>;
+  const handleRetry = () => {
+    statusRef.current?.focus();
+    retryContent();
+  };
+
+  if (contentStatus === 'ready') {
+    return (
+      <>
+        <p role="status" aria-live="polite" aria-atomic="true" className="sr-only">
+          CONTENT READY. EDITOR AVAILABLE.
+        </p>
+        {children}
+      </>
+    );
+  }
 
   if (contentStatus === 'error') {
     return (
       <section
-        ref={errorRef}
+        ref={statusRef}
         role="alert"
         aria-live="assertive"
         aria-atomic="true"
@@ -36,7 +50,7 @@ export default function AdminContentGate({ children }: AdminContentGateProps) {
         </div>
         <button
           type="button"
-          onClick={retryContent}
+          onClick={handleRetry}
           className="w-fit border border-[var(--color-primary)] px-5 py-3 text-sm font-bold tracking-widest text-[var(--color-primary)] transition-colors hover:bg-[var(--color-primary)] hover:text-[var(--color-bg)]"
         >
           RETRY CONTENT LOAD
@@ -47,10 +61,12 @@ export default function AdminContentGate({ children }: AdminContentGateProps) {
 
   return (
     <section
+      ref={statusRef}
       role="status"
       aria-live="polite"
       aria-atomic="true"
       aria-busy="true"
+      tabIndex={-1}
       className="flex min-h-[60vh] items-center justify-center font-mono text-sm tracking-[0.2em] text-[var(--color-primary)]"
     >
       LOADING CONTENT...
