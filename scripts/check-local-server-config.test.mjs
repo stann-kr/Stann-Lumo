@@ -39,6 +39,8 @@ test('Docker binds the local Worker preview to loopback on port 3004', () => {
   const dockerfile = readRepositoryFile('Dockerfile');
   const compose = readRepositoryFile('docker-compose.yml');
 
+  assert.match(dockerfile, /^RUN npm ci$/m);
+  assert.doesNotMatch(dockerfile, /^RUN npm install$/m);
   assert.match(dockerfile, /^EXPOSE 3004$/m);
   assert.match(dockerfile, /^CMD \["npm", "run", "dev:docker"\]$/m);
   assert.match(compose, /^\s+- "127\.0\.0\.1:3004:3004"$/m);

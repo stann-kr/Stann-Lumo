@@ -2,6 +2,18 @@
 
 공개 가능한 결과 중심 변경 요약이다. 항목은 일자 단위이며 최신 항목을 위에 둔다.
 
+## 2026-08-23 — 보안 의존성과 관리자 데이터 경계 정비
+
+### Security
+
+- Next.js 16, OpenNext, Wrangler, Workers Types와 Sharp를 호환 버전으로 갱신하고 전체·production dependency audit를 0건으로 복구했다.
+- 관리자 콘텐츠는 영어·한국어 bootstrap이 모두 끝난 뒤에만 편집 화면을 열며, 실패 시 빈 데이터를 저장하지 않고 재시도 상태만 제공한다.
+
+### Changed
+
+- Terminal 설정의 contract, D1 persistence와 API client를 독립 capability로 모으고 기존 API route는 인증·transport facade로 유지한다.
+- Docker 개발 이미지도 lockfile 기반 `npm ci`로 의존성을 재현한다.
+
 ## 2026-08-14 — Cloudflare development와 production 배포 분리
 
 ### Changed

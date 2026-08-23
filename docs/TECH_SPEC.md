@@ -2,7 +2,7 @@
 
 ## 아키텍처 개요
 
-`stann-lumo`는 Next.js App Router 기반 artist web app이다. public route group과 admin dashboard route group이 분리되어 있고, content/language context가 site content를 공급한다. Cloudflare 배포는 OpenNext worker와 Wrangler binding을 기준으로 한다.
+`stann-lumo`는 Next.js App Router 기반 artist web app이다. public route group은 서버의 safe projection을 받고, admin dashboard route group은 인증 뒤 편집용 content context를 사용한다. Cloudflare 배포는 OpenNext worker와 Wrangler binding을 기준으로 한다.
 
 ```text
 src/app/(public)/
@@ -22,7 +22,8 @@ Cloudflare
 | Admin routes | `src/app/admin/(dashboard)/` | home, about, contact, link, music, events, archive, theme |
 | Public shell | `src/components/feature/TerminalLayout.tsx` | navigation, language, content loading, scene, signal links |
 | 3D scene | `src/components/feature/Scene3D.tsx` | visual background |
-| Content | `src/contexts/ContentContext.tsx` | site content 공급 |
+| Admin content | `src/contexts/ContentContext.tsx` | 편집용 콘텐츠 bootstrap과 상태 |
+| Terminal capability | `src/capabilities/terminal/` | 설정 contract, D1 persistence, API client |
 | Language | `src/contexts/LanguageContext.tsx` | language state |
 | Deploy | `wrangler.json` | Cloudflare route, D1, R2 binding |
 
@@ -30,7 +31,7 @@ Cloudflare
 
 | 영역 | 값 |
 |---|---|
-| Framework | Next.js 15 |
+| Framework | Next.js 16 |
 | React | 19 |
 | Language | TypeScript 5.8 |
 | Motion | GSAP, Framer Motion, SplitType |
@@ -47,7 +48,8 @@ Cloudflare
 | `PageLayout.tsx` | public page frame |
 | `AdminLayout.tsx` | admin dashboard shell |
 | `ProtectedRoute.tsx` | admin route protection boundary |
-| `ContentContext.tsx` | site content loading and state |
+| `ContentContext.tsx` | admin content bootstrap and edit state |
+| `src/capabilities/terminal/` | terminal config contract, persistence, client boundary |
 | `LanguageContext.tsx` | language state |
 | `Scene3D.tsx` | 3D background scene |
 | `SignalNet.tsx` | STANN OS signal network 표시 |
