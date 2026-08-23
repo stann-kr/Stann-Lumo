@@ -54,6 +54,30 @@ describe('terminal config route facade', () => {
     expect(fetchTerminalConfig).not.toHaveBeenCalled();
   });
 
+  it('returns the auth response before PUT parsing or persistence', async () => {
+    vi.mocked(requireAdminSession).mockResolvedValue(
+      NextResponse.json({ success: false, error: { code: 'UNAUTHORIZED', message: 'Unauthorized' } }, { status: 401 }),
+    );
+
+    const response = await PUT(request('PUT', { config }));
+
+    expect(response.status).toBe(401);
+    expect(getDB).not.toHaveBeenCalled();
+    expect(updateTerminalConfig).not.toHaveBeenCalled();
+  });
+
+  it('fails closed when the database binding is unavailable', async () => {
+    vi.mocked(getDB).mockReturnValue(null);
+
+    const getResponse = await GET(request('GET'));
+    const putResponse = await PUT(request('PUT', { config }));
+
+    expect(getResponse.status).toBe(503);
+    expect(putResponse.status).toBe(503);
+    expect(fetchTerminalConfig).not.toHaveBeenCalled();
+    expect(updateTerminalConfig).not.toHaveBeenCalled();
+  });
+
   it('delegates GET after auth and preserves the success envelope', async () => {
     vi.mocked(fetchTerminalConfig).mockResolvedValue(config);
 
@@ -79,5 +103,24 @@ describe('terminal config route facade', () => {
 
     expect(updateTerminalConfig).toHaveBeenCalledWith(database, config);
     await expect(response.json()).resolves.toEqual({ success: true });
+  });
+
+  it('normalizes capability failures without leaking details', async () => {
+    vi.mocked(fetchTerminalConfig).mockRejectedValueOnce(new Error('test-only read failure'));
+    vi.mocked(updateTerminalConfig).mockRejectedValueOnce(new Error('test-only write failure'));
+
+    const getResponse = await GET(request('GET'));
+    const putResponse = await PUT(request('PUT', { config }));
+
+    expect(getResponse.status).toBe(500);
+    await expect(getResponse.json()).resolves.toEqual({
+      success: false,
+      error: { code: 'INTERNAL_ERROR', message: 'Failed to fetch terminal config' },
+    });
+    expect(putResponse.status).toBe(500);
+    await expect(putResponse.json()).resolves.toEqual({
+      success: false,
+      error: { code: 'INTERNAL_ERROR', message: 'Failed to update terminal config' },
+    });
   });
 });

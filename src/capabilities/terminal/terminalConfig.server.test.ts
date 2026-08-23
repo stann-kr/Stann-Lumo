@@ -113,4 +113,27 @@ describe('terminal config server capability', () => {
     expect(statements[2]?.bindings).toEqual(['field-1', 'status', 'online', 'badge', 0]);
     expect(statements[3]?.bindings).toEqual(['field-2', 'url', 'https://example.test', 'url', 1]);
   });
+
+  it('preserves the legacy defaults when style and custom fields are omitted', async () => {
+    const { database, statements } = createDatabase();
+
+    await updateTerminalConfig(database, {
+      url: 'https://terminal.example',
+      description: 'fixture',
+    } as TerminalConfigData);
+
+    expect(statements.map(({ sql }) => sql)).toEqual([
+      expect.stringContaining('UPDATE site_config'),
+      'DELETE FROM terminal_custom_fields',
+    ]);
+    expect(statements[0]?.bindings).toEqual([
+      'https://terminal.example',
+      'fixture',
+      'md',
+      'normal',
+      '>',
+      0,
+      '400px',
+    ]);
+  });
 });
