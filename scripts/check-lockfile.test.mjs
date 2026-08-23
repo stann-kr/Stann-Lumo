@@ -26,11 +26,12 @@ test('Cloudflare build tools remain production dependencies', () => {
 });
 
 test('the lockfile includes every optional Sharp platform package', () => {
+  const packageJson = readPackageJson();
   const lockfile = readLockfile();
   const rootPackage = lockfile.packages[''];
   const sharpPackage = lockfile.packages['node_modules/sharp'];
 
-  assert.equal(rootPackage.optionalDependencies?.sharp, '0.34.5');
+  assert.equal(rootPackage.optionalDependencies?.sharp, packageJson.optionalDependencies?.sharp);
   assert.ok(sharpPackage, 'Sharp must remain present in the lockfile.');
 
   for (const packageName of Object.keys(sharpPackage.optionalDependencies ?? {})) {
