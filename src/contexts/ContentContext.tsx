@@ -4,6 +4,8 @@ import {
   useState,
   ReactNode,
   useEffect,
+  useCallback,
+  useRef,
 } from "react";
 import { useLanguage } from "./LanguageContext";
 import { fetchContent } from "@/services/contentService";
@@ -15,6 +17,8 @@ import type {
   ContactContent,
 } from "../types/content";
 
+export type ContentStatus = "loading" | "ready" | "error";
+
 interface ContentContextType {
   content: ContentData;
   updateContent: (updates: Partial<ContentData>) => void;
@@ -24,6 +28,8 @@ interface ContentContextType {
   currentEditLanguage: "en" | "ko";
   setCurrentEditLanguage: (lang: "en" | "ko") => void;
   allContent: MultiLanguageContent;
+  contentStatus: ContentStatus;
+  retryContent: () => void;
   isLoading: boolean;
   isError: boolean;
 }
@@ -57,16 +63,25 @@ export const ContentProvider = ({ children }: { children: ReactNode }) => {
   const [currentEditLanguage, setCurrentEditLanguage] = useState<"en" | "ko">("en");
 
   const [allContent, setAllContent] = useState<MultiLanguageContent>(EMPTY_MULTILANG);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isError, setIsError] = useState(false);
+  const [contentStatus, setContentStatus] = useState<ContentStatus>("loading");
+  const [loadAttempt, setLoadAttempt] = useState(0);
+  const loadRequestRef = useRef(0);
+
+  const retryContent = useCallback(() => {
+    setContentStatus("loading");
+    setLoadAttempt((attempt) => attempt + 1);
+  }, []);
 
   useEffect(() => {
+    const requestId = ++loadRequestRef.current;
     Promise.all([fetchContent("en"), fetchContent("ko")])
       .then(([enData, koData]) => {
-        if (!enData) throw new Error('EN content fetch returned null');
+        if (!enData || !koData) {
+          throw new Error('Content fetch returned null');
+        }
 
         // Ko 콘텐츠 미입력 항목은 En 콘텐츠로 대체
-        const finalKo: ContentData = koData ? {
+        const finalKo: ContentData = {
           ...koData,
           tracks:        koData.tracks?.length        ? koData.tracks        : enData.tracks,
           performances:  koData.performances?.length  ? koData.performances  : enData.performances,
@@ -75,16 +90,21 @@ export const ContentProvider = ({ children }: { children: ReactNode }) => {
           linkPlatforms: koData.linkPlatforms?.length ? koData.linkPlatforms : enData.linkPlatforms,
           contactInfo:   koData.contactInfo?.length   ? koData.contactInfo   : enData.contactInfo,
           artistInfo:    koData.artistInfo?.length    ? koData.artistInfo    : enData.artistInfo,
-        } : enData;
+        };
 
+        if (loadRequestRef.current !== requestId) return;
         setAllContent({ en: enData, ko: finalKo });
-        setIsLoading(false);
+        setContentStatus("ready");
       })
       .catch(() => {
-        setIsError(true);
-        setIsLoading(false);
+        if (loadRequestRef.current !== requestId) return;
+        setContentStatus("error");
       });
-  }, []);
+
+    return () => {
+      if (loadRequestRef.current === requestId) loadRequestRef.current += 1;
+    };
+  }, [loadAttempt]);
 
   const content = allContent[language];
 
@@ -119,8 +139,10 @@ export const ContentProvider = ({ children }: { children: ReactNode }) => {
         currentEditLanguage,
         setCurrentEditLanguage,
         allContent,
-        isLoading,
-        isError,
+        contentStatus,
+        retryContent,
+        isLoading: contentStatus === "loading",
+        isError: contentStatus === "error",
       }}
     >
       {children}
