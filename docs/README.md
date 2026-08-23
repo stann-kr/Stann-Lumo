@@ -13,6 +13,8 @@
 
 ## 빠른 시작
 
+Node.js 22 이상이 필요하다.
+
 ```bash
 docker compose up --build
 ```
@@ -35,6 +37,7 @@ npm run dev
 | 영역 | 내용 |
 |---|---|
 | Framework | Next.js 16 App Router |
+| Runtime | Node.js 22 이상 |
 | React | React 19 |
 | Language | TypeScript |
 | Styling | Tailwind CSS |

@@ -6,7 +6,7 @@
 
 ### Security
 
-- Next.js 16, OpenNext, Wrangler, Workers Types와 Sharp를 호환 버전으로 갱신하고 전체·production dependency audit를 0건으로 복구했다.
+- Node.js 22 이상을 runtime 기준으로 명시하고 Next.js 16, OpenNext, Wrangler, Workers Types와 Sharp를 호환 버전으로 갱신해 전체·production dependency audit를 0건으로 복구했다.
 - 관리자 콘텐츠는 영어·한국어 bootstrap이 모두 끝난 뒤에만 편집 화면을 열며, 실패 시 빈 데이터를 저장하지 않고 재시도 상태만 제공한다.
 
 ### Changed

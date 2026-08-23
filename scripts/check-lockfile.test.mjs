@@ -14,6 +14,14 @@ function readLockfile() {
   return JSON.parse(fs.readFileSync(path.join(repositoryRoot, 'package-lock.json'), 'utf8'));
 }
 
+test('the manifest and lockfile require the Node 22 runtime', () => {
+  const packageJson = readPackageJson();
+  const lockfile = readLockfile();
+
+  assert.equal(packageJson.engines?.node, '>=22');
+  assert.equal(lockfile.packages[''].engines?.node, packageJson.engines.node);
+});
+
 test('Cloudflare build tools remain production dependencies', () => {
   const packageJson = readPackageJson();
   const lockfile = readLockfile();

@@ -32,6 +32,7 @@ Cloudflare
 | 영역 | 값 |
 |---|---|
 | Framework | Next.js 16 |
+| Runtime | Node.js 22 이상 |
 | React | 19 |
 | Language | TypeScript 5.8 |
 | Motion | GSAP, Framer Motion, SplitType |

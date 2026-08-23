@@ -2,6 +2,9 @@
   "name": "stann-lumo",
   "private": true,
   "version": "0.0.0",
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "dev": "node scripts/run-local-worker.mjs --ip 127.0.0.1",
     "dev:docker": "node scripts/run-local-worker.mjs --ip 0.0.0.0",
