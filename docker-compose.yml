@@ -8,10 +8,10 @@ services:
     ports:
       - "127.0.0.1:3004:3004"
     volumes:
-      - .:/app
-      - /app/node_modules
-      - /app/.next
-      - /app/.open-next
+      - type: bind
+        source: .dev.vars
+        target: /app/.dev.vars
+        read_only: true
     environment:
       - NODE_ENV=development
     env_file:
