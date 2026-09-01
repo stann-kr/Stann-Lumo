@@ -61,7 +61,7 @@ describe('AdminContentGate', () => {
 
     ko.resolve(content);
     expect(await screen.findByRole('button', { name: 'SAVE CONTENT' })).toBeInTheDocument();
-    expect(saveRequest).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(saveRequest).toHaveBeenCalledTimes(1));
   });
 
   it('fails closed when either locale fails, focuses the retryable error, and recovers only after both retry loads succeed', async () => {
@@ -95,7 +95,7 @@ describe('AdminContentGate', () => {
     const readyAnnouncement = screen.getByRole('status');
     expect(readyAnnouncement).toHaveTextContent('CONTENT READY. EDITOR AVAILABLE.');
     expect(readyAnnouncement).not.toHaveFocus();
-    expect(saveRequest).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(saveRequest).toHaveBeenCalledTimes(1));
   });
 
   it('treats a missing KO payload as a bootstrap error instead of falling back to EN', async () => {
