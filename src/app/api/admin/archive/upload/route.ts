@@ -6,25 +6,9 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { uploadGalleryFiles } from '@/capabilities/media/mediaLifecycle.server';
 import { getDB, getR2 } from '@/lib/db';
 import { requireAdminSession } from '@/lib/adminAuth';
-import type { GalleryPhoto } from '@/types/content';
-
-const ALLOWED_MIME_TYPES = [
-  'image/jpeg',
-  'image/png',
-  'image/webp',
-  'image/gif',
-  'image/avif',
-  'video/mp4',
-  'video/webm',
-  'video/quicktime',
-];
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
-
-function resolveMediaType(mimeType: string): 'image' | 'video_file' {
-  return mimeType.startsWith('video/') ? 'video_file' : 'image';
-}
 
 export async function POST(request: NextRequest) {
   const authError = await requireAdminSession(request);
@@ -42,66 +26,16 @@ export async function POST(request: NextRequest) {
 
   try {
     const formData = await request.formData();
-    const files = formData.getAll('files') as File[];
+    const files = formData.getAll('files').filter((entry): entry is File => entry instanceof File);
 
-    if (!files || files.length === 0) {
+    if (files.length === 0) {
       return NextResponse.json(
         { success: false, error: { code: 'BAD_REQUEST', message: 'No files provided' } },
         { status: 400 },
       );
     }
 
-    // 현재 최소 sort_order 조회하여 그보다 작은 값 부여 (최신 항목이 앞으로 오도록)
-    const minOrderRow = await db
-      .prepare('SELECT MIN(sort_order) as min_order FROM gallery_photos')
-      .first<{ min_order: number | null }>();
-    let nextOrder = (minOrderRow?.min_order ?? 1) - 1;
-
-    const uploaded: GalleryPhoto[] = [];
-
-    for (const file of files) {
-      if (!ALLOWED_MIME_TYPES.includes(file.type)) {
-        continue;
-      }
-      if (file.size > MAX_FILE_SIZE) {
-        continue;
-      }
-
-      const id = crypto.randomUUID();
-      const r2Key = `gallery/${id}`;
-      const mediaType = resolveMediaType(file.type);
-
-      // stream() 사용으로 대용량 메모리 방지
-      await r2.put(r2Key, file.stream(), {
-        httpMetadata: { contentType: file.type },
-      });
-
-      await db
-        .prepare(
-          `INSERT INTO gallery_photos
-            (id, filename, mime_type, size_bytes, alt_text, caption, sort_order,
-             media_type, focal_x, focal_y)
-           VALUES (?, ?, ?, ?, '', '', ?, ?, 50, 50)`,
-        )
-        .bind(id, file.name, file.type, file.size, nextOrder, mediaType)
-        .run();
-
-      uploaded.push({
-        id,
-        filename: file.name,
-        mimeType: file.type,
-        sizeBytes: file.size,
-        altText: '',
-        caption: '',
-        sortOrder: nextOrder,
-        createdAt: new Date().toISOString(),
-        mediaType,
-        focalX: 50,
-        focalY: 50,
-      });
-
-      nextOrder++;
-    }
+    const uploaded = await uploadGalleryFiles(db, r2, files);
 
     return NextResponse.json({ success: true, data: uploaded });
   } catch {

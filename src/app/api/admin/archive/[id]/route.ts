@@ -4,6 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { deleteGalleryMedia } from '@/capabilities/media/mediaLifecycle.server';
 import { getDB, getR2 } from '@/lib/db';
 import { requireAdminSession } from '@/lib/adminAuth';
 
@@ -27,13 +28,7 @@ export async function DELETE(
   }
 
   try {
-    // D1에서 먼저 삭제
-    await db.prepare('DELETE FROM gallery_photos WHERE id = ?').bind(id).run();
-
-    // R2 삭제 (실패해도 무시 — D1이 정상 삭제되면 orphan 파일만 남음)
-    if (r2) {
-      await r2.delete(`gallery/${id}`).catch(() => null);
-    }
+    await deleteGalleryMedia(db, r2, id);
 
     return NextResponse.json({ success: true });
   } catch {
