@@ -2,12 +2,12 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useEffect } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { fetchContent } from '@/capabilities/content/content.client';
 import { ContentProvider } from '@/contexts/ContentContext';
-import { fetchContent } from '@/services/contentService';
 import AdminContentGate from './AdminContentGate';
 import type { ContentData } from '@/types/content';
 
-vi.mock('@/services/contentService', () => ({ fetchContent: vi.fn() }));
+vi.mock('@/capabilities/content/content.client', () => ({ fetchContent: vi.fn() }));
 vi.mock('@/contexts/LanguageContext', () => ({ useLanguage: () => ({ language: 'en' }) }));
 
 const content = {} as ContentData;
