@@ -14,12 +14,12 @@ import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { Performance, PageMeta } from '@/types/content';
-import type { RAApiConfigUpdate, RAApiConfigView } from '@/types/admin';
+import type { RAApiConfigUpdate, RAApiConfigView } from '@/capabilities/events/raConfig';
 import {
   fetchRAEvents,
   convertRAEventsToPerformances,
   sortEventsByDate,
-} from '@/utils/raApi';
+} from '@/capabilities/events/raApi.client';
 import { createBorderFaint } from '@/utils/colorMix';
 import { getFailedSaveAreas } from '@/utils/saveResult';
 import {

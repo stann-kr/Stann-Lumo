@@ -13,7 +13,7 @@ import {
   privateNoStoreResponse,
   requireAdminSession,
 } from '@/lib/adminAuth';
-import { getRaApiConfigSecret, isRAApiOption } from '@/lib/admin/raApiConfig.server';
+import { getRaApiConfigSecret, isRAApiOption } from '@/capabilities/events/raApiConfig.server';
 
 function escapeXmlText(value: string): string {
   return value

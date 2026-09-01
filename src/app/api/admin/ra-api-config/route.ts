@@ -7,8 +7,8 @@
 import { NextRequest } from 'next/server';
 import { getDB } from '@/lib/db';
 import { privateNoStoreJson, requireAdminSession } from '@/lib/adminAuth';
-import { getRaApiConfigView, isRAApiOption } from '@/lib/admin/raApiConfig.server';
-import type { RAApiConfigUpdate } from '@/types/admin';
+import { getRaApiConfigView, isRAApiOption } from '@/capabilities/events/raApiConfig.server';
+import type { RAApiConfigUpdate } from '@/capabilities/events/raConfig';
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === 'object' && !Array.isArray(value);

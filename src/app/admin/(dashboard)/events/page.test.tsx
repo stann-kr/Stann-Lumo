@@ -1,7 +1,7 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ContentData, PageMeta } from '@/types/content';
-import type { RAApiConfigView } from '@/types/admin';
+import type { RAApiConfigView } from '@/capabilities/events/raConfig';
 import { AdminEditGuardProvider } from '@/contexts/AdminEditGuardContext';
 import AdminEventsPage from './page';
 
@@ -59,7 +59,7 @@ vi.mock('@/services/adminService', () => ({
   deleteEventPoster: vi.fn(),
 }));
 
-vi.mock('@/utils/raApi', () => ({
+vi.mock('@/capabilities/events/raApi.client', () => ({
   fetchRAEvents: mocks.fetchRaEvents,
   convertRAEventsToPerformances: vi.fn(() => []),
   sortEventsByDate: vi.fn((items: unknown[]) => items),

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { fetchRAEvents, parseRAApiXML } from './raApi';
+import { fetchRAEvents, parseRAApiXML } from './raApi.client';
 
 describe('RA API browser boundary', () => {
   afterEach(() => {

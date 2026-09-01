@@ -17,7 +17,7 @@ import type {
   LinkPlatform,
   ContactItem,
 } from '@/types/content';
-import type { RAApiConfigUpdate, RAApiConfigView } from '@/types/admin';
+import type { RAApiConfigUpdate, RAApiConfigView } from '@/capabilities/events/raConfig';
 import type { SiteConfigData } from '@/app/api/admin/site-config/route';
 
 // ---------- 아티스트 정보 ----------
