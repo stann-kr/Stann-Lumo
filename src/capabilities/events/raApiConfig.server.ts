@@ -1,7 +1,7 @@
 import 'server-only';
 
 import type { D1Database } from '@/lib/db';
-import type { RAApiConfigView, RAApiOption } from './raConfig';
+import type { RAApiConfigUpdate, RAApiConfigView, RAApiOption } from './raConfig';
 
 interface RAApiConfigViewRow {
   user_id: string | null;
@@ -76,4 +76,31 @@ export async function getRaApiConfigSecret(
     option: normalizeOption(row?.option),
     year: row?.year?.trim() ?? '',
   };
+}
+
+export async function updateRaApiConfig(
+  db: D1Database,
+  config: RAApiConfigUpdate,
+): Promise<RAApiConfigView> {
+  await db.prepare(
+    `UPDATE ra_api_config
+     SET user_id = ?,
+         api_key = CASE
+           WHEN ? = 1 THEN NULL
+           ELSE COALESCE(NULLIF(TRIM(?), ''), api_key)
+         END,
+         dj_id = ?,
+         option = ?,
+         year = ?
+     WHERE id = 1`,
+  ).bind(
+    config.userId ?? null,
+    config.clearApiKey === true ? 1 : 0,
+    config.apiKey ?? null,
+    config.djId ?? null,
+    config.option ?? '1',
+    config.year ?? null,
+  ).run();
+
+  return getRaApiConfigView(db);
 }

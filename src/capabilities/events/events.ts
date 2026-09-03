@@ -1,3 +1,5 @@
+import type { GalleryPhoto } from '@/capabilities/media/media';
+
 export interface Performance {
   id: string;
   date: string;
@@ -35,4 +37,9 @@ export interface EventsInfo {
 export interface EventsContent {
   performances: Performance[];
   eventsInfo: EventsInfo;
+}
+
+export interface EventDetailData {
+  event: Performance;
+  posterPhoto?: GalleryPhoto;
 }

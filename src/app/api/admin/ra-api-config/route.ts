@@ -7,7 +7,11 @@
 import { NextRequest } from 'next/server';
 import { getDB } from '@/lib/db';
 import { privateNoStoreJson, requireAdminSession } from '@/lib/adminAuth';
-import { getRaApiConfigView, isRAApiOption } from '@/capabilities/events/raApiConfig.server';
+import {
+  getRaApiConfigView,
+  isRAApiOption,
+  updateRaApiConfig,
+} from '@/capabilities/events/raApiConfig.server';
 import type { RAApiConfigUpdate } from '@/capabilities/events/raConfig';
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -75,30 +79,7 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    await db
-      .prepare(
-        `UPDATE ra_api_config
-         SET user_id = ?,
-             api_key = CASE
-               WHEN ? = 1 THEN NULL
-               ELSE COALESCE(NULLIF(TRIM(?), ''), api_key)
-             END,
-             dj_id = ?,
-             option = ?,
-             year = ?
-         WHERE id = 1`,
-      )
-      .bind(
-        raApiConfig.userId ?? null,
-        raApiConfig.clearApiKey === true ? 1 : 0,
-        raApiConfig.apiKey ?? null,
-        raApiConfig.djId ?? null,
-        raApiConfig.option ?? '1',
-        raApiConfig.year ?? null,
-      )
-      .run();
-
-    const data = await getRaApiConfigView(db);
+    const data = await updateRaApiConfig(db, raApiConfig);
     return privateNoStoreJson({ success: true, data });
   } catch {
     return privateNoStoreJson(
