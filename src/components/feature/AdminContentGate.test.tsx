@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fetchContent } from '@/capabilities/content/content.client';
 import { ContentProvider } from '@/contexts/ContentContext';
 import AdminContentGate from './AdminContentGate';
-import type { ContentData } from '@/types/content';
+import type { ContentData } from '@/capabilities/content/content';
 
 vi.mock('@/capabilities/content/content.client', () => ({ fetchContent: vi.fn() }));
 vi.mock('@/contexts/LanguageContext', () => ({ useLanguage: () => ({ language: 'en' }) }));

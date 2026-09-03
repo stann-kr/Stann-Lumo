@@ -10,13 +10,11 @@ import type {
   PageMeta,
   HomeSection,
   Track,
-  Performance,
-  EventsInfo,
   LinkPlatform,
   ContactItem,
-  TerminalInfo,
-  TerminalCustomField,
-} from '@/types/content';
+} from './content';
+import type { EventsInfo, Performance } from '@/capabilities/events/events';
+import type { TerminalCustomField, TerminalInfo } from '@/capabilities/terminal/terminalConfig';
 
 // ---------- DB 행 타입 ----------
 

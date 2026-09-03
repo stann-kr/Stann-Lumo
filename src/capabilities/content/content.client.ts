@@ -5,7 +5,7 @@
  */
 
 import { apiGet } from '@/services/apiClient';
-import type { ContentData } from '@/types/content';
+import type { ContentData } from './content';
 
 /**
  * 지정 언어의 전체 콘텐츠 데이터 조회

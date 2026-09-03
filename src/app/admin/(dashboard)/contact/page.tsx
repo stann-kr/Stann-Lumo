@@ -14,10 +14,11 @@ import { createBorderFaint, createBorderMid } from '@/utils/colorMix';
 import { runSave } from '@/utils/saveResult';
 import {
   updateContactInfo as apiUpdateContactInfo,
-  updateEventsInfo as apiUpdateEventsInfo,
   updatePageMeta as apiUpdatePageMeta,
-} from '@/services/adminService';
-import type { ContactItem, EventsInfo, PageMeta } from '@/types/content';
+} from '@/capabilities/content/contentAdmin.client';
+import { updateEventsInfo as apiUpdateEventsInfo } from '@/capabilities/events/eventsAdmin.client';
+import type { ContactItem, PageMeta } from '@/capabilities/content/content';
+import type { EventsInfo } from '@/capabilities/events/events';
 
 const AVAILABLE_ICONS = [
   { value: 'ri-mail-line', label: 'Email' },

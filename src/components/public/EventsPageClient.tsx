@@ -5,7 +5,8 @@ import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import PageLayout from '@/components/feature/PageLayout';
 import { createBorderMid } from '@/utils/colorMix';
-import type { EventsPageMeta, Performance } from '@/types/content';
+import type { EventsPageMeta } from '@/capabilities/content/content';
+import type { Performance } from '@/capabilities/events/events';
 
 interface EventsPageClientProps {
   eventsMeta: EventsPageMeta;

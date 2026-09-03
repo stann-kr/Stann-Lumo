@@ -11,7 +11,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDB, getEnv } from '@/lib/db';
 import { requireAdminSession } from '@/lib/adminAuth';
-import type { MultiLanguageContent, ContentData, DynamicSection } from '@/types/content';
+import type { MultiLanguageContent, ContentData, DynamicSection } from '@/capabilities/content/content';
 
 const LANGS = ['en', 'ko'] as const;
 

@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import PageLayout from '@/components/feature/PageLayout';
-import type { GalleryPhoto, GallerySettings } from '@/types/content';
+import type { GalleryPhoto, GallerySettings } from '@/capabilities/media/media';
 
 const ARCHIVE_SETTINGS: GallerySettings = {
   layoutMode: 'masonry', columnsMobile: 2, columnsTablet: 3, columnsDesktop: 4,

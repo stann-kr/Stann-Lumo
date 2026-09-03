@@ -1,4 +1,25 @@
-import type { TerminalCustomField, TerminalStyleConfig } from '@/types/content';
+export interface TerminalCustomField {
+  id: string;
+  fieldKey: string;
+  fieldValue: string;
+  fieldType: 'text' | 'url' | 'badge';
+  sortOrder: number;
+}
+
+export interface TerminalStyleConfig {
+  fontSize: 'sm' | 'md' | 'lg';
+  animationSpeed: 'slow' | 'normal' | 'fast';
+  promptText: string;
+  showEmbed: boolean;
+  embedHeight: string;
+}
+
+export interface TerminalInfo {
+  url: string;
+  description: string;
+  customFields?: TerminalCustomField[];
+  style?: TerminalStyleConfig;
+}
 
 export interface TerminalConfigData {
   url: string;

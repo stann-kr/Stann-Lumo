@@ -7,7 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDB } from '@/lib/db';
 import { requireAdminSession } from '@/lib/adminAuth';
-import type { PageMeta } from '@/types/content';
+import type { PageMeta } from '@/capabilities/content/content';
 
 interface PageMetaRow {
   page: string; lang: string; key: string; value: string;

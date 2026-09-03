@@ -1,4 +1,4 @@
-import type { Performance } from '@/types/content';
+import type { Performance } from './events';
 import type { RAApiConfigView } from './raConfig';
 import type { RAEventXML, RAApiResponse, RAApiError } from './raApi.types';
 

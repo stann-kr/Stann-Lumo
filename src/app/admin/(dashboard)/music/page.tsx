@@ -18,8 +18,8 @@ import { runSave } from '@/utils/saveResult';
 import {
   updateTracks as apiUpdateTracks,
   updatePageMeta as apiUpdatePageMeta,
-} from '@/services/adminService';
-import type { PageMeta } from '@/types/content';
+} from '@/capabilities/content/contentAdmin.client';
+import type { PageMeta } from '@/capabilities/content/content';
 
 interface Track {
   id: string;

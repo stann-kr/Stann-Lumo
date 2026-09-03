@@ -9,17 +9,15 @@ import type {
   ContactItem,
   DynamicSection,
   DynamicSectionType,
-  EventsInfo,
-  GalleryPhoto,
   HomeSection,
   LinkPlatform,
   PageMeta,
-  Performance,
   PhilosophyItem,
-  TerminalCustomField,
-  TerminalInfo,
   Track,
-} from '@/types/content';
+} from './content';
+import type { EventsInfo, Performance } from '@/capabilities/events/events';
+import type { GalleryPhoto } from '@/capabilities/media/media';
+import type { TerminalCustomField, TerminalInfo } from '@/capabilities/terminal/terminalConfig';
 
 export type PublicLocale = 'en' | 'ko';
 

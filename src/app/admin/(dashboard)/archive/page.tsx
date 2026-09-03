@@ -13,7 +13,8 @@ import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
 import { createBorderFaint } from '@/utils/colorMix';
 import { apiRequest } from '@/services/apiClient';
 import { runSave } from '@/utils/saveResult';
-import type { GalleryPhoto, Performance } from '@/types/content';
+import type { Performance } from '@/capabilities/events/events';
+import type { GalleryPhoto } from '@/capabilities/media/media';
 
 // ─── YouTube URL 파싱 (클라이언트 전용) ───────────────────────────────────────
 function extractYoutubeId(url: string): string | null {

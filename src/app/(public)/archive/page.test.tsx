@@ -1,7 +1,7 @@
 import type { ComponentProps, ReactNode } from 'react';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import type { GalleryPhoto } from '@/types/content';
+import type { GalleryPhoto } from '@/capabilities/media/media';
 import ArchivePageClient from '@/components/public/ArchivePageClient';
 
 vi.mock('next/link', () => ({

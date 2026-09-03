@@ -5,7 +5,7 @@
 
 import { NextResponse } from 'next/server';
 import { getDB } from '@/lib/db';
-import type { GalleryPhoto, GalleryData } from '@/types/content';
+import type { GalleryData, GalleryPhoto } from '@/capabilities/media/media';
 
 interface GalleryPhotoRow {
   id: string;

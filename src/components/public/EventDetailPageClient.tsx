@@ -4,7 +4,8 @@ import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import PageLayout from '@/components/feature/PageLayout';
 import { createBorderFaint, createBorderMid } from '@/utils/colorMix';
-import type { GalleryPhoto, Performance } from '@/types/content';
+import type { Performance } from '@/capabilities/events/events';
+import type { GalleryPhoto } from '@/capabilities/media/media';
 
 const STATUS_CLASSES: Record<Performance['status'], string> = {
   Announced: 'text-[var(--color-accent)]',

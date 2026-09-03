@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { ContentData, PageMeta } from '@/types/content';
+import type { ContentData, PageMeta } from '@/capabilities/content/content';
 import type { RAApiConfigView } from '@/capabilities/events/raConfig';
 import { AdminEditGuardProvider } from '@/contexts/AdminEditGuardContext';
 import AdminEventsPage from './page';
@@ -50,11 +50,14 @@ vi.mock('@/contexts/ContentContext', () => ({
   }),
 }));
 
-vi.mock('@/services/adminService', () => ({
+vi.mock('@/capabilities/content/contentAdmin.client', () => ({
+  updatePageMeta: mocks.updatePageMeta,
+}));
+
+vi.mock('@/capabilities/events/eventsAdmin.client', () => ({
   fetchRaApiConfig: mocks.fetchRaApiConfig,
   updateRaApiConfig: mocks.updateRaApiConfig,
   updatePerformances: mocks.updatePerformances,
-  updatePageMeta: mocks.updatePageMeta,
   uploadEventPoster: vi.fn(),
   deleteEventPoster: vi.fn(),
 }));

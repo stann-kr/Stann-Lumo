@@ -7,7 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDB } from '@/lib/db';
 import { requireAdminSession } from '@/lib/adminAuth';
-import type { EventsInfo } from '@/types/content';
+import type { EventsInfo } from '@/capabilities/events/events';
 
 interface EventsInfoRow {
   id: number; contact_email: string; response_time: string;

@@ -15,7 +15,7 @@ import type {
   MusicContent,
   EventsContent,
   ContactContent,
-} from '@/types/content';
+} from './content';
 
 export type ContentStatus = "loading" | "ready" | "error";
 

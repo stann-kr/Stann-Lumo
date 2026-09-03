@@ -7,7 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDB } from '@/lib/db';
 import { requireAdminSession } from '@/lib/adminAuth';
-import type { ArtistInfoItem } from '@/types/content';
+import type { ArtistInfoItem } from '@/capabilities/content/content';
 
 interface ArtistInfoRow {
   id: string; lang: string; key: string; value: string; sort_order: number;

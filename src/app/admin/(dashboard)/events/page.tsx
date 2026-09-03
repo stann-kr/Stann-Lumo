@@ -13,7 +13,8 @@ import { useSaveNotification } from '@/hooks/useSaveNotification';
 import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { Performance, PageMeta } from '@/types/content';
+import type { PageMeta } from '@/capabilities/content/content';
+import type { Performance } from '@/capabilities/events/events';
 import type { RAApiConfigUpdate, RAApiConfigView } from '@/capabilities/events/raConfig';
 import {
   fetchRAEvents,
@@ -23,13 +24,15 @@ import {
 import { createBorderFaint } from '@/utils/colorMix';
 import { getFailedSaveAreas } from '@/utils/saveResult';
 import {
-  updatePerformances as apiUpdatePerformances,
   updatePageMeta as apiUpdatePageMeta,
+} from '@/capabilities/content/contentAdmin.client';
+import {
+  updatePerformances as apiUpdatePerformances,
   fetchRaApiConfig as apiFetchRaApiConfig,
   updateRaApiConfig as apiUpdateRaApiConfig,
   uploadEventPoster,
   deleteEventPoster,
-} from '@/services/adminService';
+} from '@/capabilities/events/eventsAdmin.client';
 
 const POSTER_ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/avif', 'image/gif'];
 const POSTER_MAX_SIZE_BYTES = 10 * 1024 * 1024;

@@ -7,7 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDB } from '@/lib/db';
 import { requireAdminSession } from '@/lib/adminAuth';
-import type { LinkPlatform } from '@/types/content';
+import type { LinkPlatform } from '@/capabilities/content/content';
 
 interface LinkPlatformRow {
   id: string; lang: string; platform: string; url: string; icon: string; description: string; sort_order: number;

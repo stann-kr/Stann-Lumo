@@ -7,7 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDB } from '@/lib/db';
 import { requireAdminSession } from '@/lib/adminAuth';
-import type { ContactItem } from '@/types/content';
+import type { ContactItem } from '@/capabilities/content/content';
 
 interface ContactInfoRow {
   id: string; lang: string; label: string; value: string; icon: string; sort_order: number;

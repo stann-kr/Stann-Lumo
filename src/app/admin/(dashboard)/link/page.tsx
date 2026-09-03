@@ -49,9 +49,9 @@ const AVAILABLE_ICONS = [
 import {
   updateLinkPlatforms as apiUpdateLinkPlatforms,
   updatePageMeta as apiUpdatePageMeta,
-  updateTerminalInfo as apiUpdateTerminalInfo,
-} from '@/services/adminService';
-import type { PageMeta } from '@/types/content';
+} from '@/capabilities/content/contentAdmin.client';
+import { updateTerminalInfo as apiUpdateTerminalInfo } from '@/capabilities/site/siteConfig.client';
+import type { PageMeta } from '@/capabilities/content/content';
 
 const AdminLinkPage = () => {
   const { allContent, updateContent, currentEditLanguage, isLoading } = useContent();

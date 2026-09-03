@@ -8,7 +8,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDB } from '@/lib/db';
 import { requireAdminSession } from '@/lib/adminAuth';
-import type { GalleryPhoto } from '@/types/content';
+import type { GalleryPhoto } from '@/capabilities/media/media';
 
 /**
  * YouTube URL에서 video ID 추출

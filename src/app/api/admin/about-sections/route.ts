@@ -7,7 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDB } from '@/lib/db';
 import { requireAdminSession } from '@/lib/adminAuth';
-import type { DynamicSection, DynamicSectionType, PhilosophyItem } from '@/types/content';
+import type { DynamicSection, DynamicSectionType, PhilosophyItem } from '@/capabilities/content/content';
 
 interface AboutSectionRow {
   id: string; lang: string; title: string; type: string; section_order: number;

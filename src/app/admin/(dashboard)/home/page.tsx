@@ -18,13 +18,15 @@ import {
   updateHomeSections as apiUpdateHomeSections,
   updatePageMeta as apiUpdatePageMeta,
   updateArtistInfo as apiUpdateArtistInfo,
-  fetchTerminalConfig,
-  updateTerminalConfig,
-} from '@/services/adminService';
+} from '@/capabilities/content/contentAdmin.client';
+import { fetchTerminalConfig, updateTerminalConfig } from '@/capabilities/terminal/terminalConfig.client';
 import type {
-  HomeSection, TerminalInfo, PageMeta, ArtistInfoItem,
+  HomeSection, PageMeta, ArtistInfoItem,
+} from '@/capabilities/content/content';
+import type {
+  TerminalInfo,
   TerminalCustomField, TerminalStyleConfig,
-} from '@/types/content';
+} from '@/capabilities/terminal/terminalConfig';
 
 const AVAILABLE_ICONS = [
   { value: 'ri-user-line', label: 'User' },

@@ -7,7 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDB } from '@/lib/db';
 import { requireAdminSession } from '@/lib/adminAuth';
-import type { Performance } from '@/types/content';
+import type { Performance } from '@/capabilities/events/events';
 
 interface PerformanceRow {
   id: string; date: string; venue: string; location: string | null; time: string | null;

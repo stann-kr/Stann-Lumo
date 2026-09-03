@@ -13,14 +13,14 @@ import { useAdminForm } from "@/hooks/useAdminForm";
 import {
   updateArtistInfo as apiUpdateArtistInfo,
   updateAboutSections as apiUpdateAboutSections,
-} from "@/services/adminService";
+} from "@/capabilities/content/contentAdmin.client";
 import type {
   ArtistInfoItem,
   ContentData,
   DynamicSection,
   DynamicSectionType,
   PhilosophyItem,
-} from "@/types/content";
+} from "@/capabilities/content/content";
 import { createBorderFaint } from "@/utils/colorMix";
 import { runSave } from "@/utils/saveResult";
 

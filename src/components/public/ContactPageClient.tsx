@@ -3,7 +3,8 @@
 import { useTranslation } from "react-i18next";
 import PageLayout from "@/components/feature/PageLayout";
 import PageSection from "@/components/base/PageSection";
-import type { ContactItem, ContactPageMeta, EventsInfo } from "@/types/content";
+import type { ContactItem, ContactPageMeta } from "@/capabilities/content/content";
+import type { EventsInfo } from "@/capabilities/events/events";
 
 interface ContactPageClientProps {
   bookingInfo: EventsInfo;

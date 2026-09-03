@@ -5,7 +5,8 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getDB } from '@/lib/db';
-import type { Performance, GalleryPhoto } from '@/types/content';
+import type { Performance } from '@/capabilities/events/events';
+import type { GalleryPhoto } from '@/capabilities/media/media';
 
 interface PerformanceRow {
   id: string;

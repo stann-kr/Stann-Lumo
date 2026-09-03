@@ -7,7 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDB } from '@/lib/db';
 import { requireAdminSession } from '@/lib/adminAuth';
-import type { HomeSection } from '@/types/content';
+import type { HomeSection } from '@/capabilities/content/content';
 
 interface HomeSectionRow {
   id: string; lang: string; title: string; description: string; path: string; icon: string; sort_order: number;

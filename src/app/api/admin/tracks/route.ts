@@ -7,7 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDB } from '@/lib/db';
 import { requireAdminSession } from '@/lib/adminAuth';
-import type { Track } from '@/types/content';
+import type { Track } from '@/capabilities/content/content';
 
 interface TrackRow {
   id: string; lang: string; title: string; type: string; duration: string;

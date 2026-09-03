@@ -1,8 +1,12 @@
 import 'server-only';
 
 import type { D1Database } from '@/lib/db';
-import type { TerminalCustomField, TerminalStyleConfig } from '@/types/content';
-import { DEFAULT_TERMINAL_STYLE, type TerminalConfigData } from './terminalConfig';
+import {
+  DEFAULT_TERMINAL_STYLE,
+  type TerminalConfigData,
+  type TerminalCustomField,
+  type TerminalStyleConfig,
+} from './terminalConfig';
 
 interface TerminalConfigRow {
   terminal_url: string | null;
