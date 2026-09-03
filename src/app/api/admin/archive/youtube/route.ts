@@ -3,7 +3,7 @@ import {
   addYouTubeGalleryVideo,
   type YouTubeGalleryInput,
 } from '@/capabilities/media/mediaRepository.server';
-import { requireAdminSession } from '@/lib/adminAuth';
+import { requireAdminSession } from '@/capabilities/auth/authRoute.server';
 import { getDB } from '@/lib/db';
 
 export async function POST(request: NextRequest) {

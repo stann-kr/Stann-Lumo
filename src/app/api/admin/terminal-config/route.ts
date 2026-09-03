@@ -10,7 +10,7 @@ import {
   updateTerminalConfig,
 } from '@/capabilities/terminal/terminalConfig.server';
 import type { TerminalConfigData } from '@/capabilities/terminal/terminalConfig';
-import { requireAdminSession } from '@/lib/adminAuth';
+import { requireAdminSession } from '@/capabilities/auth/authRoute.server';
 import { getDB } from '@/lib/db';
 
 export type { TerminalConfigData } from '@/capabilities/terminal/terminalConfig';

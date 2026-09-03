@@ -6,7 +6,7 @@
 
 import { NextRequest } from 'next/server';
 import { getDB } from '@/lib/db';
-import { privateNoStoreJson, requireAdminSession } from '@/lib/adminAuth';
+import { privateNoStoreJson, requireAdminSession } from '@/capabilities/auth/authRoute.server';
 import {
   getRaApiConfigView,
   isRAApiOption,

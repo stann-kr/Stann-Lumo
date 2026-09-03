@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { getEnv } from '@/lib/db';
-import { buildSessionCookieHeader, createSession } from '@/lib/auth';
+import { buildSessionCookieHeader, createSession } from '@/capabilities/auth/auth.server';
 import { POST } from './route';
 
 const SessionStorageUnavailableError = vi.hoisted(
@@ -9,7 +9,7 @@ const SessionStorageUnavailableError = vi.hoisted(
 );
 
 vi.mock('@/lib/db', () => ({ getEnv: vi.fn() }));
-vi.mock('@/lib/auth', () => ({
+vi.mock('@/capabilities/auth/auth.server', () => ({
   createSession: vi.fn(),
   buildSessionCookieHeader: vi.fn(),
   SessionStorageUnavailableError,

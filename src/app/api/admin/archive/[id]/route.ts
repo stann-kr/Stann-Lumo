@@ -6,7 +6,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { deleteGalleryMedia } from '@/capabilities/media/mediaLifecycle.server';
 import { getDB, getR2 } from '@/lib/db';
-import { requireAdminSession } from '@/lib/adminAuth';
+import { requireAdminSession } from '@/capabilities/auth/authRoute.server';
 
 export async function DELETE(
   request: NextRequest,

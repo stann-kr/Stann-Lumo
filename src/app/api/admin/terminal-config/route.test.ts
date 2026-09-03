@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { D1Database } from '@/lib/db';
-import { requireAdminSession } from '@/lib/adminAuth';
+import { requireAdminSession } from '@/capabilities/auth/authRoute.server';
 import { getDB } from '@/lib/db';
 import {
   fetchTerminalConfig,
@@ -10,8 +10,8 @@ import {
 import { GET, PUT } from './route';
 
 vi.mock('@/lib/db', () => ({ getDB: vi.fn() }));
-vi.mock('@/lib/adminAuth', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/lib/adminAuth')>();
+vi.mock('@/capabilities/auth/authRoute.server', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/capabilities/auth/authRoute.server')>();
   return { ...actual, requireAdminSession: vi.fn() };
 });
 vi.mock('@/capabilities/terminal/terminalConfig.server', () => ({

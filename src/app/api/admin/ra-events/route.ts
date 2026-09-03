@@ -5,7 +5,7 @@ import {
   privateNoStoreJson,
   privateNoStoreResponse,
   requireAdminSession,
-} from '@/lib/adminAuth';
+} from '@/capabilities/auth/authRoute.server';
 import { getDB } from '@/lib/db';
 
 export async function GET(request: NextRequest) {

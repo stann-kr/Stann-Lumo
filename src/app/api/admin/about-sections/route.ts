@@ -4,7 +4,7 @@ import {
   fetchAboutSections,
   replaceAboutSections,
 } from '@/capabilities/content/contentAdmin.server';
-import { requireAdminSession } from '@/lib/adminAuth';
+import { requireAdminSession } from '@/capabilities/auth/authRoute.server';
 import { getDB } from '@/lib/db';
 
 export async function GET(request: NextRequest) {

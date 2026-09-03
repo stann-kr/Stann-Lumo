@@ -8,7 +8,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { uploadGalleryFiles } from '@/capabilities/media/mediaLifecycle.server';
 import { getDB, getR2 } from '@/lib/db';
-import { requireAdminSession } from '@/lib/adminAuth';
+import { requireAdminSession } from '@/capabilities/auth/authRoute.server';
 
 export async function POST(request: NextRequest) {
   const authError = await requireAdminSession(request);

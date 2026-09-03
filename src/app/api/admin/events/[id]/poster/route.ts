@@ -12,7 +12,7 @@ import {
   replaceEventPoster,
 } from '@/capabilities/media/mediaLifecycle.server';
 import { getDB, getR2 } from '@/lib/db';
-import { requireAdminSession } from '@/lib/adminAuth';
+import { requireAdminSession } from '@/capabilities/auth/authRoute.server';
 
 function mediaErrorResponse(error: unknown): NextResponse | null {
   if (!(error instanceof MediaLifecycleError)) return null;

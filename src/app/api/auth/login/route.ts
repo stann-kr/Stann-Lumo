@@ -4,7 +4,7 @@ import {
   createSession,
   buildSessionCookieHeader,
   SessionStorageUnavailableError,
-} from '@/lib/auth';
+} from '@/capabilities/auth/auth.server';
 
 /**
  * Web Crypto API 기반 상수 시간 문자열 비교
