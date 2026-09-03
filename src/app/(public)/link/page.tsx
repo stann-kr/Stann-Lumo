@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import LinkPageClient from '@/components/public/LinkPageClient';
-import { createPublicMetadata } from '@/lib/publicMetadata';
+import { createPublicMetadata } from '@/capabilities/site/publicMetadata';
 import { getLinkProjection, getRequestLocale } from '@/capabilities/content/publicContent.server';
 
 export async function generateMetadata(): Promise<Metadata> {

@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import EventsPageClient from '@/components/public/EventsPageClient';
-import { createPublicMetadata } from '@/lib/publicMetadata';
+import { createPublicMetadata } from '@/capabilities/site/publicMetadata';
 import { getEventsProjection, getRequestLocale } from '@/capabilities/content/publicContent.server';
 
 export async function generateMetadata(): Promise<Metadata> {

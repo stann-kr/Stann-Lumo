@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import ContactPageClient from '@/components/public/ContactPageClient';
-import { createPublicMetadata } from '@/lib/publicMetadata';
+import { createPublicMetadata } from '@/capabilities/site/publicMetadata';
 import { getContactProjection, getRequestLocale } from '@/capabilities/content/publicContent.server';
 
 export async function generateMetadata(): Promise<Metadata> {

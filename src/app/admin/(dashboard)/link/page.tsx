@@ -8,10 +8,10 @@ import FormTextarea from '@/components/base/FormTextarea';
 import SuccessMessage from '@/components/base/SuccessMessage';
 import SaveErrorMessage from '@/components/base/SaveErrorMessage';
 import DeleteConfirmModal from '@/components/base/DeleteConfirmModal';
-import { useSaveNotification } from '@/hooks/useSaveNotification';
-import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
+import { useSaveNotification } from '@/capabilities/admin/useSaveNotification';
+import { useUnsavedChanges } from '@/capabilities/admin/useUnsavedChanges';
 import { createBorderFaint } from '@/utils/colorMix';
-import { runSave } from '@/utils/saveResult';
+import { runSave } from '@/capabilities/admin/saveResult';
 
 const AVAILABLE_ICONS = [
   { value: 'ri-soundcloud-line',   label: 'SoundCloud' },

@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { useDeleteConfirm } from '@/hooks/useDeleteConfirm';
+import { useDeleteConfirm } from '@/capabilities/admin/useDeleteConfirm';
 import DeleteConfirmModal from './DeleteConfirmModal';
 
 vi.mock('react-i18next', () => ({

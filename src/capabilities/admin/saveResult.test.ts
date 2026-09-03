@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { getFailedSaveAreas, runSave } from './saveResult';
+import { getFailedSaveAreas, runSave } from '@/capabilities/admin/saveResult';
 
 describe('getFailedSaveAreas', () => {
   it('identifies rejected and success:false save operations', async () => {

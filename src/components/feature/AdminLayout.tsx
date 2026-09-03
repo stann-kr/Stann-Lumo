@@ -3,7 +3,7 @@ import { useState, ReactNode } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { requestLogout } from '@/capabilities/auth/auth.client';
 import { useContent } from '../../contexts/ContentContext';
-import { AdminEditGuardProvider, useAdminEditGuard } from '../../contexts/AdminEditGuardContext';
+import { AdminEditGuardProvider, useAdminEditGuard } from '@/capabilities/admin/AdminEditGuard';
 import { createColorMixStyle } from '../../utils/colorMix';
 import { COLOR_VARS } from '../../constants/colors';
 import { TRANSITION } from '../../constants/styles';

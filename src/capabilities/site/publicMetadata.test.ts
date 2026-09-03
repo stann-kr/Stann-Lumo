@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createPublicMetadata } from './publicMetadata';
+import { createPublicMetadata } from '@/capabilities/site/publicMetadata';
 
 describe('createPublicMetadata', () => {
   it('provides a canonical URL and social metadata for the requested public route', () => {

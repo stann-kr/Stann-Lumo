@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import MusicPageClient from '@/components/public/MusicPageClient';
-import { createPublicMetadata } from '@/lib/publicMetadata';
+import { createPublicMetadata } from '@/capabilities/site/publicMetadata';
 import { getMusicProjection, getRequestLocale } from '@/capabilities/content/publicContent.server';
 
 export async function generateMetadata(): Promise<Metadata> {

@@ -2,7 +2,7 @@ import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ContentData, PageMeta } from '@/capabilities/content/content';
 import type { RAApiConfigView } from '@/capabilities/events/raConfig';
-import { AdminEditGuardProvider } from '@/contexts/AdminEditGuardContext';
+import { AdminEditGuardProvider } from '@/capabilities/admin/AdminEditGuard';
 import AdminEventsPage from './page';
 
 const mocks = vi.hoisted(() => ({
@@ -68,7 +68,7 @@ vi.mock('@/capabilities/events/raApi.client', () => ({
   sortEventsByDate: vi.fn((items: unknown[]) => items),
 }));
 
-vi.mock('@/hooks/useSaveNotification', () => ({
+vi.mock('@/capabilities/admin/useSaveNotification', () => ({
   useSaveNotification: () => ({
     isVisible: false,
     showNotification: mocks.showNotification,

@@ -7,10 +7,10 @@ import FormInput from '@/components/base/FormInput';
 import FormSelect from '@/components/base/FormSelect';
 import SuccessMessage from '@/components/base/SuccessMessage';
 import DeleteConfirmModal from '@/components/base/DeleteConfirmModal';
-import { useListEditor } from '@/hooks/useListEditor';
-import { useDeleteConfirm } from '@/hooks/useDeleteConfirm';
-import { useSaveNotification } from '@/hooks/useSaveNotification';
-import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
+import { useListEditor } from '@/capabilities/admin/useListEditor';
+import { useDeleteConfirm } from '@/capabilities/admin/useDeleteConfirm';
+import { useSaveNotification } from '@/capabilities/admin/useSaveNotification';
+import { useUnsavedChanges } from '@/capabilities/admin/useUnsavedChanges';
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { PageMeta } from '@/capabilities/content/content';
@@ -22,7 +22,7 @@ import {
   sortEventsByDate,
 } from '@/capabilities/events/raApi.client';
 import { createBorderFaint } from '@/utils/colorMix';
-import { getFailedSaveAreas } from '@/utils/saveResult';
+import { getFailedSaveAreas } from '@/capabilities/admin/saveResult';
 import {
   updatePageMeta as apiUpdatePageMeta,
 } from '@/capabilities/content/contentAdmin.client';

@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import AboutPageClient from '@/components/public/AboutPageClient';
-import { createPublicMetadata } from '@/lib/publicMetadata';
+import { createPublicMetadata } from '@/capabilities/site/publicMetadata';
 import { getAboutProjection, getRequestLocale } from '@/capabilities/content/publicContent.server';
 
 export const metadata: Metadata = createPublicMetadata({
