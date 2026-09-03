@@ -9,20 +9,20 @@ import FormSelect from "@/components/base/FormSelect";
 import SuccessMessage from "@/components/base/SuccessMessage";
 import SaveErrorMessage from "@/components/base/SaveErrorMessage";
 import DeleteConfirmModal from "@/components/base/DeleteConfirmModal";
-import { useAdminForm } from "@/hooks/useAdminForm";
+import { useAdminForm } from "@/capabilities/admin/useAdminForm";
 import {
   updateArtistInfo as apiUpdateArtistInfo,
   updateAboutSections as apiUpdateAboutSections,
-} from "@/services/adminService";
+} from "@/capabilities/content/contentAdmin.client";
 import type {
   ArtistInfoItem,
   ContentData,
   DynamicSection,
   DynamicSectionType,
   PhilosophyItem,
-} from "@/types/content";
+} from "@/capabilities/content/content";
 import { createBorderFaint } from "@/utils/colorMix";
-import { runSave } from "@/utils/saveResult";
+import { runSave } from "@/capabilities/admin/saveResult";
 
 type PendingDelete =
   | { kind: "artist"; id: string; name: string }

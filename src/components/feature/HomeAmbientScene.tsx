@@ -3,7 +3,7 @@
 import dynamic from 'next/dynamic';
 import { Component, type ReactNode, useEffect, useState } from 'react';
 import { useMotionPreference } from '@/hooks/useMotionPreference';
-import type { Track } from '@/types/content';
+import type { Track } from '@/capabilities/content/content';
 
 const Scene3D = dynamic(() => import('./Scene3D'), {
   loading: () => null,

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useTranslation } from "react-i18next";
 import PageLayout from "@/components/feature/PageLayout";
 import { createBorderFaint } from "@/utils/colorMix";
-import type { MusicPageMeta, Track } from "@/types/content";
+import type { MusicPageMeta, Track } from "@/capabilities/content/content";
 
 interface MusicPageClientProps {
   musicMeta: MusicPageMeta;

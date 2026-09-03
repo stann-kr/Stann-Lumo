@@ -1,12 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { getDB } from './db';
+import { getDB } from '@/lib/db';
 import {
   createSession,
   SessionStorageUnavailableError,
   validateSession,
-} from './auth';
+} from './auth.server';
 
-vi.mock('./db', () => ({ getDB: vi.fn() }));
+vi.mock('@/lib/db', () => ({ getDB: vi.fn() }));
 
 describe('database-backed admin sessions', () => {
   beforeEach(() => {

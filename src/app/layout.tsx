@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import "./globals.css";
 import Providers from "./Providers";
 import LegacyPublicStorageCleanup from "@/components/security/LegacyPublicStorageCleanup";
-import { getRequestLocale } from '@/lib/publicContent.server';
+import { getRequestLocale } from '@/capabilities/content/publicContent.server';
 
 export const metadata: Metadata = {
   title: "STANN LUMO",

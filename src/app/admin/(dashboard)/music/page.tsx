@@ -7,19 +7,19 @@ import FormSelect from '@/components/base/FormSelect';
 import SuccessMessage from '@/components/base/SuccessMessage';
 import SaveErrorMessage from '@/components/base/SaveErrorMessage';
 import DeleteConfirmModal from '@/components/base/DeleteConfirmModal';
-import { useListEditor } from '@/hooks/useListEditor';
-import { useDeleteConfirm } from '@/hooks/useDeleteConfirm';
-import { useItemReorder } from '@/hooks/useItemReorder';
-import { useSaveNotification } from '@/hooks/useSaveNotification';
-import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
+import { useListEditor } from '@/capabilities/admin/useListEditor';
+import { useDeleteConfirm } from '@/capabilities/admin/useDeleteConfirm';
+import { useItemReorder } from '@/capabilities/admin/useItemReorder';
+import { useSaveNotification } from '@/capabilities/admin/useSaveNotification';
+import { useUnsavedChanges } from '@/capabilities/admin/useUnsavedChanges';
 import { useState, useEffect } from 'react';
 import { createBorderFaint } from '@/utils/colorMix';
-import { runSave } from '@/utils/saveResult';
+import { runSave } from '@/capabilities/admin/saveResult';
 import {
   updateTracks as apiUpdateTracks,
   updatePageMeta as apiUpdatePageMeta,
-} from '@/services/adminService';
-import type { PageMeta } from '@/types/content';
+} from '@/capabilities/content/contentAdmin.client';
+import type { PageMeta } from '@/capabilities/content/content';
 
 interface Track {
   id: string;

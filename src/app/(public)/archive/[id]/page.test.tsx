@@ -2,7 +2,7 @@ import type { ComponentProps, ReactNode } from 'react';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { GalleryPhoto } from '@/types/content';
+import type { GalleryPhoto } from '@/capabilities/media/media';
 import ArchiveDetailPageClient from '@/components/public/ArchiveDetailPageClient';
 
 const push = vi.fn();

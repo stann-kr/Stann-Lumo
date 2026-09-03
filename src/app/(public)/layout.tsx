@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 import TerminalLayout from '@/components/feature/TerminalLayout';
-import { getPublicShellProjection, getRequestLocale } from '@/lib/publicContent.server';
+import { getPublicShellProjection, getRequestLocale } from '@/capabilities/content/publicContent.server';
 
 export const metadata: Metadata = {
   title: {

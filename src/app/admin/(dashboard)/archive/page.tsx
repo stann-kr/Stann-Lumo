@@ -7,28 +7,21 @@ import FormSelect from '@/components/base/FormSelect';
 import SuccessMessage from '@/components/base/SuccessMessage';
 import SaveErrorMessage from '@/components/base/SaveErrorMessage';
 import DeleteConfirmModal from '@/components/base/DeleteConfirmModal';
-import { useSaveNotification } from '@/hooks/useSaveNotification';
-import { useDeleteConfirm } from '@/hooks/useDeleteConfirm';
-import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
+import { useSaveNotification } from '@/capabilities/admin/useSaveNotification';
+import { useDeleteConfirm } from '@/capabilities/admin/useDeleteConfirm';
+import { useUnsavedChanges } from '@/capabilities/admin/useUnsavedChanges';
 import { createBorderFaint } from '@/utils/colorMix';
-import { apiRequest } from '@/services/apiClient';
-import { runSave } from '@/utils/saveResult';
-import type { GalleryPhoto, Performance } from '@/types/content';
-
-// ─── YouTube URL 파싱 (클라이언트 전용) ───────────────────────────────────────
-function extractYoutubeId(url: string): string | null {
-  const patterns = [
-    /youtu\.be\/([a-zA-Z0-9_-]{11})/,
-    /youtube\.com\/watch\?.*v=([a-zA-Z0-9_-]{11})/,
-    /youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/,
-    /youtube\.com\/embed\/([a-zA-Z0-9_-]{11})/,
-  ];
-  for (const pattern of patterns) {
-    const match = url.match(pattern);
-    if (match?.[1]) return match[1];
-  }
-  return null;
-}
+import { runSave } from '@/capabilities/admin/saveResult';
+import type { Performance } from '@/capabilities/events/events';
+import { fetchPerformances } from '@/capabilities/events/eventsAdmin.client';
+import { extractYouTubeId, type GalleryPhoto } from '@/capabilities/media/media';
+import {
+  addYouTubeGalleryVideo,
+  deleteGalleryPhoto,
+  fetchGalleryPhotos,
+  updateGalleryPhotos,
+  uploadGalleryFiles,
+} from '@/capabilities/media/mediaAdmin.client';
 
 // ─── FocalPicker ─────────────────────────────────────────────────────────────
 interface FocalPickerProps {
@@ -126,14 +119,12 @@ const AdminGalleryPage = () => {
   // ─── 초기 데이터 로드 ────────────────────────────────────────────────────
   const fetchData = async () => {
     try {
-      const [photosRes, perfsRes] = await Promise.all([
-        fetch('/api/admin/archive'),
-        fetch('/api/admin/performances'),
+      const [photosResult, performancesResult] = await Promise.all([
+        fetchGalleryPhotos(),
+        fetchPerformances(),
       ]);
-      const photosJson = (await photosRes.json()) as { success: boolean; data: GalleryPhoto[] };
-      const perfsJson = (await perfsRes.json()) as { success: boolean; data: Performance[] };
-      if (photosJson.success) setPhotos(photosJson.data);
-      if (perfsJson.success) setPerformances(perfsJson.data);
+      if (photosResult.success && photosResult.data) setPhotos(photosResult.data);
+      if (performancesResult.success && performancesResult.data) setPerformances(performancesResult.data);
     } catch {
       // 조용히 실패
     } finally {
@@ -145,7 +136,7 @@ const AdminGalleryPage = () => {
 
   // ─── YouTube URL 실시간 파싱 ─────────────────────────────────────────────
   useEffect(() => {
-    setYoutubePreviewId(extractYoutubeId(youtubeUrl));
+    setYoutubePreviewId(extractYouTubeId(youtubeUrl));
     setYoutubeError('');
   }, [youtubeUrl]);
 
@@ -177,10 +168,7 @@ const AdminGalleryPage = () => {
     try {
       await runSave(
         ['ARCHIVE LAYOUT'],
-        [apiRequest<void>('/api/admin/archive', {
-          method: 'PUT',
-          body: JSON.stringify({ photos }),
-        })],
+        [updateGalleryPhotos(photos)],
         () => {
           setSavedDataVersion((version) => version + 1);
           showNotification();
@@ -199,10 +187,8 @@ const AdminGalleryPage = () => {
     if (!files || files.length === 0) return;
     setIsUploading(true);
     setUploadError('');
-    const formData = new FormData();
-    Array.from(files).forEach((file) => formData.append('files', file));
     try {
-      const result = await apiRequest<GalleryPhoto[]>('/api/admin/archive/upload', { method: 'POST', body: formData });
+      const result = await uploadGalleryFiles(files);
       const uploadedPhotos = result.data;
       if (result.success && uploadedPhotos && uploadedPhotos.length > 0) {
         setPhotos((prev) => [...prev, ...uploadedPhotos]);
@@ -234,13 +220,7 @@ const AdminGalleryPage = () => {
     setIsAddingYoutube(true);
     setYoutubeError('');
     try {
-      const result = await apiRequest<GalleryPhoto>('/api/admin/archive/youtube', {
-        method: 'POST',
-        body: JSON.stringify({
-          youtubeUrl,
-          ...(youtubeLinkedEventId && { linkedEventId: youtubeLinkedEventId }),
-        }),
-      });
+      const result = await addYouTubeGalleryVideo(youtubeUrl, youtubeLinkedEventId || undefined);
       const addedPhoto = result.data;
       if (result.success && addedPhoto) {
         setPhotos((prev) => [...prev, addedPhoto]);
@@ -264,7 +244,7 @@ const AdminGalleryPage = () => {
     if (!photo) return;
     setSaveError('');
     try {
-      const result = await apiRequest<void>(`/api/admin/archive/${photo.id}`, { method: 'DELETE' });
+      const result = await deleteGalleryPhoto(photo.id);
       if (!result.success) {
         setSaveError('MEDIA DELETE에 실패했습니다. 현재 목록은 유지됩니다. 다시 시도해 주세요.');
         return;

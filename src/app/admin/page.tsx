@@ -1,6 +1,7 @@
 'use client';
 import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
+import { authenticateAdmin } from '@/capabilities/auth/auth.client';
 
 const AdminLoginPage = () => {
   const [password, setPassword] = useState('');
@@ -12,16 +13,11 @@ const AdminLoginPage = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password }),
-      });
-      if (res.ok) {
+      const result = await authenticateAdmin(password);
+      if (result.isAuthenticated) {
         router.push('/admin/home');
       } else {
-        const data = await res.json() as { error?: { message?: string } };
-        setError(data?.error?.message ?? 'Invalid password');
+        setError(result.errorMessage ?? 'Invalid password');
         setPassword('');
       }
     } catch {

@@ -1,25 +1,15 @@
-/**
- * 어드민 트랙 API
- * GET  /api/admin/tracks?lang=en|ko
- * PUT  /api/admin/tracks
- */
-
 import { NextRequest, NextResponse } from 'next/server';
+import { isContentLocale, type Track } from '@/capabilities/content/content';
+import { fetchTracks, replaceTracks } from '@/capabilities/content/contentAdmin.server';
+import { requireAdminSession } from '@/capabilities/auth/authRoute.server';
 import { getDB } from '@/lib/db';
-import { requireAdminSession } from '@/lib/adminAuth';
-import type { Track } from '@/types/content';
-
-interface TrackRow {
-  id: string; lang: string; title: string; type: string; duration: string;
-  year: string; platform: string; link: string; sort_order: number;
-}
 
 export async function GET(request: NextRequest) {
   const authError = await requireAdminSession(request);
   if (authError) return authError;
 
   const lang = request.nextUrl.searchParams.get('lang') ?? 'en';
-  if (lang !== 'en' && lang !== 'ko') {
+  if (!isContentLocale(lang)) {
     return NextResponse.json(
       { success: false, error: { code: 'BAD_REQUEST', message: 'lang must be "en" or "ko"' } },
       { status: 400 },
@@ -35,16 +25,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const result = await db.prepare(
-      'SELECT * FROM tracks WHERE lang = ? ORDER BY sort_order',
-    ).bind(lang).all<TrackRow>();
-
-    const data: Track[] = result.results.map((r) => ({
-      id: r.id, title: r.title, type: r.type, duration: r.duration,
-      year: r.year, platform: r.platform, link: r.link,
-    }));
-
-    return NextResponse.json({ success: true, data });
+    return NextResponse.json({ success: true, data: await fetchTracks(db, lang) });
   } catch {
     return NextResponse.json(
       { success: false, error: { code: 'INTERNAL_ERROR', message: 'Failed to fetch tracks' } },
@@ -67,30 +48,21 @@ export async function PUT(request: NextRequest) {
 
   try {
     const body = (await request.json()) as { lang: string; items: Track[] };
-    const { lang, items } = body;
-
-    if (lang !== 'en' && lang !== 'ko') {
+    const { lang } = body;
+    if (!isContentLocale(lang)) {
       return NextResponse.json(
         { success: false, error: { code: 'BAD_REQUEST', message: 'lang must be "en" or "ko"' } },
         { status: 400 },
       );
     }
-    if (!Array.isArray(items)) {
+    if (!Array.isArray(body.items)) {
       return NextResponse.json(
         { success: false, error: { code: 'BAD_REQUEST', message: 'items must be an array' } },
         { status: 400 },
       );
     }
 
-    await db.batch([
-      db.prepare('DELETE FROM tracks WHERE lang = ?').bind(lang),
-      ...items.map((track, idx) =>
-        db.prepare(
-          'INSERT INTO tracks (id, lang, title, type, duration, year, platform, link, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-        ).bind(track.id, lang, track.title, track.type, track.duration, track.year, track.platform, track.link, idx),
-      ),
-    ]);
-
+    await replaceTracks(db, lang, body.items);
     return NextResponse.json({ success: true });
   } catch {
     return NextResponse.json(

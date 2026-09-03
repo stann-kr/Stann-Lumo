@@ -8,8 +8,8 @@ import type {
   ArtistInfoItem,
   HomePageMeta,
   HomeSection,
-  TerminalInfo,
-} from "@/types/content";
+} from "@/capabilities/content/content";
+import type { TerminalInfo } from "@/capabilities/terminal/terminalConfig";
 
 interface HomePageClientProps {
   artistInfo: ArtistInfoItem[];

@@ -10,21 +10,23 @@ import SuccessMessage from '@/components/base/SuccessMessage';
 import SaveErrorMessage from '@/components/base/SaveErrorMessage';
 import DeleteConfirmModal from '@/components/base/DeleteConfirmModal';
 import RadioGroup from '@/components/base/RadioGroup';
-import { useSaveNotification } from '@/hooks/useSaveNotification';
-import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
+import { useSaveNotification } from '@/capabilities/admin/useSaveNotification';
+import { useUnsavedChanges } from '@/capabilities/admin/useUnsavedChanges';
 import { createBorderFaint, createBorderMid } from '@/utils/colorMix';
-import { runSave } from '@/utils/saveResult';
+import { runSave } from '@/capabilities/admin/saveResult';
 import {
   updateHomeSections as apiUpdateHomeSections,
   updatePageMeta as apiUpdatePageMeta,
   updateArtistInfo as apiUpdateArtistInfo,
-  fetchTerminalConfig,
-  updateTerminalConfig,
-} from '@/services/adminService';
+} from '@/capabilities/content/contentAdmin.client';
+import { fetchTerminalConfig, updateTerminalConfig } from '@/capabilities/terminal/terminalConfig.client';
 import type {
-  HomeSection, TerminalInfo, PageMeta, ArtistInfoItem,
+  HomeSection, PageMeta, ArtistInfoItem,
+} from '@/capabilities/content/content';
+import type {
+  TerminalInfo,
   TerminalCustomField, TerminalStyleConfig,
-} from '@/types/content';
+} from '@/capabilities/terminal/terminalConfig';
 
 const AVAILABLE_ICONS = [
   { value: 'ri-user-line', label: 'User' },

@@ -4,7 +4,8 @@ import { useTranslation } from "react-i18next";
 import PageLayout from "@/components/feature/PageLayout";
 import PageSection from "@/components/base/PageSection";
 import { createBorderFaint, createBorderMid } from "@/utils/colorMix";
-import type { LinkPageMeta, LinkPlatform, TerminalInfo } from "@/types/content";
+import type { LinkPageMeta, LinkPlatform } from "@/capabilities/content/content";
+import type { TerminalInfo } from "@/capabilities/terminal/terminalConfig";
 
 interface LinkPageClientProps {
   linkMeta: LinkPageMeta;

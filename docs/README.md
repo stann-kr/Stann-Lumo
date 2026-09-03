@@ -6,12 +6,14 @@
 
 ## 현재 상태
 
-- Next.js 15, React 19 기반 web-app/brand-site다.
+- Next.js 16, React 19 기반 web-app/brand-site다.
 - public route와 admin dashboard route를 함께 가진다.
 - Cloudflare/OpenNext 배포를 사용하며 D1 database와 R2 bucket을 바인딩한다.
 - STANN OS 일관화 규칙에 맞춰 hub/live interface와 연결된다.
 
 ## 빠른 시작
+
+Node.js 22 이상이 필요하다.
 
 ```bash
 docker compose up --build
@@ -34,7 +36,8 @@ npm run dev
 
 | 영역 | 내용 |
 |---|---|
-| Framework | Next.js 15 App Router |
+| Framework | Next.js 16 App Router |
+| Runtime | Node.js 22 이상 |
 | React | React 19 |
 | Language | TypeScript |
 | Styling | Tailwind CSS |
@@ -49,6 +52,7 @@ npm run dev
 ```text
 src/app/(public)/        # public artist site routes
 src/app/admin/           # admin dashboard routes
+src/capabilities/        # domain contract, persistence, client boundary
 src/components/base/     # reusable UI primitives
 src/components/feature/  # layout, scene, protected route
 src/contexts/            # language/content contexts

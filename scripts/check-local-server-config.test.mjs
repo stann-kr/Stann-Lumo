@@ -39,9 +39,18 @@ test('Docker binds the local Worker preview to loopback on port 3004', () => {
   const dockerfile = readRepositoryFile('Dockerfile');
   const compose = readRepositoryFile('docker-compose.yml');
 
+  assert.match(dockerfile, /^FROM node:22-bookworm-slim$/m);
+  assert.doesNotMatch(dockerfile, /^FROM .*alpine.*$/m);
+  assert.match(dockerfile, /^RUN npm ci$/m);
+  assert.doesNotMatch(dockerfile, /^RUN npm install$/m);
   assert.match(dockerfile, /^EXPOSE 3004$/m);
   assert.match(dockerfile, /^CMD \["npm", "run", "dev:docker"\]$/m);
   assert.match(compose, /^\s+- "127\.0\.0\.1:3004:3004"$/m);
+  assert.match(compose, /^\s+source: \.dev\.vars$/m);
+  assert.match(compose, /^\s+target: \/app\/\.dev\.vars$/m);
+  assert.match(compose, /^\s+read_only: true$/m);
+  assert.doesNotMatch(compose, /^\s+- \.:\/app$/m);
+  assert.doesNotMatch(compose, /^\s+- \/app\/\.(?:next|open-next)$/m);
   assert.match(compose, /^\s+- \.env$/m);
   assert.doesNotMatch(compose, /^\s+- \.dev\.vars$/m);
   assert.doesNotMatch(`${dockerfile}\n${compose}`, /\b3000\b/);

@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import PageLayout from "@/components/feature/PageLayout";
 import PageSection from "@/components/base/PageSection";
 import { createBorderFaint, createBorderMid } from "@/utils/colorMix";
-import type { ArtistInfoItem, DynamicSection } from "@/types/content";
+import type { ArtistInfoItem, DynamicSection } from "@/capabilities/content/content";
 
 interface AboutPageClientProps {
   artistInfo: ArtistInfoItem[];
