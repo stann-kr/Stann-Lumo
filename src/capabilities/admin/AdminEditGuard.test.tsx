@@ -2,8 +2,8 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { useState } from 'react';
-import { AdminEditGuardProvider, useAdminEditGuard } from './AdminEditGuardContext';
-import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
+import { AdminEditGuardProvider, useAdminEditGuard } from './AdminEditGuard';
+import { useUnsavedChanges } from './useUnsavedChanges';
 
 const GuardHarness = () => {
   const [value, setValue] = useState('initial');

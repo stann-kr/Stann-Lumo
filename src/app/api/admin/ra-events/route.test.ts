@@ -2,17 +2,17 @@ import { NextRequest } from 'next/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { D1Database } from '@/lib/db';
 import { getDB } from '@/lib/db';
-import { privateNoStoreJson, requireAdminSession } from '@/lib/adminAuth';
-import { getRaApiConfigSecret } from '@/lib/admin/raApiConfig.server';
+import { privateNoStoreJson, requireAdminSession } from '@/capabilities/auth/authRoute.server';
+import { getRaApiConfigSecret } from '@/capabilities/events/raApiConfig.server';
 import { GET } from './route';
 
 vi.mock('@/lib/db', () => ({ getDB: vi.fn() }));
-vi.mock('@/lib/adminAuth', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/lib/adminAuth')>();
+vi.mock('@/capabilities/auth/authRoute.server', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/capabilities/auth/authRoute.server')>();
   return { ...actual, requireAdminSession: vi.fn() };
 });
-vi.mock('@/lib/admin/raApiConfig.server', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/lib/admin/raApiConfig.server')>();
+vi.mock('@/capabilities/events/raApiConfig.server', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/capabilities/events/raApiConfig.server')>();
   return { ...actual, getRaApiConfigSecret: vi.fn() };
 });
 

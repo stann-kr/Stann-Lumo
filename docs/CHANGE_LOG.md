@@ -2,6 +2,26 @@
 
 공개 가능한 결과 중심 변경 요약이다. 항목은 일자 단위이며 최신 항목을 위에 둔다.
 
+## 2026-08-23 — 보안 의존성과 관리자 데이터 경계 정비
+
+### Security
+
+- Node.js 22 이상을 runtime 기준으로 명시하고 Next.js 16, OpenNext, Wrangler, Workers Types와 Sharp를 호환 버전으로 갱신해 전체·production dependency audit를 0건으로 복구했다.
+- 관리자 콘텐츠는 영어·한국어 bootstrap이 모두 끝난 뒤에만 편집 화면을 열며, 실패 시 빈 데이터를 저장하지 않고 재시도 상태만 제공한다.
+
+### Changed
+
+- Terminal 설정의 contract, D1 persistence와 API client를 독립 capability로 모으고 기존 API route는 인증·transport facade로 유지한다.
+- Docker 개발 이미지도 lockfile 기반 `npm ci`로 의존성을 재현한다.
+
+## 2026-08-14 — Cloudflare development와 production 배포 분리
+
+### Changed
+
+- feature branch preview와 `dev` 배포를 고정 development Worker 및 별도 D1·R2 resource로 분리했다.
+- `main`만 production Worker를 배포하도록 Workers Builds branch 계약과 deploy guard를 추가했다.
+- 모호한 수동 production deploy 경로를 제거하고 development bootstrap과 migration을 명시적 명령으로 분리했다.
+
 ## 2026-08-11 — 로컬 환경 경계와 빌드 산출물 격리
 
 ### Fixed

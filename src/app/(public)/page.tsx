@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import HomePageClient from '@/components/public/HomePageClient';
-import { createPublicMetadata } from '@/lib/publicMetadata';
-import { getHomeProjection, getRequestLocale } from '@/lib/publicContent.server';
+import { createPublicMetadata } from '@/capabilities/site/publicMetadata';
+import { getHomeProjection, getRequestLocale } from '@/capabilities/content/publicContent.server';
 
 export async function generateMetadata(): Promise<Metadata> {
   const projection = await getHomeProjection(await getRequestLocale());

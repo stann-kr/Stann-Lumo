@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import PageLayout from '@/components/feature/PageLayout';
 import { createBorderAccent, createBorderFaint, createBorderMid } from '@/utils/colorMix';
-import type { GalleryPhoto } from '@/types/content';
+import type { GalleryPhoto } from '@/capabilities/media/media';
 
 interface ArchiveDetailPageClientProps {
   photo: GalleryPhoto;

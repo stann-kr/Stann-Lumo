@@ -12,7 +12,7 @@ import HomeAmbientScene from "./HomeAmbientScene";
 import SignalNet from "../base/SignalNet";
 import { SELF_NODE_ID } from "../../constants/signalNet";
 import { useMotionPreference } from "../../hooks/useMotionPreference";
-import type { Track } from "@/types/content";
+import type { Track } from "@/capabilities/content/content";
 
 interface TerminalLayoutProps {
   children: ReactNode;

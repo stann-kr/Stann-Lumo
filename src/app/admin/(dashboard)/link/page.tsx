@@ -8,10 +8,10 @@ import FormTextarea from '@/components/base/FormTextarea';
 import SuccessMessage from '@/components/base/SuccessMessage';
 import SaveErrorMessage from '@/components/base/SaveErrorMessage';
 import DeleteConfirmModal from '@/components/base/DeleteConfirmModal';
-import { useSaveNotification } from '@/hooks/useSaveNotification';
-import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
+import { useSaveNotification } from '@/capabilities/admin/useSaveNotification';
+import { useUnsavedChanges } from '@/capabilities/admin/useUnsavedChanges';
 import { createBorderFaint } from '@/utils/colorMix';
-import { runSave } from '@/utils/saveResult';
+import { runSave } from '@/capabilities/admin/saveResult';
 
 const AVAILABLE_ICONS = [
   { value: 'ri-soundcloud-line',   label: 'SoundCloud' },
@@ -49,9 +49,9 @@ const AVAILABLE_ICONS = [
 import {
   updateLinkPlatforms as apiUpdateLinkPlatforms,
   updatePageMeta as apiUpdatePageMeta,
-  updateTerminalInfo as apiUpdateTerminalInfo,
-} from '@/services/adminService';
-import type { PageMeta } from '@/types/content';
+} from '@/capabilities/content/contentAdmin.client';
+import { updateTerminalInfo as apiUpdateTerminalInfo } from '@/capabilities/site/siteConfig.client';
+import type { PageMeta } from '@/capabilities/content/content';
 
 const AdminLinkPage = () => {
   const { allContent, updateContent, currentEditLanguage, isLoading } = useContent();

@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import EventDetailPageClient from '@/components/public/EventDetailPageClient';
-import { createPublicMetadata } from '@/lib/publicMetadata';
-import { getEventDetail } from '@/lib/publicContent.server';
+import { createPublicMetadata } from '@/capabilities/site/publicMetadata';
+import { getEventDetail } from '@/capabilities/content/publicContent.server';
 
 interface EventDetailPageProps { params: Promise<{ id: string }> }
 

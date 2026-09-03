@@ -2,12 +2,12 @@ import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { D1Database, D1PreparedStatement, D1Result } from '@/lib/db';
 import { getDB } from '@/lib/db';
-import { privateNoStoreJson, requireAdminSession } from '@/lib/adminAuth';
+import { privateNoStoreJson, requireAdminSession } from '@/capabilities/auth/authRoute.server';
 import { GET, PUT } from './route';
 
 vi.mock('@/lib/db', () => ({ getDB: vi.fn() }));
-vi.mock('@/lib/adminAuth', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@/lib/adminAuth')>();
+vi.mock('@/capabilities/auth/authRoute.server', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/capabilities/auth/authRoute.server')>();
   return { ...actual, requireAdminSession: vi.fn() };
 });
 

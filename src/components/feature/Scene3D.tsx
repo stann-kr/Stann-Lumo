@@ -7,7 +7,7 @@ import { EffectComposer, Bloom, Noise, ChromaticAberration, Vignette } from '@re
 import { BlendFunction } from 'postprocessing';
 import * as THREE from 'three';
 import { COLORS } from '../../styles/colors';
-import type { Track } from '@/types/content';
+import type { Track } from '@/capabilities/content/content';
 
 // ─── 궤도 파라미터 타입 ───────────────────────────────────────────────────────
 

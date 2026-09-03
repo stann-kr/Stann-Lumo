@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { validateSession, SESSION_COOKIE_NAME } from '@/lib/auth';
+import { validateSession, SESSION_COOKIE_NAME } from '@/capabilities/auth/auth.server';
 
 export async function GET(request: NextRequest) {
   const sessionId = request.cookies.get(SESSION_COOKIE_NAME)?.value ?? '';

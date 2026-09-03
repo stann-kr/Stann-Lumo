@@ -1,9 +1,9 @@
 import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { validateSession } from './auth';
-import { requireAdminSession } from './adminAuth';
+import { validateSession } from './auth.server';
+import { requireAdminSession } from './authRoute.server';
 
-vi.mock('./auth', () => ({
+vi.mock('./auth.server', () => ({
   SESSION_COOKIE_NAME: 'admin_session',
   validateSession: vi.fn(),
 }));

@@ -2,25 +2,38 @@
   "name": "stann-lumo",
   "private": true,
   "version": "0.0.0",
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
-    "dev": "node --env-file-if-exists=.dev.vars ./node_modules/next/dist/bin/next dev --port 3004",
+    "dev": "node scripts/run-local-worker.mjs --ip 127.0.0.1",
+    "dev:docker": "node scripts/run-local-worker.mjs --ip 0.0.0.0",
+    "dev:next": "node scripts/run-local-worker.mjs --next --ip 127.0.0.1",
     "prebuild": "node scripts/check-token-sync.mjs",
     "build": "NEXT_DIST_DIR=$(node scripts/resolve-build-dist-dir.mjs) NODE_ENV=production next build && next typegen",
     "build:cloudflare": "node scripts/check-token-sync.mjs && npm run env:check:opennext && NEXT_DIST_DIR=.next opennextjs-cloudflare build && npm run env:check:opennext-artifact",
-    "start": "NEXT_DIST_DIR=.next-build node --env-file-if-exists=.dev.vars ./node_modules/next/dist/bin/next start --port 3004",
+    "start": "NEXT_DIST_DIR=.next-build node ./node_modules/next/dist/bin/next start --hostname 127.0.0.1 --port 3004",
     "lint": "eslint src --report-unused-disable-directives --max-warnings 0",
     "test": "vitest run",
     "test:env": "node --test scripts/check-opennext-env.test.mjs",
-    "test:local-config": "node --test scripts/check-local-server-config.test.mjs scripts/migrate-local-server-env.test.mjs scripts/resolve-build-dist-dir.test.mjs scripts/check-lockfile.test.mjs",
+    "test:local-config": "npm run local:config:check && node --test scripts/check-local-server-env.test.mjs scripts/run-local-worker.test.mjs scripts/check-local-server-config.test.mjs scripts/check-cloudflare-deploy-config.test.mjs scripts/check-cloudflare-deploy-target.test.mjs scripts/migrate-local-server-env.test.mjs scripts/resolve-build-dist-dir.test.mjs scripts/check-lockfile.test.mjs",
+    "test:local-worker": "node scripts/smoke-local-worker.mjs",
+    "local:config:check": "node scripts/check-local-server-env.mjs",
+    "local:d1:apply": "wrangler d1 migrations apply stann-lumo-db --local",
+    "local:prepare": "node scripts/run-local-worker.mjs --prepare-only",
     "test:watch": "vitest",
     "type-check": "tsc --noEmit",
     "env:check:opennext": "node scripts/check-opennext-env.mjs source",
     "env:check:opennext-artifact": "node scripts/check-opennext-env.mjs artifact",
     "migrate:local-env": "node scripts/migrate-local-server-env.mjs",
-    "deploy": "npm run build:cloudflare && wrangler deploy"
+    "d1:dev:apply": "wrangler d1 migrations apply DB --remote --env dev",
+    "deploy:dev": "npm run build:cloudflare && ALLOW_MANUAL_CLOUDFLARE_DEPLOY=dev npm run deploy:dev:artifact",
+    "deploy:dev:artifact": "node scripts/check-cloudflare-deploy-target.mjs dev && wrangler deploy .open-next/worker.js --env dev",
+    "deploy:preview:artifact": "node scripts/check-cloudflare-deploy-target.mjs preview && wrangler versions upload .open-next/worker.js --env dev",
+    "deploy:production:artifact": "node scripts/check-cloudflare-deploy-target.mjs production && wrangler deploy .open-next/worker.js --env=\"\""
   },
   "dependencies": {
-    "@opennextjs/cloudflare": "^1.17.1",
+    "@opennextjs/cloudflare": "^1.20.2",
     "@gsap/react": "^2.1.2",
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.5.0",
@@ -30,19 +43,19 @@
     "gsap": "^3.14.2",
     "i18next": "^25.3.2",
     "i18next-browser-languagedetector": "^8.2.0",
-    "next": "^15.0.0",
-    "react": "^19.1.2",
-    "react-dom": "^19.1.2",
+    "next": "^16.3.2",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
     "react-i18next": "^15.6.0",
     "split-type": "^0.3.4",
     "three": "^0.183.2",
-    "wrangler": "^4.74.0"
+    "wrangler": "^4.125.0"
   },
   "optionalDependencies": {
-    "sharp": "0.34.5"
+    "sharp": "0.35.3"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20260317.1",
+    "@cloudflare/workers-types": "^5.20260823.1",
     "@dotenvx/dotenvx": "1.31.0",
     "@eslint/js": "^9.30.1",
     "@testing-library/jest-dom": "^7.0.0",
@@ -56,7 +69,7 @@
     "autoprefixer": "^10.4.21",
     "axe-core": "^4.13.0",
     "eslint": "^9.30.1",
-    "eslint-config-next": "^16.2.0",
+    "eslint-config-next": "^16.3.2",
     "eslint-plugin-react-hooks": "^5.2.0",
     "globals": "^16.3.0",
     "jiti": "^2.6.1",

@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import ArchiveDetailPageClient from '@/components/public/ArchiveDetailPageClient';
-import { createPublicMetadata } from '@/lib/publicMetadata';
-import { getArchiveDetail, getArchivePhotos } from '@/lib/publicContent.server';
+import { createPublicMetadata } from '@/capabilities/site/publicMetadata';
+import { getArchiveDetail, getArchivePhotos } from '@/capabilities/content/publicContent.server';
 
 interface ArchiveDetailPageProps { params: Promise<{ id: string }> }
 

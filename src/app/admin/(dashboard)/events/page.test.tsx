@@ -1,8 +1,8 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { ContentData, PageMeta } from '@/types/content';
-import type { RAApiConfigView } from '@/types/admin';
-import { AdminEditGuardProvider } from '@/contexts/AdminEditGuardContext';
+import type { ContentData, PageMeta } from '@/capabilities/content/content';
+import type { RAApiConfigView } from '@/capabilities/events/raConfig';
+import { AdminEditGuardProvider } from '@/capabilities/admin/AdminEditGuard';
 import AdminEventsPage from './page';
 
 const mocks = vi.hoisted(() => ({
@@ -50,22 +50,25 @@ vi.mock('@/contexts/ContentContext', () => ({
   }),
 }));
 
-vi.mock('@/services/adminService', () => ({
+vi.mock('@/capabilities/content/contentAdmin.client', () => ({
+  updatePageMeta: mocks.updatePageMeta,
+}));
+
+vi.mock('@/capabilities/events/eventsAdmin.client', () => ({
   fetchRaApiConfig: mocks.fetchRaApiConfig,
   updateRaApiConfig: mocks.updateRaApiConfig,
   updatePerformances: mocks.updatePerformances,
-  updatePageMeta: mocks.updatePageMeta,
   uploadEventPoster: vi.fn(),
   deleteEventPoster: vi.fn(),
 }));
 
-vi.mock('@/utils/raApi', () => ({
+vi.mock('@/capabilities/events/raApi.client', () => ({
   fetchRAEvents: mocks.fetchRaEvents,
   convertRAEventsToPerformances: vi.fn(() => []),
   sortEventsByDate: vi.fn((items: unknown[]) => items),
 }));
 
-vi.mock('@/hooks/useSaveNotification', () => ({
+vi.mock('@/capabilities/admin/useSaveNotification', () => ({
   useSaveNotification: () => ({
     isVisible: false,
     showNotification: mocks.showNotification,

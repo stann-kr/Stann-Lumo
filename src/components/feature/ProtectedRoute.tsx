@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useCallback, useState, type ReactElement } from 'react';
 import { useRouter } from 'next/navigation';
+import { checkSession } from '@/capabilities/auth/auth.client';
 
 /** 세션 재검증 주기 (ms) — 5분 */
 const SESSION_CHECK_INTERVAL = 5 * 60 * 1000;
@@ -20,9 +21,7 @@ const ProtectedRoute = ({ children }: { children: ReactElement }) => {
   // setState 없이 인증 여부만 반환 — 상태 변경은 호출자 책임
   const verifySession = useCallback(async (): Promise<boolean> => {
     try {
-      const res = await fetch('/api/auth/session');
-      const data = (await res.json()) as { success: boolean; data?: { authenticated: boolean } };
-      return !!data.data?.authenticated;
+      return await checkSession();
     } catch {
       // 네트워크 오류 — 인증 불명확
       return false;
