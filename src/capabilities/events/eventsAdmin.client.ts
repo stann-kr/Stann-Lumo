@@ -1,5 +1,5 @@
 import { apiGet, apiPut, apiRequest } from '@/services/apiClient';
-import type { ContentLocale } from '@/capabilities/content/contentAdmin.client';
+import type { ContentLocale } from '@/capabilities/content/content';
 import type { EventsInfo, Performance } from './events';
 import type { RAApiConfigUpdate, RAApiConfigView } from './raConfig';
 

@@ -2,14 +2,13 @@ import { apiGet, apiPut } from '@/services/apiClient';
 import type {
   ArtistInfoItem,
   ContactItem,
+  ContentLocale,
   DynamicSection,
   HomeSection,
   LinkPlatform,
   PageMeta,
   Track,
 } from './content';
-
-export type ContentLocale = 'en' | 'ko';
 
 export function fetchArtistInfo(lang: ContentLocale) {
   return apiGet<ArtistInfoItem[]>(`/api/admin/artist-info?lang=${lang}`);

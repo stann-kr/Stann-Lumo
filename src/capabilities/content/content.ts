@@ -1,6 +1,12 @@
 import type { EventsInfo, Performance } from '@/capabilities/events/events';
 import type { TerminalInfo } from '@/capabilities/terminal/terminalConfig';
 
+export type ContentLocale = 'en' | 'ko';
+
+export function isContentLocale(value: unknown): value is ContentLocale {
+  return value === 'en' || value === 'ko';
+}
+
 export interface ArtistInfoItem {
   id: string;
   key: string;

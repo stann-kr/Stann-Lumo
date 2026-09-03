@@ -1,24 +1,18 @@
-/**
- * 어드민 아티스트 정보 API
- * GET  /api/admin/artist-info?lang=en|ko  — 목록 조회
- * PUT  /api/admin/artist-info             — 전체 교체 (lang별)
- */
-
 import { NextRequest, NextResponse } from 'next/server';
-import { getDB } from '@/lib/db';
+import { isContentLocale, type ArtistInfoItem } from '@/capabilities/content/content';
+import {
+  fetchArtistInfo,
+  replaceArtistInfo,
+} from '@/capabilities/content/contentAdmin.server';
 import { requireAdminSession } from '@/lib/adminAuth';
-import type { ArtistInfoItem } from '@/capabilities/content/content';
-
-interface ArtistInfoRow {
-  id: string; lang: string; key: string; value: string; sort_order: number;
-}
+import { getDB } from '@/lib/db';
 
 export async function GET(request: NextRequest) {
   const authError = await requireAdminSession(request);
   if (authError) return authError;
 
   const lang = request.nextUrl.searchParams.get('lang') ?? 'en';
-  if (lang !== 'en' && lang !== 'ko') {
+  if (!isContentLocale(lang)) {
     return NextResponse.json(
       { success: false, error: { code: 'BAD_REQUEST', message: 'lang must be "en" or "ko"' } },
       { status: 400 },
@@ -34,15 +28,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const result = await db.prepare(
-      'SELECT * FROM artist_info WHERE lang = ? ORDER BY sort_order',
-    ).bind(lang).all<ArtistInfoRow>();
-
-    const data: ArtistInfoItem[] = result.results.map((r) => ({
-      id: r.id, key: r.key, value: r.value,
-    }));
-
-    return NextResponse.json({ success: true, data });
+    return NextResponse.json({ success: true, data: await fetchArtistInfo(db, lang) });
   } catch {
     return NextResponse.json(
       { success: false, error: { code: 'INTERNAL_ERROR', message: 'Failed to fetch artist info' } },
@@ -65,30 +51,21 @@ export async function PUT(request: NextRequest) {
 
   try {
     const body = (await request.json()) as { lang: string; items: ArtistInfoItem[] };
-    const { lang, items } = body;
-
-    if (lang !== 'en' && lang !== 'ko') {
+    const { lang } = body;
+    if (!isContentLocale(lang)) {
       return NextResponse.json(
         { success: false, error: { code: 'BAD_REQUEST', message: 'lang must be "en" or "ko"' } },
         { status: 400 },
       );
     }
-    if (!Array.isArray(items)) {
+    if (!Array.isArray(body.items)) {
       return NextResponse.json(
         { success: false, error: { code: 'BAD_REQUEST', message: 'items must be an array' } },
         { status: 400 },
       );
     }
 
-    await db.batch([
-      db.prepare('DELETE FROM artist_info WHERE lang = ?').bind(lang),
-      ...items.map((item, idx) =>
-        db.prepare(
-          'INSERT INTO artist_info (id, lang, key, value, sort_order) VALUES (?, ?, ?, ?, ?)',
-        ).bind(item.id, lang, item.key, item.value, idx),
-      ),
-    ]);
-
+    await replaceArtistInfo(db, lang, body.items);
     return NextResponse.json({ success: true });
   } catch {
     return NextResponse.json(
