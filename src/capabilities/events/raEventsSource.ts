@@ -25,6 +25,7 @@ function containsCredentialReflection(body: string, credential: string): boolean
 export type RaEventsUpstreamResult =
   | { kind: 'success'; xml: string }
   | { kind: 'upstream-error'; status: number }
+  | { kind: 'transport-error' }
   | { kind: 'unsafe-response' };
 
 export async function fetchRaEventsXmlFromSource(
@@ -47,13 +48,17 @@ export async function fetchRaEventsXmlFromSource(
     PromoterID: '',
     Year: year || '',
   });
-  const response = await fetch(
-    `https://www.residentadvisor.net/api/events.asmx/GetEvents?${params.toString()}`,
-    { headers: { Accept: 'application/xml, text/xml' } },
-  );
-  if (!response.ok) return { kind: 'upstream-error', status: response.status };
+  try {
+    const response = await fetch(
+      `https://www.residentadvisor.net/api/events.asmx/GetEvents?${params.toString()}`,
+      { headers: { Accept: 'application/xml, text/xml' } },
+    );
+    if (!response.ok) return { kind: 'upstream-error', status: response.status };
 
-  const xml = await response.text();
-  if (containsCredentialReflection(xml, config.apiKey)) return { kind: 'unsafe-response' };
-  return { kind: 'success', xml };
+    const xml = await response.text();
+    if (containsCredentialReflection(xml, config.apiKey)) return { kind: 'unsafe-response' };
+    return { kind: 'success', xml };
+  } catch {
+    return { kind: 'transport-error' };
+  }
 }

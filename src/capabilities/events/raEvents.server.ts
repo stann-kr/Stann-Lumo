@@ -9,6 +9,7 @@ export type RaEventsResult =
   | { kind: 'success'; xml: string }
   | { kind: 'not-configured' }
   | { kind: 'upstream-error'; status: number }
+  | { kind: 'transport-error' }
   | { kind: 'unsafe-response' };
 
 export async function fetchRaEventsXml(

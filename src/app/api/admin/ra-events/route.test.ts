@@ -150,6 +150,19 @@ describe('admin RA events proxy', () => {
     expect(body).not.toContain('residentadvisor.net');
   });
 
+  it('returns a generic response when the upstream transport fails', async () => {
+    const sentinel = secretConfig.apiKey;
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error(sentinel)));
+
+    const response = await GET(request());
+    const body = await response.text();
+
+    expect(response.status).toBe(502);
+    expectPrivateNoStore(response);
+    expect(body).not.toContain(sentinel);
+    expect(body).not.toContain('residentadvisor.net');
+  });
+
   it.each([
     ['auth', 401],
     ['database', 503],

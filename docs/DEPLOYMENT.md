@@ -12,7 +12,9 @@
 | `dev` | `stann-lumo-dev` | 고정 development Worker | `stann-lumo-db-dev` | `stann-lumo-media-dev` |
 | `main` | `stann-lumo` | `lumo.stann.kr` production traffic | `stann-lumo-db` | `stann-lumo-media` |
 
-두 Worker 모두 `.open-next/worker.js`와 `.open-next/assets`를 사용한다. D1 binding은 `DB`, R2 binding은 `MEDIA`로 동일하지만 resource ID와 bucket은 환경별로 분리한다.
+두 Worker 모두 `worker.ts` custom entrypoint에서 `.open-next/worker.js`의 fetch handler를 재사용하고 `.open-next/assets`를 사용한다. D1 binding은 `DB`, R2 binding은 `MEDIA`로 동일하지만 resource ID와 bucket은 환경별로 분리한다.
+
+production Worker는 매주 월요일 04:15 KST에 Cron Trigger를 받고, 2026-09-07을 기준으로 격주 실행만 통과시켜 RA 이벤트를 동기화한다. 동기화는 공식 `GetEvents` 응답의 새 이벤트만 `ra-{eventId}`로 추가하며 기존 이벤트, 관리자 수정값과 포스터 연결은 교체하지 않는다. development Worker와 preview에는 Cron Trigger를 등록하지 않는다.
 
 ## 사전 체크리스트
 
