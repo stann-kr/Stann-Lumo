@@ -36,9 +36,9 @@ class SqliteStatement implements D1PreparedStatement {
 
   execute<T = unknown>(): D1Result<T> {
     const statement = this.sqlite.prepare(this.sql);
-    if (/^\s*(SELECT|WITH|PRAGMA)/i.test(this.sql)) {
+    if (/^\s*(SELECT|WITH|PRAGMA)/i.test(this.sql) || /\bRETURNING\b/i.test(this.sql)) {
       return {
-      results: statement.all(...this.values as never[]) as T[],
+        results: statement.all(...this.values as never[]) as T[],
         success: true,
         meta: { changes: 0 },
       };
