@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
         { status: 502 },
       );
     }
-    if (result.kind === 'unsafe-response') {
+    if (result.kind === 'transport-error' || result.kind === 'unsafe-response') {
       return privateNoStoreJson(
         { success: false, error: { code: 'RA_API_ERROR', message: 'RA API 응답을 처리하지 못했습니다.' } },
         { status: 502 },

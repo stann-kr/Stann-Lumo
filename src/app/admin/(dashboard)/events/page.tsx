@@ -1,613 +1,790 @@
-'use client';
-import { useContent } from '@/contexts/ContentContext';
-import AdminCard from '@/components/base/AdminCard';
-import AdminSectionHeader from '@/components/base/AdminSectionHeader';
-import SaveErrorMessage from '@/components/base/SaveErrorMessage';
-import FormInput from '@/components/base/FormInput';
-import FormSelect from '@/components/base/FormSelect';
-import SuccessMessage from '@/components/base/SuccessMessage';
-import DeleteConfirmModal from '@/components/base/DeleteConfirmModal';
-import { useListEditor } from '@/capabilities/admin/useListEditor';
-import { useDeleteConfirm } from '@/capabilities/admin/useDeleteConfirm';
-import { useSaveNotification } from '@/capabilities/admin/useSaveNotification';
-import { useUnsavedChanges } from '@/capabilities/admin/useUnsavedChanges';
-import { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
-import type { PageMeta } from '@/capabilities/content/content';
-import type { Performance } from '@/capabilities/events/events';
-import type { RAApiConfigUpdate, RAApiConfigView } from '@/capabilities/events/raConfig';
-import {
-  fetchRAEvents,
-  convertRAEventsToPerformances,
-  sortEventsByDate,
-} from '@/capabilities/events/raApi.client';
-import { createBorderFaint } from '@/utils/colorMix';
-import { getFailedSaveAreas } from '@/capabilities/admin/saveResult';
-import {
-  updatePageMeta as apiUpdatePageMeta,
-} from '@/capabilities/content/contentAdmin.client';
-import {
-  updatePerformances as apiUpdatePerformances,
-  fetchRaApiConfig as apiFetchRaApiConfig,
-  updateRaApiConfig as apiUpdateRaApiConfig,
-  uploadEventPoster,
-  deleteEventPoster,
-} from '@/capabilities/events/eventsAdmin.client';
+"use client";
 
-const POSTER_ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/avif', 'image/gif'];
-const POSTER_MAX_SIZE_BYTES = 10 * 1024 * 1024;
-const EMPTY_RA_API_CONFIG: RAApiConfigView = {
-  userId: '',
-  djId: '',
-  option: '1',
-  year: '',
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { useContent } from "@/contexts/ContentContext";
+import AdminCard from "@/components/base/AdminCard";
+import AdminSectionHeader from "@/components/base/AdminSectionHeader";
+import DeleteConfirmModal from "@/components/base/DeleteConfirmModal";
+import FormInput from "@/components/base/FormInput";
+import FormSelect from "@/components/base/FormSelect";
+import SaveErrorMessage from "@/components/base/SaveErrorMessage";
+import SuccessMessage from "@/components/base/SuccessMessage";
+import { useDeleteConfirm } from "@/capabilities/admin/useDeleteConfirm";
+import { useListEditor } from "@/capabilities/admin/useListEditor";
+import { useSaveNotification } from "@/capabilities/admin/useSaveNotification";
+import { useAdminEditGuard } from "@/capabilities/admin/AdminEditGuard";
+import { updatePageMeta as apiUpdatePageMeta } from "@/capabilities/content/contentAdmin.client";
+import type { PageMeta } from "@/capabilities/content/content";
+import type { Performance } from "@/capabilities/events/events";
+import type {
+  RAApiConfigUpdate,
+  RAApiConfigView,
+} from "@/capabilities/events/raConfig";
+import type { RaSyncStatus } from "@/capabilities/events/raSync";
+import RaSyncPanel from "@/capabilities/events/RaSyncPanel";
+import { sortEventsByDate } from "@/capabilities/events/raApi.client";
+import {
+  deleteEventPoster,
+  fetchPerformancesSnapshot,
+  fetchRaApiConfig,
+  fetchRaSyncStatus,
+  restoreRaEventExclusion,
+  runRaSync,
+  updatePerformances,
+  updateRaApiConfig,
+  uploadEventPoster,
+} from "@/capabilities/events/eventsAdmin.client";
+import { createBorderFaint } from "@/utils/colorMix";
+
+const POSTER_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/avif",
+  "image/gif",
+];
+const POSTER_MAX_BYTES = 10 * 1024 * 1024;
+const EMPTY_CONFIG: RAApiConfigView = {
+  userId: "",
+  djId: "",
+  option: "1",
+  year: "",
   hasApiKey: false,
 };
+const EMPTY_PERFORMANCES: Performance[] = [];
 
-const AdminEventsPage = () => {
+function normalize(items: Performance[]) {
+  return sortEventsByDate(
+    items.map((item) => ({
+      ...item,
+      status: (item.status === ("Confirmed" as string)
+        ? "Announced"
+        : item.status === ("Pending" as string)
+          ? "TBA"
+          : item.status) as Performance["status"],
+    })),
+    false,
+  );
+}
+
+export default function AdminEventsPage() {
   const { t } = useTranslation();
-  const { allContent, updateContent, currentEditLanguage, isLoading } = useContent();
-  const content = allContent[currentEditLanguage];
-
+  const { allContent, currentEditLanguage, isLoading, updateContent } =
+    useContent();
   const {
     items: performances,
-    setItems: setPerformances,
-    updateItem: updatePerformance,
-    deleteItem: deletePerformance,
-  } = useListEditor<Performance>(content.performances);
-
-  const [raApiConfig, setRaApiConfig] = useState<RAApiConfigView>(EMPTY_RA_API_CONFIG);
-  const [replacementApiKey, setReplacementApiKey] = useState('');
-  const [clearApiKey, setClearApiKey] = useState(false);
-  const [isRaConfigDirty, setIsRaConfigDirty] = useState(false);
-  const [isRaConfigLoading, setIsRaConfigLoading] = useState(true);
-  const [raConfigLoadFailed, setRaConfigLoadFailed] = useState(false);
-  const [pageMeta, setPageMeta] = useState<PageMeta>(content.pageMeta);
-  const [isFetching, setIsFetching] = useState(false);
-  const [fetchError, setFetchError] = useState('');
-  const [fetchSuccess, setFetchSuccess] = useState('');
+    setItems,
+    updateItem,
+    deleteItem,
+  } = useListEditor<Performance>(EMPTY_PERFORMANCES);
+  const [savedItems, setSavedItems] = useState<Performance[]>([]);
+  const [revision, setRevision] = useState<number | null>(null);
+  const [isEventsLoading, setIsEventsLoading] = useState(true);
+  const [pageMeta, setPageMeta] = useState<PageMeta>(
+    allContent[currentEditLanguage].pageMeta,
+  );
+  const [isPageMetaDirty, setIsPageMetaDirty] = useState(false);
+  const [pageMetaLanguage, setPageMetaLanguage] = useState(currentEditLanguage);
+  const [config, setConfig] = useState<RAApiConfigView>(EMPTY_CONFIG);
+  const [replacementKey, setReplacementKey] = useState("");
+  const [clearKey, setClearKey] = useState(false);
+  const [isConfigDirty, setIsConfigDirty] = useState(false);
+  const [isConfigLoading, setIsConfigLoading] = useState(true);
+  const [configFailed, setConfigFailed] = useState(false);
+  const [syncStatus, setSyncStatus] = useState<RaSyncStatus | null>(null);
+  const [isSyncStatusLoading, setIsSyncStatusLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [posterUploading, setPosterUploading] = useState<Record<string, boolean>>({});
-  const [posterError, setPosterError] = useState<Record<string, string | null>>({});
-
+  const [isFetching, setIsFetching] = useState(false);
+  const [posterBusy, setPosterBusy] = useState<Record<string, boolean>>({});
+  const [posterError, setPosterError] = useState<Record<string, string>>({});
+  const [saveError, setSaveError] = useState("");
+  const [syncError, setSyncError] = useState("");
+  const [syncSuccess, setSyncSuccess] = useState("");
+  const [hasConflict, setHasConflict] = useState(false);
   const { isVisible: showSuccess, showNotification } = useSaveNotification();
-
-  const {
-    isOpen: isDeleteModalOpen,
-    pendingIndex: deleteIndex,
-    openConfirm: openDeleteConfirm,
-    closeConfirm: closeDeleteConfirm,
-    confirmDelete,
-  } = useDeleteConfirm();
+  const { setDirty } = useAdminEditGuard();
+  const deleteConfirm = useDeleteConfirm();
+  const isPosterBusy = Object.values(posterBusy).some(Boolean);
+  const hasEventEdits = useMemo(
+    () => JSON.stringify(performances) !== JSON.stringify(savedItems),
+    [performances, savedItems],
+  );
+  const hasUnsavedChanges = hasEventEdits || isPageMetaDirty || isConfigDirty;
 
   useEffect(() => {
+    setDirty(hasUnsavedChanges);
+  }, [hasUnsavedChanges, setDirty]);
+
+  useEffect(() => () => setDirty(false), [setDirty]);
+
+  const applySnapshot = useCallback(
+    (items: Performance[], nextRevision: number) => {
+      const nextItems = normalize(items);
+      setItems(nextItems);
+      setSavedItems(nextItems);
+      setRevision(nextRevision);
+      setHasConflict(false);
+    },
+    [setItems],
+  );
+
+  const loadEvents = useCallback(async () => {
+    setIsEventsLoading(true);
+    try {
+      const response = await fetchPerformancesSnapshot();
+      if (!response.success || !response.data) throw new Error("snapshot");
+      applySnapshot(response.data.items, response.data.revision);
+      return true;
+    } catch {
+      setSaveError(
+        "이벤트 목록을 불러오지 못했습니다. 새로고침 후 다시 시도해 주세요.",
+      );
+      return false;
+    } finally {
+      setIsEventsLoading(false);
+    }
+  }, [applySnapshot]);
+
+  const loadSyncStatus = useCallback(async () => {
+    setIsSyncStatusLoading(true);
+    try {
+      const response = await fetchRaSyncStatus();
+      if (!response.success || !response.data) throw new Error("status");
+      setSyncStatus(response.data);
+      return true;
+    } catch {
+      setSyncError("RA 동기화 상태를 불러오지 못했습니다.");
+      return false;
+    } finally {
+      setIsSyncStatusLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadEvents();
+    void loadSyncStatus();
+  }, [loadEvents, loadSyncStatus]);
+  useEffect(() => {
+    if (isLoading || isPageMetaDirty || isSaving || isPosterBusy || isFetching)
+      return;
+    setPageMeta(allContent[currentEditLanguage].pageMeta);
+    setIsPageMetaDirty(false);
+    setPageMetaLanguage(currentEditLanguage);
+  }, [
+    allContent,
+    currentEditLanguage,
+    isFetching,
+    isLoading,
+    isPageMetaDirty,
+    isPosterBusy,
+    isSaving,
+  ]);
+  useEffect(() => {
     let active = true;
-
-    const loadRaApiConfig = async () => {
-      try {
-        const response = await apiFetchRaApiConfig();
+    void fetchRaApiConfig()
+      .then((response) => {
         if (!active) return;
-
-        if (response.success && response.data) {
-          setRaApiConfig(response.data);
-          setReplacementApiKey('');
-          setClearApiKey(false);
-          setIsRaConfigDirty(false);
-          setRaConfigLoadFailed(false);
-        } else {
-          setRaConfigLoadFailed(true);
-        }
-      } catch {
-        if (active) setRaConfigLoadFailed(true);
-      } finally {
-        if (active) setIsRaConfigLoading(false);
-      }
-    };
-
-    void loadRaApiConfig();
+        if (response.success && response.data) setConfig(response.data);
+        else setConfigFailed(true);
+      })
+      .catch(() => {
+        if (active) setConfigFailed(true);
+      })
+      .finally(() => {
+        if (active) setIsConfigLoading(false);
+      });
     return () => {
       active = false;
     };
   }, []);
 
-  useEffect(() => {
-    // 구버전 status 값 정규화 (DB 마이그레이션 전 환경 대비)
-    const normalized = allContent[currentEditLanguage].performances.map((p) => ({
-      ...p,
-      status: (p.status === ('Confirmed' as string) ? 'Announced'
-             : p.status === ('Pending'   as string) ? 'TBA'
-             : p.status) as Performance['status'],
-    }));
-    // 초기 로드 시에도 최신순 정렬 보장
-    setPerformances(sortEventsByDate(normalized, false));
-    setPageMeta(allContent[currentEditLanguage].pageMeta);
-  }, [currentEditLanguage, allContent, setPerformances]);
-
-  const { markSaved } = useUnsavedChanges(
-    { clearApiKey, pageMeta, performances, raApiConfig, replacementApiKey },
-    `${currentEditLanguage}:${isLoading}:${isRaConfigLoading}`,
-  );
-
-  const updatePageMetaField = (field: keyof PageMeta['events'], value: string) => {
-    setPageMeta(prev => ({ ...prev, events: { ...prev.events, [field]: value } }));
+  const setConfigField = <Field extends "userId" | "djId" | "option" | "year">(
+    field: Field,
+    value: RAApiConfigView[Field],
+  ) => {
+    setConfig((previous) => ({ ...previous, [field]: value }));
+    setIsConfigDirty(true);
   };
+  const updateField = (
+    index: number,
+    field: keyof Performance,
+    value: string,
+  ) => {
+    const item = performances[index];
+    if (item) updateItem(index, { ...item, [field]: value });
+  };
+  const updateMeta = (field: keyof PageMeta["events"], value: string) => {
+    setPageMeta((previous) => ({
+      ...previous,
+      events: { ...previous.events, [field]: value },
+    }));
+    setIsPageMetaDirty(true);
+  };
+  const addEvent = () =>
+    setItems([
+      {
+        id: crypto.randomUUID(),
+        date: new Date().toISOString().slice(0, 10),
+        venue: "New Venue",
+        title: "New Performance",
+        location: "Seoul",
+        time: "23:00",
+        status: "TBA",
+      },
+      ...performances,
+    ]);
 
-  const canSyncWithRA =
-    !isRaConfigLoading &&
-    !isSaving &&
-    !raConfigLoadFailed &&
-    raApiConfig.hasApiKey &&
-    raApiConfig.userId.trim().length > 0 &&
-    raApiConfig.djId.trim().length > 0 &&
-    !isRaConfigDirty;
-
-  const saveChanges = async () => {
-    const shouldSaveRaConfig = !isRaConfigLoading && !raConfigLoadFailed;
-    const shouldUpdateRaConfig = shouldSaveRaConfig && isRaConfigDirty;
-    const hasReplacementKey = replacementApiKey.trim().length > 0;
-
+  const save = async () => {
+    if (revision === null || isPosterBusy) return;
+    if (isPageMetaDirty && pageMetaLanguage !== currentEditLanguage) {
+      setSaveError("현재 언어의 페이지 설정을 불러온 뒤 저장해 주세요.");
+      return;
+    }
     setIsSaving(true);
-    setFetchError('');
-
+    setSaveError("");
+    setHasConflict(false);
     try {
-      const failedAreas = await getFailedSaveAreas(
-        ['EVENTS', 'PAGE SETTINGS'],
-        [
-          apiUpdatePerformances(performances),
-          apiUpdatePageMeta(currentEditLanguage, pageMeta),
-        ],
-      );
-
-      let raResult: Awaited<ReturnType<typeof apiUpdateRaApiConfig>> | null = null;
-      if (shouldUpdateRaConfig) {
-        const update: RAApiConfigUpdate = {
-          userId: raApiConfig.userId,
-          djId: raApiConfig.djId,
-          option: raApiConfig.option,
-          year: raApiConfig.year,
-          ...(hasReplacementKey && { apiKey: replacementApiKey.trim() }),
-          ...(clearApiKey && { clearApiKey: true }),
-        };
-        raResult = await apiUpdateRaApiConfig(update);
-        if (raResult.success && raResult.data) {
-          setRaApiConfig(raResult.data);
-          setReplacementApiKey('');
-          setClearApiKey(false);
-          setIsRaConfigDirty(false);
+      const [eventResult, metaResult] = await Promise.all([
+        updatePerformances(performances, revision),
+        apiUpdatePageMeta(currentEditLanguage, pageMeta),
+      ]);
+      if (!eventResult.success || !eventResult.data) {
+        if (eventResult.error?.code === "CONFLICT") {
+          setHasConflict(true);
+          setSaveError(
+            "다른 동기화 또는 관리자 변경이 먼저 반영되었습니다. 현재 입력은 유지됩니다. 최신 이벤트 목록을 확인한 뒤 다시 저장해 주세요.",
+          );
+          return;
         }
-      }
-
-      if (raResult && !raResult.success) {
-        failedAreas.push('RA API CONFIG');
-      }
-
-      if (failedAreas.length > 0) {
-        setFetchError(`${failedAreas.join(', ')} 저장에 실패했습니다. 입력한 내용은 유지됩니다. 다시 저장해 주세요.`);
+        setSaveError(
+          "EVENTS 저장에 실패했습니다. 입력한 내용은 유지됩니다. 다시 저장해 주세요.",
+        );
         return;
       }
-
-      updateContent({ performances, pageMeta });
-      markSaved();
+      applySnapshot(eventResult.data.items, eventResult.data.revision);
+      let configOkay = true;
+      if (isConfigDirty && !isConfigLoading && !configFailed) {
+        const update: RAApiConfigUpdate = {
+          userId: config.userId,
+          djId: config.djId,
+          option: config.option,
+          year: config.year,
+          ...(replacementKey.trim() && { apiKey: replacementKey.trim() }),
+          ...(clearKey && { clearApiKey: true }),
+        };
+        const result = await updateRaApiConfig(update);
+        configOkay = Boolean(result.success && result.data);
+        if (result.success && result.data) {
+          setConfig(result.data);
+          setReplacementKey("");
+          setClearKey(false);
+          setIsConfigDirty(false);
+        }
+      }
+      const failed = [
+        !metaResult.success && "PAGE SETTINGS",
+        !configOkay && "RA API CONFIG",
+      ].filter(Boolean);
+      if (failed.length) {
+        setSaveError(
+          `${failed.join(", ")} 저장에 실패했습니다. 입력한 내용은 유지됩니다. 다시 저장해 주세요.`,
+        );
+        return;
+      }
+      updateContent({ performances: eventResult.data.items, pageMeta });
+      setIsPageMetaDirty(false);
+      setPageMetaLanguage(currentEditLanguage);
       showNotification();
+      void loadSyncStatus();
     } catch {
-      setFetchError('저장 중 오류가 발생했습니다. 입력한 내용은 유지됩니다. 다시 저장해 주세요.');
+      setSaveError(
+        "저장 중 오류가 발생했습니다. 입력한 내용은 유지됩니다. 다시 저장해 주세요.",
+      );
     } finally {
       setIsSaving(false);
     }
   };
 
-  const fetchFromRA = async () => {
-    if (!canSyncWithRA) {
-      setFetchError(t('events_api_config_required'));
+  const reloadConflict = async () => {
+    if (
+      !window.confirm(
+        "현재 저장하지 않은 이벤트 편집을 버리고 최신 목록을 불러올까요?",
+      )
+    )
+      return;
+    setSaveError("");
+    await loadEvents();
+  };
+  const runSync = async () => {
+    if (hasEventEdits || isConfigDirty) {
+      setSyncError(
+        "이벤트 또는 RA 설정의 저장하지 않은 변경을 먼저 저장해 주세요.",
+      );
       return;
     }
     setIsFetching(true);
-    setFetchError('');
-    setFetchSuccess('');
+    setSyncError("");
+    setSyncSuccess("");
     try {
-      const response = await fetchRAEvents({ option: raApiConfig.option, year: raApiConfig.year });
-      const raPerformances = convertRAEventsToPerformances(response.events);
-
-      // 이미 저장된 RA 이벤트 ID 집합 (raEventId 기준 중복 제외)
-      const existingRaIds = new Set(
-        performances.filter((p) => p.raEventId).map((p) => p.raEventId)
+      const response = await runRaSync();
+      if (!response.success || !response.data) throw new Error("sync");
+      setSyncStatus(response.data.status);
+      await loadEvents();
+      const result = response.data.result;
+      if (result.kind === "success")
+        setSyncSuccess(
+          `${result.inserted ?? 0}개 추가됨${(result.skippedExcluded ?? 0) ? ` · ${result.skippedExcluded}개 제외` : ""}`,
+        );
+      else if (result.kind === "not-due")
+        setSyncSuccess("현재 동기화 주기가 아니므로 실행하지 않았습니다.");
+      else if (result.kind === "busy")
+        setSyncError(
+          "다른 동기화가 실행 중입니다. 잠시 후 다시 시도해 주세요.",
+        );
+      else if (result.kind === "not-configured")
+        setSyncError("RA API 설정을 저장한 뒤 동기화할 수 있습니다.");
+      else
+        setSyncError(
+          "RA 동기화에 실패했습니다. 상태를 확인한 뒤 다시 시도해 주세요.",
+        );
+    } catch {
+      setSyncError(
+        "RA 동기화를 실행하지 못했습니다. 네트워크를 확인한 뒤 다시 시도해 주세요.",
       );
-      const newPerformances = raPerformances.filter(
-        (p) => p.raEventId && !existingRaIds.has(p.raEventId)
-      );
-      const skipped = raPerformances.length - newPerformances.length;
-
-      // 기존 이벤트 + 새 RA 이벤트 병합 후 날짜순 정렬 (최신순: ascending = false)
-      const merged = sortEventsByDate([...performances, ...newPerformances], false);
-      setPerformances(merged);
-
-      setFetchSuccess(
-        `${newPerformances.length}개 추가됨${skipped > 0 ? ` (${skipped}개 중복 제외)` : ''}`
-      );
-    } catch (error) {
-      setFetchError(error instanceof Error ? error.message : t('events_sync_error'));
     } finally {
       setIsFetching(false);
     }
   };
-
-  const addNewPerformance = () => {
-    const newPerf: Performance = {
-      id: crypto.randomUUID(),
-      date: new Date().toISOString().split('T')[0],
-      venue: 'New Venue',
-      title: 'New Performance',
-      location: 'Seoul',
-      time: '23:00',
-      status: 'TBA',
-    };
-    setPerformances([newPerf, ...performances]);
-  };
-
-  const updatePerformanceField = (index: number, field: keyof Performance, value: string) => {
-    const current = performances[index];
-    if (current) {
-      updatePerformance(index, { ...current, [field]: value });
-    }
-  };
-
-  const updateRaApiConfigField = <
-    Field extends 'userId' | 'djId' | 'option' | 'year',
-  >(field: Field, value: RAApiConfigView[Field]) => {
-    setRaApiConfig((prev) => ({ ...prev, [field]: value }));
-    setIsRaConfigDirty(true);
-  };
-
-  const updateReplacementApiKey = (value: string) => {
-    setReplacementApiKey(value);
-    if (value.trim().length > 0) setClearApiKey(false);
-    setIsRaConfigDirty(true);
-  };
-
-  const isRaConfigReadOnly = isRaConfigLoading || raConfigLoadFailed || isSaving;
-
-  const handlePosterUpload = async (eventId: string, file: File) => {
-    setPosterError((prev) => ({ ...prev, [eventId]: null }));
-
-    if (!POSTER_ALLOWED_TYPES.includes(file.type)) {
-      setPosterError((prev) => ({ ...prev, [eventId]: 'JPG, PNG, WebP, AVIF, GIF 형식만 지원합니다.' }));
+  const restoreExclusion = async (raEventId: string) => {
+    const result = await restoreRaEventExclusion(raEventId);
+    if (!result.success) {
+      setSyncError("제외 목록을 복원하지 못했습니다. 다시 시도해 주세요.");
       return;
     }
-    if (file.size > POSTER_MAX_SIZE_BYTES) {
-      setPosterError((prev) => ({ ...prev, [eventId]: '파일 크기가 10MB를 초과합니다.' }));
+    setSyncSuccess(
+      "제외 목록에서 복원했습니다. 다음 수동 또는 정기 동기화에서 다시 확인합니다.",
+    );
+    await loadSyncStatus();
+  };
+  const changePoster = async (eventId: string, file?: File) => {
+    if (hasEventEdits) {
+      setPosterError((previous) => ({
+        ...previous,
+        [eventId]: "이벤트 변경을 먼저 저장한 뒤 포스터를 변경해 주세요.",
+      }));
       return;
     }
-
-    setPosterUploading((prev) => ({ ...prev, [eventId]: true }));
+    if (
+      file &&
+      (!POSTER_TYPES.includes(file.type) || file.size > POSTER_MAX_BYTES)
+    ) {
+      setPosterError((previous) => ({
+        ...previous,
+        [eventId]: "JPG, PNG, WebP, AVIF, GIF 형식과 최대 10MB만 지원합니다.",
+      }));
+      return;
+    }
+    setPosterBusy((previous) => ({ ...previous, [eventId]: true }));
     try {
-      const result = await uploadEventPoster(eventId, file);
-      if (result.success && result.data) {
-        setPerformances(
-          performances.map((p) => p.id === eventId ? { ...p, posterImageId: result.data!.photoId } : p)
-        );
-      } else {
-        setPosterError((prev) => ({ ...prev, [eventId]: '업로드에 실패했습니다. 다시 시도해 주세요.' }));
-      }
+      const result = file
+        ? await uploadEventPoster(eventId, file)
+        : await deleteEventPoster(eventId);
+      if (!result.success) throw new Error("poster");
+      await loadEvents();
     } catch {
-      setPosterError((prev) => ({ ...prev, [eventId]: '네트워크 오류가 발생했습니다.' }));
+      setPosterError((previous) => ({
+        ...previous,
+        [eventId]: "포스터 변경에 실패했습니다. 다시 시도해 주세요.",
+      }));
     } finally {
-      setPosterUploading((prev) => ({ ...prev, [eventId]: false }));
+      setPosterBusy((previous) => ({ ...previous, [eventId]: false }));
     }
   };
 
-  const handlePosterDelete = async (eventId: string) => {
-    setPosterUploading((prev) => ({ ...prev, [eventId]: true }));
-    try {
-      const result = await deleteEventPoster(eventId);
-      if (result.success) {
-        setPerformances(
-          performances.map((p) => p.id === eventId ? { ...p, posterImageId: undefined } : p)
-        );
-      }
-    } finally {
-      setPosterUploading((prev) => ({ ...prev, [eventId]: false }));
-    }
-  };
+  const controlsDisabled =
+    isSaving || isPosterBusy || isFetching || isEventsLoading;
+  const canSync =
+    !controlsDisabled &&
+    !isConfigLoading &&
+    !configFailed &&
+    config.hasApiKey &&
+    config.userId.trim() &&
+    config.djId.trim() &&
+    !hasEventEdits &&
+    !isConfigDirty;
+  const syncReason =
+    hasEventEdits || isConfigDirty
+      ? "이벤트 또는 RA 설정의 저장하지 않은 변경을 먼저 저장해 주세요."
+      : !config.hasApiKey
+        ? "RA API 키를 저장한 뒤 실행할 수 있습니다."
+        : "";
+  const hasLocaleDraft =
+    isPageMetaDirty && pageMetaLanguage !== currentEditLanguage;
 
   return (
     <div className="space-y-8">
       <AdminSectionHeader
         title="EVENTS SECTION"
-        description={`${t('admin_events_subtitle')} (${currentEditLanguage.toUpperCase()})`}
-        onSave={saveChanges}
+        description={`${t("admin_events_subtitle")} (${currentEditLanguage.toUpperCase()})`}
+        onSave={save}
         isSaving={isSaving}
-        isSaveDisabled={isRaConfigLoading}
+        isSaveDisabled={
+          isConfigLoading ||
+          isEventsLoading ||
+          isPosterBusy ||
+          isFetching ||
+          hasConflict ||
+          hasLocaleDraft
+        }
         action={
           <button
-            onClick={addNewPerformance}
-            className="px-6 py-3 border text-[var(--color-secondary)] hover:bg-[var(--color-secondary)]/10 transition-colors whitespace-nowrap cursor-pointer text-sm tracking-wider"
+            type="button"
+            onClick={addEvent}
+            disabled={controlsDisabled}
+            className="px-6 py-3 border text-[var(--color-secondary)] hover:bg-[var(--color-secondary)]/10 transition-colors whitespace-nowrap cursor-pointer text-sm tracking-wider disabled:opacity-50"
             style={createBorderFaint()}
           >
-            <i className="ri-add-line mr-2"></i>ADD EVENT
+            <i className="ri-add-line mr-2" aria-hidden="true" />
+            ADD EVENT
           </button>
         }
       />
-
       <SuccessMessage message="변경 사항이 저장되었습니다" show={showSuccess} />
-
-      {/* PAGE SETTINGS */}
-      <div>
-        <h2 className="text-xl font-bold text-[var(--color-secondary)] tracking-wider mb-4">
-          PAGE SETTINGS
-        </h2>
-        <AdminCard>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FormInput
-              label="PAGE TITLE"
-              value={pageMeta.events.title}
-              onChange={(value) => updatePageMetaField('title', value)}
-              placeholder="EVENTS"
-            />
-            <FormInput
-              label="PAGE SUBTITLE"
-              value={pageMeta.events.subtitle}
-              onChange={(value) => updatePageMetaField('subtitle', value)}
-              placeholder="PERFORMANCE SCHEDULE & INFORMATION"
-            />
-            <FormInput
-              label="UPCOMING SECTION TITLE"
-              value={pageMeta.events.upcomingTitle}
-              onChange={(value) => updatePageMetaField('upcomingTitle', value)}
-              placeholder="UPCOMING EVENTS"
-            />
-            <FormInput
-              label="PAST SECTION TITLE"
-              value={pageMeta.events.pastTitle}
-              onChange={(value) => updatePageMetaField('pastTitle', value)}
-              placeholder="PAST EVENTS"
-            />
-          </div>
-        </AdminCard>
-      </div>
-
-      {/* RA API Settings */}
-      <div>
-        <h2 className="text-xl font-bold text-[var(--color-secondary)] tracking-wider mb-4">
-          {t('events_ra_settings')}
-        </h2>
-        <AdminCard>
-          <div className="space-y-4">
+      <SaveErrorMessage message={saveError} />
+      {hasLocaleDraft && (
+        <p role="alert" className="text-sm text-red-400 tracking-wider">
+          저장하지 않은 이전 언어의 페이지 설정이 있습니다. 해당 언어로 돌아가
+          저장하거나 변경을 취소해 주세요.
+        </p>
+      )}
+      {hasConflict && (
+        <button
+          type="button"
+          onClick={() => void reloadConflict()}
+          className="min-h-11 px-4 border border-[var(--color-secondary)]/40 text-sm text-[var(--color-secondary)] hover:bg-[var(--color-secondary)]/10"
+        >
+          최신 이벤트 목록 불러오기 (현재 이벤트 편집 버림)
+        </button>
+      )}
+      <fieldset
+        disabled={controlsDisabled}
+        className="space-y-8 disabled:opacity-60"
+      >
+        <section>
+          <h2 className="text-xl font-bold text-[var(--color-secondary)] tracking-wider mb-4">
+            PAGE SETTINGS
+          </h2>
+          <AdminCard>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormInput
-                label={t('events_api_userid')}
-                value={raApiConfig.userId}
-                onChange={(value) => updateRaApiConfigField('userId', value)}
-                placeholder="123456"
-                disabled={isRaConfigReadOnly}
+                label="PAGE TITLE"
+                value={pageMeta.events.title}
+                onChange={(value) => updateMeta("title", value)}
+                placeholder="EVENTS"
               />
               <FormInput
-                id="ra-api-key"
-                label={t('events_api_key')}
-                type="password"
-                value={replacementApiKey}
-                onChange={updateReplacementApiKey}
-                placeholder={raApiConfig.hasApiKey ? '저장된 키 유지 — 교체할 때만 입력' : '새 API 키 입력'}
-                autoComplete="new-password"
-                aria-describedby="ra-api-key-status"
-                disabled={isRaConfigReadOnly}
+                label="PAGE SUBTITLE"
+                value={pageMeta.events.subtitle}
+                onChange={(value) => updateMeta("subtitle", value)}
+                placeholder="PERFORMANCE SCHEDULE & INFORMATION"
               />
               <FormInput
-                label={t('events_api_djid')}
-                value={raApiConfig.djId}
-                onChange={(value) => updateRaApiConfigField('djId', value)}
-                placeholder="123456"
-                disabled={isRaConfigReadOnly}
+                label="UPCOMING SECTION TITLE"
+                value={pageMeta.events.upcomingTitle}
+                onChange={(value) => updateMeta("upcomingTitle", value)}
+                placeholder="UPCOMING EVENTS"
               />
-              <FormSelect
+              <FormInput
+                label="PAST SECTION TITLE"
+                value={pageMeta.events.pastTitle}
+                onChange={(value) => updateMeta("pastTitle", value)}
+                placeholder="PAST EVENTS"
+              />
+            </div>
+          </AdminCard>
+        </section>
+        <section>
+          <h2 className="text-xl font-bold text-[var(--color-secondary)] tracking-wider mb-4">
+            {t("events_ra_settings")}
+          </h2>
+          <AdminCard>
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormInput
+                  label={t("events_api_userid")}
+                  value={config.userId}
+                  onChange={(value) => setConfigField("userId", value)}
+                  placeholder="123456"
+                  disabled={isConfigLoading || configFailed}
+                />
+                <FormInput
+                  id="ra-api-key"
+                  label={t("events_api_key")}
+                  type="password"
+                  value={replacementKey}
+                  onChange={(value) => {
+                    setReplacementKey(value);
+                    if (value.trim()) setClearKey(false);
+                    setIsConfigDirty(true);
+                  }}
+                  placeholder={
+                    config.hasApiKey
+                      ? "저장된 키 유지 — 교체할 때만 입력"
+                      : "새 API 키 입력"
+                  }
+                  autoComplete="new-password"
+                  aria-describedby="ra-api-key-status"
+                  disabled={isConfigLoading || configFailed}
+                />
+                <FormInput
+                  label={t("events_api_djid")}
+                  value={config.djId}
+                  onChange={(value) => setConfigField("djId", value)}
+                  placeholder="123456"
+                  disabled={isConfigLoading || configFailed}
+                />
+                <FormSelect
                   id="ra-api-option"
                   name="raApiOption"
-                  label={t('events_api_option')}
-                  value={raApiConfig.option}
-                  onChange={(value) => updateRaApiConfigField(
-                    'option',
-                    value as RAApiConfigView['option'],
-                  )}
-                  disabled={isRaConfigReadOnly}
+                  label={t("events_api_option")}
+                  value={config.option}
+                  onChange={(value) =>
+                    setConfigField("option", value as RAApiConfigView["option"])
+                  }
+                  disabled={isConfigLoading || configFailed}
                 >
-                  <option value="1">{t('events_api_option_1')}</option>
-                  <option value="2">{t('events_api_option_2')}</option>
-                  <option value="3">{t('events_api_option_3')}</option>
-                  <option value="4">{t('events_api_option_4')}</option>
-              </FormSelect>
-              <FormInput
-                label="YEAR (선택사항, 미입력시 올해 기준)"
-                value={raApiConfig.year ?? ''}
-                onChange={(value) => updateRaApiConfigField('year', value)}
-                placeholder="2025"
-                disabled={isRaConfigReadOnly}
-              />
-            </div>
-            {!isRaConfigLoading && !raConfigLoadFailed && (
-              <div className="space-y-2 text-xs tracking-wider text-[var(--color-secondary)]/70">
-                <p id="ra-api-key-status" role="status" aria-live="polite">
-                  {raApiConfig.hasApiKey ? 'API 키 저장됨' : '저장된 API 키 없음'}
-                </p>
-                {raApiConfig.hasApiKey && (
-                  <label className="inline-flex min-h-11 items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={clearApiKey}
-                      disabled={isSaving}
-                      onChange={(event) => {
-                        const shouldClear = event.target.checked;
-                        setClearApiKey(shouldClear);
-                        if (shouldClear) setReplacementApiKey('');
-                        setIsRaConfigDirty(true);
-                      }}
-                    />
-                    저장된 API 키 제거
-                  </label>
-                )}
+                  <option value="1">{t("events_api_option_1")}</option>
+                  <option value="2">{t("events_api_option_2")}</option>
+                  <option value="3">{t("events_api_option_3")}</option>
+                  <option value="4">{t("events_api_option_4")}</option>
+                </FormSelect>
+                <FormInput
+                  label="YEAR (선택사항, 미입력시 올해 기준)"
+                  value={config.year ?? ""}
+                  onChange={(value) => setConfigField("year", value)}
+                  placeholder="2026"
+                  disabled={isConfigLoading || configFailed}
+                />
               </div>
-            )}
-            <div className="space-y-2">
-              <button
-                onClick={fetchFromRA}
-                disabled={isFetching || !canSyncWithRA}
-                className="px-6 py-2 bg-[var(--color-accent)] text-[var(--color-bg)] tracking-wider text-sm hover:bg-[var(--color-primary)] transition-colors whitespace-nowrap cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isFetching ? t('events_fetching') : t('events_fetch_from_ra')}
-              </button>
-              {raConfigLoadFailed && (
+              {!isConfigLoading && !configFailed && (
+                <div className="space-y-2 text-xs tracking-wider text-[var(--color-secondary)]/70">
+                  <p id="ra-api-key-status" role="status" aria-live="polite">
+                    {config.hasApiKey ? "API 키 저장됨" : "저장된 API 키 없음"}
+                  </p>
+                  {config.hasApiKey && (
+                    <label className="inline-flex min-h-11 items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={clearKey}
+                        onChange={(event) => {
+                          setClearKey(event.target.checked);
+                          if (event.target.checked) setReplacementKey("");
+                          setIsConfigDirty(true);
+                        }}
+                      />
+                      저장된 API 키 제거
+                    </label>
+                  )}
+                </div>
+              )}
+              {configFailed && (
                 <p role="alert" className="text-sm text-red-400 tracking-wider">
-                  RA API 설정을 불러오지 못했습니다. 설정 저장과 동기화가 비활성화됩니다.
+                  RA API 설정을 불러오지 못했습니다. 설정 저장과 동기화가
+                  비활성화됩니다.
                 </p>
               )}
-              <SaveErrorMessage message={fetchError} />
-              {fetchSuccess && <p role="status" className="text-sm text-green-400 tracking-wider">{fetchSuccess}</p>}
+              <RaSyncPanel
+                status={syncStatus}
+                isLoading={isSyncStatusLoading}
+                isRunning={isFetching}
+                error={syncError}
+                success={syncSuccess}
+                isRunDisabled={!canSync}
+                disabledReason={syncReason}
+                onRun={() => void runSync()}
+                onRestoreExclusion={restoreExclusion}
+              />
             </div>
-          </div>
-        </AdminCard>
-      </div>
-
-      {/* Events */}
-      <div>
-        <h2 className="text-xl font-bold text-[var(--color-secondary)] tracking-wider mb-4">
-          EVENTS
-        </h2>
-        <div className="space-y-4">
-          {performances.map((performance, index) => (
-            <AdminCard key={performance.id}>
-              {isDeleteModalOpen && deleteIndex === index ? (
-                <DeleteConfirmModal
-                  show={true}
-                  itemName={deleteIndex !== null ? performances[deleteIndex]?.venue || '' : ''}
-                  onConfirm={() => confirmDelete(deletePerformance)}
-                  onCancel={closeDeleteConfirm}
-                />
-              ) : (
-                <div className="flex items-start gap-4">
-                  {/* 포스터 썸네일 — 있을 때만 좌측 표시 */}
-                  {performance.posterImageId && (
-                    <div className="shrink-0 w-20 h-20 overflow-hidden">
-                      <img
-                        src={`/api/media/${performance.posterImageId}`}
-                        alt="Poster"
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  )}
-                  <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormInput
-                      label="TITLE"
-                      value={performance.title}
-                      onChange={(value) => updatePerformanceField(index, 'title', value)}
-                      placeholder="Performance Title"
+          </AdminCard>
+        </section>
+        <section>
+          <h2 className="text-xl font-bold text-[var(--color-secondary)] tracking-wider mb-4">
+            EVENTS
+          </h2>
+          {isEventsLoading ? (
+            <p
+              role="status"
+              className="text-sm text-[var(--color-secondary)]/70"
+            >
+              이벤트를 불러오는 중입니다.
+            </p>
+          ) : (
+            <div className="space-y-4">
+              {performances.map((item, index) => (
+                <AdminCard key={item.id}>
+                  {deleteConfirm.isOpen &&
+                  deleteConfirm.pendingIndex === index ? (
+                    <DeleteConfirmModal
+                      show
+                      itemName={
+                        performances[deleteConfirm.pendingIndex]?.venue || ""
+                      }
+                      onConfirm={() => deleteConfirm.confirmDelete(deleteItem)}
+                      onCancel={deleteConfirm.closeConfirm}
                     />
-                    <FormInput
-                      label="DATE"
-                      type="date"
-                      value={performance.date}
-                      onChange={(value) => updatePerformanceField(index, 'date', value)}
-                    />
-                    <FormInput
-                      label="TIME"
-                      type="time"
-                      value={performance.time ?? ''}
-                      onChange={(value) => updatePerformanceField(index, 'time', value)}
-                    />
-                    <FormInput
-                      label="VENUE"
-                      value={performance.venue}
-                      onChange={(value) => updatePerformanceField(index, 'venue', value)}
-                    />
-                    <FormInput
-                      label="LOCATION"
-                      value={performance.location ?? ''}
-                      onChange={(value) => updatePerformanceField(index, 'location', value)}
-                    />
-                    <div className="md:col-span-2">
-                      <FormSelect
-                        id={`performance-status-${performance.id}`}
-                        name={`performanceStatus-${performance.id}`}
-                        label="STATUS"
-                        value={performance.status}
-                        onChange={(value) => updatePerformanceField(index, 'status', value)}
-                      >
-                        <option value="Announced">Announced</option>
-                        <option value="TBA">TBA</option>
-                        <option value="Cancelled">Cancelled</option>
-                      </FormSelect>
-                    </div>
-                    {performance.raEventId && (
-                      <div className="md:col-span-2">
-                        <p className="text-xs text-[var(--color-accent)] tracking-widest">
-                          RA에서 가져온 이벤트 (ID: {performance.raEventId})
-                        </p>
-                      </div>
-                    )}
-                    {/* 포스터 이미지 업로드 (선택 사항) */}
-                    <div className="md:col-span-2 space-y-2">
-                      <label className="block text-xs text-[var(--color-accent)] tracking-widest">
-                        POSTER IMAGE <span className="text-[var(--color-secondary)]/30 normal-case font-normal">(선택)</span>
-                      </label>
-                      {performance.posterImageId ? (
-                        <button
-                          onClick={() => handlePosterDelete(performance.id)}
-                          disabled={posterUploading[performance.id]}
-                          className="text-xs text-red-400 hover:text-red-300 tracking-widest disabled:opacity-50 cursor-pointer"
-                        >
-                          {posterUploading[performance.id] ? 'REMOVING...' : 'REMOVE POSTER'}
-                        </button>
-                      ) : (
-                        <div className="space-y-1.5">
-                          <label className="flex items-center gap-2 cursor-pointer text-xs text-[var(--color-secondary)]/60 hover:text-[var(--color-secondary)] tracking-widest transition-colors">
-                            <i className="ri-upload-line"></i>
-                            <span>UPLOAD POSTER</span>
-                            <input
-                              type="file"
-                              accept="image/jpeg,image/png,image/webp,image/avif,image/gif"
-                              className="hidden"
-                              disabled={posterUploading[performance.id]}
-                              onChange={(e) => {
-                                const file = e.target.files?.[0];
-                                if (file) handlePosterUpload(performance.id, file);
-                                e.target.value = '';
-                              }}
-                            />
+                  ) : (
+                    <div className="flex items-start gap-4">
+                      {item.posterImageId && (
+                        <div className="shrink-0 w-20 h-20 overflow-hidden">
+                          <img
+                            src={`/api/media/${item.posterImageId}`}
+                            alt={`${item.title} 포스터`}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      )}
+                      <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormInput
+                          label="TITLE"
+                          value={item.title}
+                          onChange={(value) =>
+                            updateField(index, "title", value)
+                          }
+                          placeholder="Performance Title"
+                        />
+                        <FormInput
+                          label="DATE"
+                          type="date"
+                          value={item.date}
+                          onChange={(value) =>
+                            updateField(index, "date", value)
+                          }
+                        />
+                        <FormInput
+                          label="TIME"
+                          type="time"
+                          value={item.time ?? ""}
+                          onChange={(value) =>
+                            updateField(index, "time", value)
+                          }
+                        />
+                        <FormInput
+                          label="VENUE"
+                          value={item.venue}
+                          onChange={(value) =>
+                            updateField(index, "venue", value)
+                          }
+                        />
+                        <FormInput
+                          label="LOCATION"
+                          value={item.location ?? ""}
+                          onChange={(value) =>
+                            updateField(index, "location", value)
+                          }
+                        />
+                        <div className="md:col-span-2">
+                          <FormSelect
+                            id={`performance-status-${item.id}`}
+                            name={`performanceStatus-${item.id}`}
+                            label="STATUS"
+                            value={item.status}
+                            onChange={(value) =>
+                              updateField(index, "status", value)
+                            }
+                          >
+                            <option value="Announced">Announced</option>
+                            <option value="TBA">TBA</option>
+                            <option value="Cancelled">Cancelled</option>
+                          </FormSelect>
+                        </div>
+                        {item.raEventId && (
+                          <div className="md:col-span-2">
+                            <p className="text-xs text-[var(--color-accent)] tracking-widest">
+                              RA에서 가져온 이벤트 (ID: {item.raEventId})
+                            </p>
+                            <p className="mt-1 text-xs text-[var(--color-secondary)]/60">
+                              삭제 후 저장하면 다음 동기화에서 다시 가져오지
+                              않도록 제외됩니다.
+                            </p>
+                          </div>
+                        )}
+                        <div className="md:col-span-2 space-y-2">
+                          <label className="block text-xs text-[var(--color-accent)] tracking-widest">
+                            POSTER IMAGE{" "}
+                            <span className="text-[var(--color-secondary)]/30 normal-case font-normal">
+                              (선택)
+                            </span>
                           </label>
-                          {posterUploading[performance.id] && (
-                            <div className="w-full h-0.5 bg-[var(--color-secondary)]/10 overflow-hidden rounded-full">
+                          {item.posterImageId ? (
+                            <button
+                              type="button"
+                              onClick={() => void changePoster(item.id)}
+                              disabled={posterBusy[item.id] || hasEventEdits}
+                              className="text-xs text-red-400 hover:text-red-300 tracking-widest disabled:opacity-50"
+                            >
+                              {posterBusy[item.id]
+                                ? "REMOVING..."
+                                : "REMOVE POSTER"}
+                            </button>
+                          ) : (
+                            <label className="flex items-center gap-2 cursor-pointer text-xs text-[var(--color-secondary)]/60 hover:text-[var(--color-secondary)] tracking-widest">
+                              <i
+                                className="ri-upload-line"
+                                aria-hidden="true"
+                              />
+                              <span>UPLOAD POSTER</span>
+                              <input
+                                type="file"
+                                accept="image/jpeg,image/png,image/webp,image/avif,image/gif"
+                                className="sr-only focus:not-sr-only focus:absolute focus:mt-8 focus:border focus:border-[var(--color-accent)] focus:bg-[var(--color-bg)] focus:p-2"
+                                disabled={posterBusy[item.id] || hasEventEdits}
+                                onChange={(event) => {
+                                  const file = event.target.files?.[0];
+                                  if (file) void changePoster(item.id, file);
+                                  event.target.value = "";
+                                }}
+                              />
+                            </label>
+                          )}
+                          <p className="text-[10px] text-[var(--color-secondary)]/30 tracking-wider">
+                            JPG · PNG · WebP · AVIF · GIF · max 10MB
+                          </p>
+                          {posterBusy[item.id] && (
+                            <div
+                              role="status"
+                              className="w-full h-0.5 bg-[var(--color-secondary)]/10 overflow-hidden rounded-full"
+                            >
                               <div className="h-full w-1/2 bg-[var(--color-accent)] animate-shimmer rounded-full" />
                             </div>
                           )}
-                          {!posterUploading[performance.id] && (
-                            <p className="text-[10px] text-[var(--color-secondary)]/30 tracking-wider">
-                              JPG · PNG · WebP · AVIF · GIF · max 10MB
-                            </p>
-                          )}
-                          {posterError[performance.id] && (
-                            <p className="text-[10px] text-red-400 tracking-wider flex items-center gap-1">
-                              <i className="ri-error-warning-line" />
-                              {posterError[performance.id]}
+                          {posterError[item.id] && (
+                            <p
+                              role="alert"
+                              className="text-[10px] text-red-400 tracking-wider"
+                            >
+                              {posterError[item.id]}
                             </p>
                           )}
                         </div>
-                      )}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => deleteConfirm.openConfirm(index)}
+                        aria-label={`이벤트 ${item.title} 삭제`}
+                        className="w-8 h-8 flex items-center justify-center border border-red-900/30 text-red-400 hover:bg-red-900/20 transition-colors cursor-pointer shrink-0"
+                        title="Delete"
+                      >
+                        <i className="ri-delete-bin-line" aria-hidden="true" />
+                      </button>
                     </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => openDeleteConfirm(index)}
-                    aria-label={`이벤트 ${performance.title} 삭제`}
-                    className="w-8 h-8 flex items-center justify-center border border-red-900/30 text-red-400 hover:bg-red-900/20 transition-colors cursor-pointer shrink-0"
-                    title="Delete"
-                  >
-                    <i className="ri-delete-bin-line"></i>
-                  </button>
-                </div>
-              )}
-            </AdminCard>
-          ))}
-        </div>
-      </div>
+                  )}
+                </AdminCard>
+              ))}
+            </div>
+          )}
+        </section>
+      </fieldset>
     </div>
   );
-};
-
-export default AdminEventsPage;
+}

@@ -12,7 +12,21 @@
 | `dev` | `stann-lumo-dev` | 고정 development Worker | `stann-lumo-db-dev` | `stann-lumo-media-dev` |
 | `main` | `stann-lumo` | `lumo.stann.kr` production traffic | `stann-lumo-db` | `stann-lumo-media` |
 
-두 Worker 모두 `.open-next/worker.js`와 `.open-next/assets`를 사용한다. D1 binding은 `DB`, R2 binding은 `MEDIA`로 동일하지만 resource ID와 bucket은 환경별로 분리한다.
+두 Worker 모두 `worker.ts` custom entrypoint에서 `.open-next/worker.js`의 fetch handler를 재사용하고 `.open-next/assets`를 사용한다. D1 binding은 `DB`, R2 binding은 `MEDIA`로 동일하지만 resource ID와 bucket은 환경별로 분리한다.
+
+production Worker의 정기 RA 수집은 **격주 월요일 04:15 KST**이며 기준일은 2026-09-07이다. Cron은 매일 04:15 KST에 실행 필요 여부만 확인한다. 정상 수집은 14일 주기를 유지하고, 정기 수집 실패 시 하루 간격으로 최대 두 번 재시도한다. 배포·장애로 정기 실행을 놓쳤으면 다음 일일 확인에서 최근 누락 주기를 한 번 보충한다. development Worker와 preview에는 Cron Trigger를 등록하지 않는다.
+
+동기화는 공식 `GetEvents` 응답의 새 이벤트만 `ra-{eventId}`로 추가한다. 기존 RA ID, 관리자 수정값과 포스터 연결은 교체하지 않는다. 조회 범위는 관리자에 저장된 RA `option`과 `year`를 사용하므로 고정 연도를 설정했다면 다음 해 운영 전에 확인한다. 플라이어 자동 저장은 포함하지 않는다.
+
+관리자 Events의 `RA AUTOMATIC SYNC`에서 최근 결과, 마지막 성공, 다음 실행/재시도와 제외 목록을 확인할 수 있다. `SYNC RA NOW`는 서버에서 즉시 저장하며, 편집 중인 이벤트와 RA 설정을 먼저 저장해야 한다. 동시 실행은 잠금으로 막고 수동 재시도는 최소 1분 간격으로 제한한다.
+
+RA 이벤트를 삭제하고 저장하면 수집 제외 목록에도 기록된다. `RESTORE`는 제외만 해제하며 다음 수동·정기 수집 때 다시 가져온다. 오래된 관리자 목록을 저장하면 409 충돌로 거부하고 입력은 유지한다. 최신 목록을 다시 불러오는 조작은 미저장 이벤트 편집을 버리므로 확인 후 사용한다. 포스터는 이벤트 편집을 저장한 상태에서 변경한다.
+
+## RA 운영 스키마
+
+`0002_ra_sync_operations.sql`은 상태·실행 잠금을 위한 `ra_sync_state`, 제외 목록인 `ra_event_exclusions`와 이벤트 변경 버전을 갱신하는 트리거를 추가한다. 기존 공연·포스터 데이터는 변경하지 않는다. 이벤트 API와 Cron을 배포하기 전에 대상 환경에 이 migration을 별도로 적용해야 한다.
+
+승인된 순서는 개발 D1 migration → 개발 코드 배포·검증 → 운영 D1 migration → 운영 코드 배포·검증이다. 코드 롤백 시 추가 테이블은 남겨두며, 구버전 코드에는 충돌·제외 보호가 없으므로 자동 수집을 운영하지 않는다. 배포 인증에는 대상 Workers와 D1 권한이 필요하며 인증값을 저장소에 넣지 않는다.
 
 ## 사전 체크리스트
 
