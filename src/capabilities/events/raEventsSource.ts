@@ -52,7 +52,7 @@ export async function fetchRaEventsXmlFromSource(
     const response = await fetch(
       `https://www.residentadvisor.net/api/events.asmx/GetEvents?${params.toString()}`,
       { headers: { Accept: 'application/xml, text/xml' },
-        signal: AbortSignal.timeout(15_000), redirect: 'error' },
+        signal: AbortSignal.timeout(15_000), redirect: 'manual' },
     );
     if (!response.ok) return { kind: 'upstream-error', status: response.status };
 

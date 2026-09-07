@@ -124,6 +124,7 @@ describe('admin RA events proxy', () => {
     const outboundUrl = new URL(String(fetchMock.mock.calls[0]?.[0]));
     expect(outboundUrl.searchParams.get('AccessKey')).toBe(secretConfig.apiKey);
     expect(outboundUrl.searchParams.get('UserID')).toBe(secretConfig.userId);
+    expect(fetchMock.mock.calls[0]?.[1]).toMatchObject({ redirect: 'manual' });
     expect(body).not.toContain(secretConfig.apiKey);
   });
 
@@ -197,14 +198,24 @@ describe('admin RA events proxy', () => {
     errorSpy.mockRestore();
   });
 
-  it('returns upstream failures privately without exposing the outbound URL', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('', { status: 429 })));
+  it.each([
+    ['a cross-host redirect without following it', new Response('', {
+      status: 302,
+      headers: { Location: 'https://untrusted.example/collect' },
+    })],
+    ['a rate-limited response', new Response('', { status: 429 })],
+  ] as const)('returns %s privately without exposing the outbound URL', async (_kind, upstream) => {
+    const fetchMock = vi.fn().mockResolvedValue(upstream);
+    vi.stubGlobal('fetch', fetchMock);
 
     const response = await GET(request());
     const body = await response.text();
 
     expect(response.status).toBe(502);
     expectPrivateNoStore(response);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.calls[0]?.[1]).toMatchObject({ redirect: 'manual' });
+    expect(new URL(String(fetchMock.mock.calls[0]?.[0])).origin).toBe('https://www.residentadvisor.net');
     expect(body).not.toContain(secretConfig.apiKey);
     expect(body).not.toContain('residentadvisor.net');
   });

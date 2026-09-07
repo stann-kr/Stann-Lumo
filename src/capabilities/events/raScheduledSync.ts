@@ -169,7 +169,8 @@ function insertRaPerformance(db: D1Database, performance: Performance, sortOrder
      SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
      WHERE EXISTS (SELECT 1 FROM ra_sync_state WHERE id = 1 AND lease_token = ?)
        AND NOT EXISTS (SELECT 1 FROM ra_event_exclusions WHERE ra_event_id = ?)
-       AND NOT EXISTS (SELECT 1 FROM performances WHERE ra_event_id = ?)`,
+       AND NOT EXISTS (SELECT 1 FROM performances WHERE ra_event_id = ?)
+     RETURNING id`,
   ).bind(
     performance.id,
     performance.date,
@@ -200,11 +201,10 @@ function insertRaPerformance(db: D1Database, performance: Performance, sortOrder
   );
 }
 
-function countChanges(results: D1Result[]): number {
+function countInsertedRows(results: D1Result[]): number {
   return results.reduce((total, result) => {
     if (!result.success) throw new Error('RA event insert failed');
-    const changes = result.meta.changes;
-    return total + (typeof changes === 'number' ? changes : 0);
+    return total + result.results.length;
   }, 0);
 }
 
@@ -268,7 +268,7 @@ export async function syncRaEvents(
       const results = performances.length ? await db.batch(
         performances.map((performance, index) => insertRaPerformance(db, performance, index, lease)),
       ) : [];
-      result = { kind: 'success', fetched: performances.length, inserted: countChanges(results),
+      result = { kind: 'success', fetched: performances.length, inserted: countInsertedRows(results),
         skippedExcluded: excluded.results.length };
     }
   } catch {

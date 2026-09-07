@@ -126,6 +126,8 @@ describe('scheduled RA sync', () => {
       ra_event_id: '42',
       ra_lineup_raw: '<artist id="1">Lumo</artist>, Guest&nbsp;Name',
     });
+    expect(sqlite.prepare('SELECT performances_revision FROM ra_sync_state WHERE id = 1').get())
+      .toEqual({ performances_revision: 1 });
   });
 
   it('does not duplicate an existing RA event under another local id or replace its poster', async () => {
