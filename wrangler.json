@@ -7,7 +7,7 @@
       "custom_domain": true
     }
   ],
-  "main": ".open-next/worker.js",
+  "main": "worker.ts",
   "assets": {
     "directory": ".open-next/assets"
   },
@@ -26,6 +26,9 @@
       "bucket_name": "stann-lumo-media"
     }
   ],
+  "triggers": {
+    "crons": ["15 19 * * *"]
+  },
   "vars": {},
   "env": {
     "dev": {
@@ -45,6 +48,9 @@
           "bucket_name": "stann-lumo-media-dev"
         }
       ],
+      "triggers": {
+        "crons": []
+      },
       "vars": {
         "MIGRATE_ENABLED": "false",
         "NEXTJS_ENV": "development"

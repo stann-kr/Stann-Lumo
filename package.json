@@ -28,18 +28,19 @@
     "migrate:local-env": "node scripts/migrate-local-server-env.mjs",
     "d1:dev:apply": "wrangler d1 migrations apply DB --remote --env dev",
     "deploy:dev": "npm run build:cloudflare && ALLOW_MANUAL_CLOUDFLARE_DEPLOY=dev npm run deploy:dev:artifact",
-    "deploy:dev:artifact": "node scripts/check-cloudflare-deploy-target.mjs dev && wrangler deploy .open-next/worker.js --env dev",
-    "deploy:preview:artifact": "node scripts/check-cloudflare-deploy-target.mjs preview && wrangler versions upload .open-next/worker.js --env dev",
-    "deploy:production:artifact": "node scripts/check-cloudflare-deploy-target.mjs production && wrangler deploy .open-next/worker.js --env=\"\""
+    "deploy:dev:artifact": "node scripts/check-cloudflare-deploy-target.mjs dev && wrangler deploy --env dev",
+    "deploy:preview:artifact": "node scripts/check-cloudflare-deploy-target.mjs preview && wrangler versions upload --env dev",
+    "deploy:production:artifact": "node scripts/check-cloudflare-deploy-target.mjs production && wrangler deploy --env=\"\""
   },
   "dependencies": {
-    "@opennextjs/cloudflare": "^1.20.2",
     "@gsap/react": "^2.1.2",
+    "@opennextjs/cloudflare": "^1.20.2",
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.5.0",
     "@react-three/postprocessing": "^3.0.4",
-    "framer-motion": "^12.38.0",
+    "entities": "^8.0.0",
     "esbuild": "^0.28.2",
+    "framer-motion": "^12.38.0",
     "gsap": "^3.14.2",
     "i18next": "^25.3.2",
     "i18next-browser-languagedetector": "^8.2.0",
@@ -47,6 +48,7 @@
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-i18next": "^15.6.0",
+    "saxes": "^6.0.0",
     "split-type": "^0.3.4",
     "three": "^0.183.2",
     "wrangler": "^4.125.0"

@@ -15,11 +15,13 @@ test('Wrangler separates fixed development and production resources', () => {
   const development = wrangler.env?.dev;
 
   assert.equal(wrangler.name, 'stann-lumo');
+  assert.equal(wrangler.main, 'worker.ts');
   assert.deepEqual(wrangler.routes, [{ pattern: 'lumo.stann.kr', custom_domain: true }]);
   assert.equal(wrangler.d1_databases?.[0]?.binding, 'DB');
   assert.equal(wrangler.d1_databases?.[0]?.database_name, 'stann-lumo-db');
   assert.equal(wrangler.r2_buckets?.[0]?.binding, 'MEDIA');
   assert.equal(wrangler.r2_buckets?.[0]?.bucket_name, 'stann-lumo-media');
+  assert.deepEqual(wrangler.triggers?.crons, ['15 19 * * *']);
 
   assert.ok(development);
   assert.equal(development.workers_dev, true);
@@ -31,6 +33,7 @@ test('Wrangler separates fixed development and production resources', () => {
   assert.equal(development.r2_buckets?.[0]?.binding, 'MEDIA');
   assert.equal(development.r2_buckets?.[0]?.bucket_name, 'stann-lumo-media-dev');
   assert.notEqual(development.r2_buckets?.[0]?.bucket_name, wrangler.r2_buckets?.[0]?.bucket_name);
+  assert.deepEqual(development.triggers?.crons, []);
   assert.deepEqual(development.vars, {
     MIGRATE_ENABLED: 'false',
     NEXTJS_ENV: 'development',
@@ -44,10 +47,10 @@ test('package scripts keep deploy targets explicit and branch-guarded', () => {
   assert.equal(packageJson.scripts.deploy, undefined);
   assert.match(packageJson.scripts['deploy:dev'], /ALLOW_MANUAL_CLOUDFLARE_DEPLOY=dev/);
   assert.match(packageJson.scripts['deploy:dev:artifact'], /check-cloudflare-deploy-target\.mjs dev/);
-  assert.match(packageJson.scripts['deploy:dev:artifact'], /wrangler deploy \.open-next\/worker\.js --env dev/);
-  assert.match(packageJson.scripts['deploy:preview:artifact'], /wrangler versions upload \.open-next\/worker\.js --env dev/);
+  assert.match(packageJson.scripts['deploy:dev:artifact'], /wrangler deploy --env dev/);
+  assert.match(packageJson.scripts['deploy:preview:artifact'], /wrangler versions upload --env dev/);
   assert.match(packageJson.scripts['deploy:production:artifact'], /check-cloudflare-deploy-target\.mjs production/);
-  assert.match(packageJson.scripts['deploy:production:artifact'], /wrangler deploy \.open-next\/worker\.js --env=/);
+  assert.match(packageJson.scripts['deploy:production:artifact'], /wrangler deploy --env=/);
   assert.doesNotMatch(packageJson.scripts['deploy:production:artifact'], /--env dev/);
   assert.equal(packageJson.scripts['d1:dev:apply'], 'wrangler d1 migrations apply DB --remote --env dev');
 });

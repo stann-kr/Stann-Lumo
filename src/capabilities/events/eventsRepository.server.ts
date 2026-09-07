@@ -41,6 +41,19 @@ interface EventsListRow {
   value: string;
 }
 
+interface PerformancesRevisionRow {
+  performances_revision: number;
+}
+
+export interface PerformancesSnapshot {
+  items: Performance[];
+  revision: number;
+}
+
+export type ReplacePerformancesResult =
+  | { kind: 'success'; snapshot: PerformancesSnapshot }
+  | { kind: 'conflict' };
+
 function mapPerformance(row: PerformanceRow): Performance {
   return {
     id: row.id,
@@ -92,40 +105,137 @@ export async function fetchPerformances(db: D1Database): Promise<Performance[]> 
   return result.results.map(mapPerformance);
 }
 
-export async function replacePerformances(db: D1Database, items: Performance[]): Promise<void> {
-  await db.batch([
-    db.prepare('DELETE FROM performances'),
-    ...items.map((performance, index) => db.prepare(
-      `INSERT INTO performances
-       (id, date, venue, location, time, title, lineup, ra_event_link, ra_event_id, poster_image_id, status, sort_order, ra_venue_id, ra_country_name, ra_area_name, ra_area_id, ra_address, ra_cost, ra_promoter, ra_venue_link, ra_has_tickets, ra_has_barcode, ra_promoter_id, ra_lineup_raw)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    ).bind(
-      performance.id,
-      performance.date,
-      performance.venue,
-      performance.location ?? null,
-      performance.time ?? null,
-      performance.title,
-      performance.lineup ?? null,
-      performance.raEventLink ?? null,
-      performance.raEventId ?? null,
-      performance.posterImageId ?? null,
-      performance.status,
-      index,
-      performance.raVenueId ?? null,
-      performance.raCountryName ?? null,
-      performance.raAreaName ?? null,
-      performance.raAreaId ?? null,
-      performance.raAddress ?? null,
-      performance.raCost ?? null,
-      performance.raPromoter ?? null,
-      performance.raVenueLink ?? null,
-      performance.raHasTickets ? '1' : '0',
-      performance.raHasBarcode ? '1' : '0',
-      performance.raPromoterId ?? null,
-      performance.raLineupRaw ?? null,
-    )),
+export async function fetchPerformancesSnapshot(db: D1Database): Promise<PerformancesSnapshot> {
+  const [performancesResult, revisionResult] = await db.batch([
+    db.prepare('SELECT * FROM performances ORDER BY date DESC, sort_order'),
+    db.prepare('SELECT performances_revision FROM ra_sync_state WHERE id = 1'),
   ]);
+  const revision = (revisionResult?.results[0] as PerformancesRevisionRow | undefined)
+    ?.performances_revision;
+
+  if (typeof revision !== 'number' || !Number.isSafeInteger(revision) || revision < 0) {
+    throw new Error('Performance revision is unavailable');
+  }
+
+  return {
+    items: (performancesResult?.results as PerformanceRow[]).map(mapPerformance),
+    revision,
+  };
+}
+
+function insertPerformanceStatement(
+  db: D1Database,
+  performance: Performance,
+  sortOrder: number,
+  editToken: string,
+) {
+  return db.prepare(
+    `INSERT INTO performances
+     (id, date, venue, location, time, title, lineup, ra_event_link, ra_event_id, poster_image_id, status, sort_order, ra_venue_id, ra_country_name, ra_area_name, ra_area_id, ra_address, ra_cost, ra_promoter, ra_venue_link, ra_has_tickets, ra_has_barcode, ra_promoter_id, ra_lineup_raw)
+     SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+     WHERE EXISTS (
+       SELECT 1 FROM ra_sync_state WHERE id = 1 AND edit_token = ?
+     )`,
+  ).bind(
+    performance.id,
+    performance.date,
+    performance.venue,
+    performance.location ?? null,
+    performance.time ?? null,
+    performance.title,
+    performance.lineup ?? null,
+    performance.raEventLink ?? null,
+    performance.raEventId ?? null,
+    performance.posterImageId ?? null,
+    performance.status,
+    sortOrder,
+    performance.raVenueId ?? null,
+    performance.raCountryName ?? null,
+    performance.raAreaName ?? null,
+    performance.raAreaId ?? null,
+    performance.raAddress ?? null,
+    performance.raCost ?? null,
+    performance.raPromoter ?? null,
+    performance.raVenueLink ?? null,
+    performance.raHasTickets ? '1' : '0',
+    performance.raHasBarcode ? '1' : '0',
+    performance.raPromoterId ?? null,
+    performance.raLineupRaw ?? null,
+    editToken,
+  );
+}
+
+/**
+ * Replaces the admin list only when it was edited from the current database revision.
+ * The claim and all writes share one D1 batch, so a scheduled insert cannot be lost
+ * between the revision check and the replacement.
+ */
+export async function replacePerformancesAtRevision(
+  db: D1Database,
+  items: Performance[],
+  expectedRevision: number,
+): Promise<ReplacePerformancesResult> {
+  const editToken = crypto.randomUUID();
+  const retainedRaEventIds = JSON.stringify(
+    [...new Set(items.flatMap((performance) => performance.raEventId ? [performance.raEventId] : []))],
+  );
+  const statements = [
+    db.prepare(
+      `UPDATE ra_sync_state
+       SET edit_token = ?
+       WHERE id = 1 AND performances_revision = ? AND edit_token IS NULL`,
+    ).bind(editToken, expectedRevision),
+    db.prepare(
+      `INSERT OR IGNORE INTO ra_event_exclusions (ra_event_id, title, excluded_at)
+       SELECT performance.ra_event_id, performance.title, ?
+       FROM performances AS performance
+       WHERE performance.ra_event_id IS NOT NULL
+         AND NOT EXISTS (
+           SELECT 1 FROM json_each(?) AS retained
+           WHERE retained.value = performance.ra_event_id
+         )
+         AND EXISTS (
+           SELECT 1 FROM ra_sync_state WHERE id = 1 AND edit_token = ?
+         )`,
+    ).bind(Date.now(), retainedRaEventIds, editToken),
+    db.prepare(
+      `DELETE FROM performances
+       WHERE EXISTS (
+         SELECT 1 FROM ra_sync_state WHERE id = 1 AND edit_token = ?
+       )`,
+    ).bind(editToken),
+    ...items.map((performance, index) => insertPerformanceStatement(
+      db,
+      performance,
+      index,
+      editToken,
+    )),
+    db.prepare('SELECT * FROM performances ORDER BY date DESC, sort_order'),
+    db.prepare('SELECT performances_revision FROM ra_sync_state WHERE id = 1'),
+    db.prepare(
+      'UPDATE ra_sync_state SET edit_token = NULL WHERE id = 1 AND edit_token = ?',
+    ).bind(editToken),
+  ];
+  const results = await db.batch(statements);
+  const claimed = Number(results[0]?.meta.changes ?? 0) > 0;
+
+  if (!claimed) return { kind: 'conflict' };
+
+  const performancesResult = results[items.length + 3];
+  const revisionResult = results[items.length + 4];
+  const revision = (revisionResult?.results[0] as PerformancesRevisionRow | undefined)
+    ?.performances_revision;
+  if (typeof revision !== 'number' || !Number.isSafeInteger(revision) || revision < 0) {
+    throw new Error('Performance revision is unavailable');
+  }
+
+  return {
+    kind: 'success',
+    snapshot: {
+      items: (performancesResult?.results as PerformanceRow[]).map(mapPerformance),
+      revision,
+    },
+  };
 }
 
 export async function fetchEventsInfo(
