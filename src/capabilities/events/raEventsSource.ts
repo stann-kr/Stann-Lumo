@@ -51,11 +51,27 @@ export async function fetchRaEventsXmlFromSource(
   try {
     const response = await fetch(
       `https://www.residentadvisor.net/api/events.asmx/GetEvents?${params.toString()}`,
-      { headers: { Accept: 'application/xml, text/xml' } },
+      { headers: { Accept: 'application/xml, text/xml' },
+        signal: AbortSignal.timeout(15_000), redirect: 'error' },
     );
     if (!response.ok) return { kind: 'upstream-error', status: response.status };
 
-    const xml = await response.text();
+    const reader = response.body?.getReader();
+    if (!reader) return { kind: 'unsafe-response' };
+    const decoder = new TextDecoder();
+    let xml = '';
+    let bytes = 0;
+    for (;;) {
+      const chunk = await reader.read();
+      if (chunk.done) break;
+      bytes += chunk.value.byteLength;
+      if (bytes > 5 * 1024 * 1024) {
+        await reader.cancel();
+        return { kind: 'unsafe-response' };
+      }
+      xml += decoder.decode(chunk.value, { stream: true });
+    }
+    xml += decoder.decode();
     if (containsCredentialReflection(xml, config.apiKey)) return { kind: 'unsafe-response' };
     return { kind: 'success', xml };
   } catch {

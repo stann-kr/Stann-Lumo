@@ -27,7 +27,7 @@
     }
   ],
   "triggers": {
-    "crons": ["15 19 * * SUN"]
+    "crons": ["15 19 * * *"]
   },
   "vars": {},
   "env": {

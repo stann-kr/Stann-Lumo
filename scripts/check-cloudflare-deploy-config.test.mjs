@@ -21,7 +21,7 @@ test('Wrangler separates fixed development and production resources', () => {
   assert.equal(wrangler.d1_databases?.[0]?.database_name, 'stann-lumo-db');
   assert.equal(wrangler.r2_buckets?.[0]?.binding, 'MEDIA');
   assert.equal(wrangler.r2_buckets?.[0]?.bucket_name, 'stann-lumo-media');
-  assert.deepEqual(wrangler.triggers?.crons, ['15 19 * * SUN']);
+  assert.deepEqual(wrangler.triggers?.crons, ['15 19 * * *']);
 
   assert.ok(development);
   assert.equal(development.workers_dev, true);

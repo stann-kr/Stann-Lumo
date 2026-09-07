@@ -5,11 +5,70 @@ import { getDB } from '@/lib/db';
 import { privateNoStoreJson, requireAdminSession } from '@/capabilities/auth/authRoute.server';
 import { getRaApiConfigSecret } from '@/capabilities/events/raApiConfig.server';
 import { GET } from './route';
+import { GET as getSync, POST as postSync } from '../ra-sync/route';
+import { DELETE as restoreExclusion } from '../ra-sync/exclusions/route';
+import { syncRaEvents } from '@/capabilities/events/raScheduledSync';
+import { getRaSyncStatus, restoreRaEvent } from '@/capabilities/events/raSyncState';
+
+vi.mock('@/capabilities/events/raScheduledSync', () => ({ syncRaEvents: vi.fn() }));
+vi.mock('@/capabilities/events/raSyncState', () => ({ getRaSyncStatus: vi.fn(), restoreRaEvent: vi.fn() }));
 
 vi.mock('@/lib/db', () => ({ getDB: vi.fn() }));
 vi.mock('@/capabilities/auth/authRoute.server', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/capabilities/auth/authRoute.server')>();
   return { ...actual, requireAdminSession: vi.fn() };
+});
+
+describe('admin RA sync operations', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(requireAdminSession).mockResolvedValue(null);
+    vi.mocked(getDB).mockReturnValue(database);
+  });
+
+  it.each([getSync, postSync, restoreExclusion])('requires authentication before accessing sync state', async (handler) => {
+    vi.mocked(requireAdminSession).mockResolvedValue(privateNoStoreJson({ success: false }, { status: 401 }));
+    const response = await handler(request());
+    expect(response.status).toBe(401);
+    expectPrivateNoStore(response);
+    expect(syncRaEvents).not.toHaveBeenCalled();
+    expect(getRaSyncStatus).not.toHaveBeenCalled();
+    expect(restoreRaEvent).not.toHaveBeenCalled();
+  });
+
+  it('runs the common sync service only for POST and returns status privately', async () => {
+    const status = { lastStatus: 'success', inserted: 2 } as Awaited<ReturnType<typeof getRaSyncStatus>>;
+    vi.mocked(getRaSyncStatus).mockResolvedValue(status);
+    vi.mocked(syncRaEvents).mockResolvedValue({ kind: 'success', fetched: 3, inserted: 2, skippedExcluded: 1 });
+    const read = await getSync(request());
+    expect(syncRaEvents).not.toHaveBeenCalled();
+    await expect(read.json()).resolves.toEqual({ success: true, data: status });
+    const run = await postSync(request());
+    expect(syncRaEvents).toHaveBeenCalledWith(database);
+    expectPrivateNoStore(run);
+    await expect(run.json()).resolves.toMatchObject({ data: { result: { inserted: 2 }, status } });
+  });
+
+  it('does not expose upstream or database diagnostics', async () => {
+    vi.mocked(syncRaEvents).mockRejectedValue(new Error(secretConfig.apiKey));
+    const response = await postSync(request());
+    expect(response.status).toBe(503);
+    expectPrivateNoStore(response);
+    expect(await response.text()).not.toContain(secretConfig.apiKey);
+  });
+
+  it('validates exclusion restoration without triggering an import', async () => {
+    const makeRequest = (raEventId: unknown) => new NextRequest('https://lumo.test/api/admin/ra-sync/exclusions', {
+      method: 'DELETE', body: JSON.stringify({ raEventId }), headers: { 'Content-Type': 'application/json' },
+    });
+    expect((await restoreExclusion(makeRequest('../42'))).status).toBe(400);
+    expect(restoreRaEvent).not.toHaveBeenCalled();
+    const response = await restoreExclusion(makeRequest('42'));
+    expect(response.status).toBe(200);
+    expectPrivateNoStore(response);
+    expect(restoreRaEvent).toHaveBeenCalledWith(database, '42');
+    expect(syncRaEvents).not.toHaveBeenCalled();
+  });
 });
 vi.mock('@/capabilities/events/raApiConfig.server', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/capabilities/events/raApiConfig.server')>();
