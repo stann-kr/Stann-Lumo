@@ -6,7 +6,10 @@ import {
   waitFor,
 } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { AdminEditGuardProvider } from "@/capabilities/admin/AdminEditGuard";
+import {
+  AdminEditGuardProvider,
+  useAdminEditGuard,
+} from "@/capabilities/admin/AdminEditGuard";
 import type { ContentData, PageMeta } from "@/capabilities/content/content";
 import type { RAApiConfigView } from "@/capabilities/events/raConfig";
 import AdminEventsPage from "./page";
@@ -93,10 +96,16 @@ vi.mock("react-i18next", () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
 
+const DirtyState = () => {
+  const { isDirty } = useAdminEditGuard();
+  return <output data-testid="dirty-state">{String(isDirty)}</output>;
+};
+
 const renderPage = () =>
   render(
     <AdminEditGuardProvider>
       <AdminEventsPage />
+      <DirtyState />
     </AdminEditGuardProvider>,
   );
 
@@ -222,10 +231,31 @@ describe("AdminEventsPage performance snapshots", () => {
     view.rerender(
       <AdminEditGuardProvider>
         <AdminEventsPage />
+        <DirtyState />
       </AdminEditGuardProvider>,
     );
     await waitFor(() =>
       expect(screen.getByDisplayValue("EVENTS KO")).toBeInTheDocument(),
+    );
+  });
+
+  it("keeps the edit guard dirty while a page setting draft refreshes events through manual sync", async () => {
+    renderPage();
+    const title = await screen.findByLabelText("PAGE TITLE");
+    fireEvent.change(title, { target: { value: "Draft title" } });
+    await waitFor(() =>
+      expect(screen.getByTestId("dirty-state")).toHaveTextContent("true"),
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "SYNC RA NOW" }));
+    await waitFor(() => expect(mocks.runRaSync).toHaveBeenCalledTimes(1));
+    await screen.findByText("0개 추가됨");
+    await waitFor(() =>
+      expect(mocks.fetchPerformancesSnapshot).toHaveBeenCalledTimes(2),
+    );
+    expect(screen.getByLabelText("PAGE TITLE")).toHaveValue("Draft title");
+    await waitFor(() =>
+      expect(screen.getByTestId("dirty-state")).toHaveTextContent("true"),
     );
   });
 
@@ -264,6 +294,7 @@ describe("AdminEventsPage performance snapshots", () => {
     view.rerender(
       <AdminEditGuardProvider>
         <AdminEventsPage />
+        <DirtyState />
       </AdminEditGuardProvider>,
     );
     expect(screen.getByLabelText("events_api_key")).toHaveValue("");

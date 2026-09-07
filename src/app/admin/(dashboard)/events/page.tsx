@@ -13,7 +13,7 @@ import SuccessMessage from "@/components/base/SuccessMessage";
 import { useDeleteConfirm } from "@/capabilities/admin/useDeleteConfirm";
 import { useListEditor } from "@/capabilities/admin/useListEditor";
 import { useSaveNotification } from "@/capabilities/admin/useSaveNotification";
-import { useUnsavedChanges } from "@/capabilities/admin/useUnsavedChanges";
+import { useAdminEditGuard } from "@/capabilities/admin/AdminEditGuard";
 import { updatePageMeta as apiUpdatePageMeta } from "@/capabilities/content/contentAdmin.client";
 import type { PageMeta } from "@/capabilities/content/content";
 import type { Performance } from "@/capabilities/events/events";
@@ -103,16 +103,20 @@ export default function AdminEventsPage() {
   const [syncSuccess, setSyncSuccess] = useState("");
   const [hasConflict, setHasConflict] = useState(false);
   const { isVisible: showSuccess, showNotification } = useSaveNotification();
+  const { setDirty } = useAdminEditGuard();
   const deleteConfirm = useDeleteConfirm();
   const isPosterBusy = Object.values(posterBusy).some(Boolean);
   const hasEventEdits = useMemo(
     () => JSON.stringify(performances) !== JSON.stringify(savedItems),
     [performances, savedItems],
   );
-  const { markSaved } = useUnsavedChanges(
-    { clearKey, pageMeta, performances, config, replacementKey },
-    `${currentEditLanguage}:${isLoading}:${isConfigLoading}:${isEventsLoading}`,
-  );
+  const hasUnsavedChanges = hasEventEdits || isPageMetaDirty || isConfigDirty;
+
+  useEffect(() => {
+    setDirty(hasUnsavedChanges);
+  }, [hasUnsavedChanges, setDirty]);
+
+  useEffect(() => () => setDirty(false), [setDirty]);
 
   const applySnapshot = useCallback(
     (items: Performance[], nextRevision: number) => {
@@ -291,7 +295,6 @@ export default function AdminEventsPage() {
       updateContent({ performances: eventResult.data.items, pageMeta });
       setIsPageMetaDirty(false);
       setPageMetaLanguage(currentEditLanguage);
-      markSaved();
       showNotification();
       void loadSyncStatus();
     } catch {
