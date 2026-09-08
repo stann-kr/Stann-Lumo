@@ -1,5 +1,7 @@
 'use client';
 
+import { getPublicImageUrl } from '@/capabilities/media/media';
+
 import { useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -37,7 +39,7 @@ export default function ArchiveDetailPageClient({ photo, previous, next, index, 
 
   const media = photo.mediaType === 'video_youtube' && photo.videoYoutubeId ? <div className="w-full aspect-video"><iframe src={`https://www.youtube.com/embed/${photo.videoYoutubeId}`} allow="encrypted-media; fullscreen" allowFullScreen className="w-full h-full" title={photo.altText || photo.filename} /></div>
     : photo.mediaType === 'video_file' ? <video src={`/api/media/${photo.id}`} controls className="w-full max-h-[70vh] object-contain" aria-label={pageTitle} />
-    : <img src={`/api/media/${photo.id}`} alt={photo.altText || photo.filename} className="w-full object-contain" style={{ objectPosition: `${photo.focalX}% ${photo.focalY}%` }} />;
+    : <img src={getPublicImageUrl(photo.id)} alt={photo.altText || photo.filename} className="w-full object-contain" style={{ objectPosition: `${photo.focalX}% ${photo.focalY}%` }} />;
 
   return (
     <PageLayout title={pageTitle}>
