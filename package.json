@@ -7,6 +7,7 @@
   },
   "scripts": {
     "dev": "node scripts/run-local-worker.mjs --ip 127.0.0.1",
+    "dev:preview": "node scripts/run-public-preview.mjs",
     "dev:docker": "node scripts/run-local-worker.mjs --ip 0.0.0.0",
     "dev:next": "node scripts/run-local-worker.mjs --next --ip 127.0.0.1",
     "prebuild": "node scripts/check-token-sync.mjs",
