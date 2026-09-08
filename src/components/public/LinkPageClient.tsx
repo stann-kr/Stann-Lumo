@@ -17,16 +17,18 @@ export default function LinkPageClient({ linkMeta, linkPlatforms, terminalInfo }
   return (
     <PageLayout title={linkMeta.title || t("link_title")} subtitle={linkMeta.subtitle || t("link_subtitle")}>
       <ul className={styles.platforms}>
-        {linkPlatforms.map((link) => <li key={link.id}>
-          <a href={link.url} target="_blank" rel="noopener noreferrer" className={styles.row}>
-            <h2>{link.platform}</h2><p>{link.description}</p><span className={styles.external}><span aria-hidden="true">↗</span><span className="sr-only">{newTabLabel}</span></span>
+        {linkPlatforms.map((link) => <li key={link.id} data-reveal="row">
+          <a href={link.url} target="_blank" rel="noopener noreferrer" className={styles.row} data-hover>
+            <h2 data-hover-label>{link.platform}</h2><p>{link.description}</p><span className={styles.external}><span data-hover-arrow aria-hidden="true">↗</span><span className="sr-only">{newTabLabel}</span></span>
+            <i className={styles.rowRule} data-hover-rule aria-hidden="true" />
           </a>
         </li>)}
       </ul>
-      {terminalInfo.url && <section className={styles.terminal}>
+      {terminalInfo.url && <section className={styles.terminal} data-reveal>
         <p>{t("link_side_project")}</p>
-        <a href={terminalInfo.url} target="_blank" rel="noopener noreferrer" className={styles.row}>
-          <h2>{linkMeta.terminalTitle || 'Terminal'}</h2><p>{terminalInfo.description}</p><span className={styles.external}><span aria-hidden="true">↗</span><span className="sr-only">{newTabLabel}</span></span>
+        <a href={terminalInfo.url} target="_blank" rel="noopener noreferrer" className={styles.row} data-hover>
+          <h2 data-hover-label>{linkMeta.terminalTitle || 'Terminal'}</h2><p>{terminalInfo.description}</p><span className={styles.external}><span data-hover-arrow aria-hidden="true">↗</span><span className="sr-only">{newTabLabel}</span></span>
+          <i className={styles.rowRule} data-hover-rule aria-hidden="true" />
         </a>
       </section>}
       <footer className={styles.footer}><p>{t("link_footer_note")}</p><Link href="/contact">{t("link_footer_contact")}</Link></footer>

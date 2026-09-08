@@ -24,8 +24,8 @@ export default function EventDetailPageClient({ event, posterPhoto }: { event: P
           </dl>
           {event.raEventLink && <a href={event.raEventLink} target="_blank" rel="noopener noreferrer" className={styles.external}>{isKorean ? 'Resident Advisor에서 보기' : 'View on Resident Advisor'} <span aria-hidden="true">↗</span><span className="sr-only">{isKorean ? ' (새 창)' : ' (opens in a new tab)'}</span></a>}
         </aside>
-        {posterPhoto && <div className={styles.poster}><img src={getPublicImageUrl(posterPhoto.id)} alt={posterPhoto.altText || event.title} /></div>}
-        {event.lineup && <section className={styles.lineup}><h2>{isKorean ? '라인업' : 'Lineup'}</h2><p>{event.lineup}</p></section>}
+        {posterPhoto && <div className={styles.poster} data-reveal="card"><img src={getPublicImageUrl(posterPhoto.id)} alt={posterPhoto.altText || event.title} /></div>}
+        {event.lineup && <section className={styles.lineup} data-reveal><h2>{isKorean ? '라인업' : 'Lineup'}</h2><p>{event.lineup}</p></section>}
       </div>
     </PageLayout>
   );

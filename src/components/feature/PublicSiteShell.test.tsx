@@ -1,6 +1,7 @@
 import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import PublicSiteShell from './PublicSiteShell';
 import HomePageClient from '../public/HomePageClient';
 
@@ -69,6 +70,7 @@ describe('PublicSiteShell public navigation', () => {
     desktopBreakpointListeners.clear();
     matchMedia.mockClear();
     vi.stubGlobal('matchMedia', matchMedia);
+    vi.stubGlobal('scrollTo', vi.fn());
   });
 
   it('provides a skip link and exposes the current route to assistive technology', () => {
@@ -140,6 +142,64 @@ describe('PublicSiteShell public navigation', () => {
     await waitFor(() => expect(within(screen.getByRole('dialog')).getByRole('link', { name: 'HOME' })).toHaveFocus());
     await user.keyboard('{Escape}');
     expect(main.closest('[inert]')).toBeNull();
+  });
+
+  it('restores readable content when motion is reduced and releases only its own animations on unmount', async () => {
+    let isReduced = false;
+    const queries = new Map<string, Set<(event: MediaQueryListEvent) => void>>();
+    const matches = (query: string) => query.includes('no-preference') ? !isReduced
+      : query.includes('prefers-reduced-motion: reduce') ? isReduced
+      : query.includes('min-width') || query.includes('pointer: fine');
+    vi.stubGlobal('matchMedia', (query: string) => {
+      if (!queries.has(query)) queries.set(query, new Set());
+      const listeners = queries.get(query)!;
+      return {
+        media: query,
+        get matches() { return matches(query); },
+        addEventListener: (_type: string, listener: (event: MediaQueryListEvent) => void) => listeners.add(listener),
+        removeEventListener: (_type: string, listener: (event: MediaQueryListEvent) => void) => listeners.delete(listener),
+        addListener: (listener: (event: MediaQueryListEvent) => void) => listeners.add(listener),
+        removeListener: (listener: (event: MediaQueryListEvent) => void) => listeners.delete(listener),
+      };
+    });
+    const changePreference = async (value: boolean) => {
+      await act(async () => {
+        // Native media changes happen in distinct browser tasks; GSAP debounces them.
+        await new Promise((resolve) => setTimeout(resolve, 20));
+        isReduced = value;
+        for (const [query, listeners] of queries) {
+          for (const listener of listeners) listener({ matches: matches(query), media: query } as MediaQueryListEvent);
+        }
+      });
+    };
+
+    const { container, unmount } = render(<PublicSiteShell>
+      <HomePageClient artistInfo={[]} homeMeta={{ navTitle: 'Explore' }} homeSections={sections} terminalInfo={{ url: '', description: '' }} />
+    </PublicSiteShell>);
+    const unrelated = ScrollTrigger.create({ trigger: document.body });
+    try {
+      expect(screen.getByRole('heading', { level: 1, name: 'STANN LUMO' })).toBeInTheDocument();
+      expect(ScrollTrigger.getAll().length).toBeGreaterThan(1);
+      const user = userEvent.setup();
+      await user.click(screen.getByRole('button', { name: 'Archive' }));
+      screen.getByRole('link', { name: /Explore Archive/ }).focus();
+      expect(screen.getByRole('link', { name: /Explore Archive/ })).toBeVisible();
+
+      await changePreference(true);
+      await waitFor(() => expect(ScrollTrigger.getAll()).toEqual([unrelated]));
+      expect(screen.getByRole('link', { name: /Explore Archive/ })).toBeVisible();
+      for (const glyph of container.querySelectorAll<HTMLElement>('[data-glyph]')) {
+        expect(glyph.style.transform).toBe('');
+      }
+
+      await changePreference(false);
+      await waitFor(() => expect(ScrollTrigger.getAll().length).toBeGreaterThan(1));
+      unmount();
+      expect(ScrollTrigger.getAll()).toEqual([unrelated]);
+    } finally {
+      unmount();
+      unrelated.kill();
+    }
   });
 });
 

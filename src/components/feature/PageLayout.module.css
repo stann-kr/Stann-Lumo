@@ -1,5 +1,9 @@
 .page { padding: clamp(2.5rem, 6vw, 6rem) var(--page-gutter, 1.25rem) clamp(4rem, 8vw, 8rem); max-width: 1800px; margin-inline: auto; }
-.header { padding-bottom: clamp(2rem, 4vw, 4rem); }
+.header { position: relative; padding-bottom: clamp(2.75rem, 4.5vw, 4.5rem); }
 .header h1 { max-width: 18ch; font-family: var(--font-display, sans-serif); font-size: clamp(2.5rem, 7vw, 8rem); font-weight: 900; line-height: 1.04; letter-spacing: -.045em; overflow-wrap: anywhere; }
-.header h1 span { display: block; }
 .header p { margin-top: 1.5rem; max-width: 65ch; font-size: 1rem; color: var(--color-secondary); overflow-wrap: anywhere; }
+.registration { display: flex; align-items: center; gap: .65rem; height: .65rem; margin-top: 2rem; }
+.registration span { height: 1px; background: var(--color-muted); }
+.registration span:first-child { width: 3.5rem; background: var(--color-accent); }
+.registration span:last-child { flex: 1; }
+.registration i { width: .4rem; height: .4rem; border: 1px solid var(--color-accent); transform: rotate(45deg); }

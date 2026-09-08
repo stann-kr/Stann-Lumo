@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useState } from "react";
+import { useId, useRef, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
@@ -11,6 +11,8 @@ import type { ArtistInfoItem, HomePageMeta, HomeSection, HomePreviews } from "@/
 import type { TerminalInfo } from "@/capabilities/terminal/terminalConfig";
 import { getPublicImageUrl } from "@/capabilities/media/media";
 import styles from "./HomePageClient.module.css";
+import KineticHeading from '../feature/KineticHeading';
+import { useHomeMotion } from './useHomeMotion';
 
 interface HomePageClientProps {
   artistInfo: ArtistInfoItem[];
@@ -29,14 +31,24 @@ export default function HomePageClient({ artistInfo, homeMeta, homeSections, ter
   // The CMS owns order: the first four sections are panels, all remaining sections stay visible below.
   const panels = homeSections.slice(0, 4);
   const [selectedPath, setSelectedPath] = useState<string | null>(() => panels.find((section) => section.path === "/music")?.path ?? panels[0]?.path ?? null);
+  const homeRef = useRef<HTMLDivElement>(null);
+  useHomeMotion(homeRef, selectedPath);
   const artistName = artistInfo.find((item) => item.key === "Name" || item.key === "이름")?.value || SITE_NAME;
   const newTabLabel = language === "ko" ? " (새 창)" : " (opens in a new tab)";
 
   return (
-    <div className={styles.home} data-motion={isMotionEnabled ? "on" : "off"}>
+    <div ref={homeRef} className={styles.home} data-motion={isMotionEnabled ? "on" : "off"}>
       <header className={styles.intro}>
-        <h1>{artistName}</h1>
-        <p>{homeMeta.navTitle || t("home_nav_title")}</p>
+        <KineticHeading title={artistName} />
+        <p data-reveal>{homeMeta.navTitle || t("home_nav_title")}</p>
+        <div className={styles.signalTrack} aria-hidden="true">
+          <div className={styles.signal} data-signal>
+            {[24, 44, 72, 38, 100, 58, 84, 32, 66, 92, 48, 76, 36, 60, 20].map((height, index) => (
+              <i key={index} data-signal-bar style={{ height: `${height}%` }} />
+            ))}
+          </div>
+          <span className={styles.signalEnd} />
+        </div>
       </header>
       <div className={styles.panels}>
         {panels.map((section, index) => {
@@ -44,6 +56,8 @@ export default function HomePageClient({ artistInfo, homeMeta, homeSections, ter
           const contentId = `${panelId}-${index}`;
           return (
             <motion.section key={`${section.path}-${index}`} layout={isMotionEnabled} transition={{ layout: { duration: 0.55, ease: [0.22, 1, 0.36, 1] } }} className={styles.panel} data-expanded={isExpanded}>
+              <span className={styles.panelIndex} data-panel-index aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
+              <span className={styles.panelRule} data-panel-rule aria-hidden="true" />
               <motion.h2 layout={isMotionEnabled ? 'position' : false}>
                 <button type="button" id={`${contentId}-trigger`} aria-expanded={isExpanded} aria-controls={contentId}
                   onClick={() => setSelectedPath(isExpanded ? null : section.path)}>
@@ -51,7 +65,7 @@ export default function HomePageClient({ artistInfo, homeMeta, homeSections, ter
                   <span className={styles.toggle} aria-hidden="true">{isExpanded ? "−" : "+"}</span>
                 </button>
               </motion.h2>
-              <div id={contentId} hidden={!isExpanded} className={styles.panelContent}>
+              <div id={contentId} hidden={!isExpanded} className={styles.panelContent} data-panel-content>
                 <p>{section.description}</p>
                 {section.path === '/music' && !!previews?.tracks.length && <ul className={styles.trackPreview}>
                   {previews.tracks.map((track) => <li key={track.id}><strong>{track.title}</strong><span>{track.type} / {track.year}</span></li>)}
@@ -68,8 +82,9 @@ export default function HomePageClient({ artistInfo, homeMeta, homeSections, ter
                 {section.path === '/about' && artistInfo.length > 0 && <dl className={styles.artistPreview}>
                   {artistInfo.map((info) => <div key={info.id}><dt>{info.key}</dt><dd>{info.value}</dd></div>)}
                 </dl>}
-                <Link href={section.path} className={styles.visit}>
-                  {language === "ko" ? `${section.title} 보기` : `Explore ${section.title}`}<span aria-hidden="true">↗</span>
+                <Link href={section.path} className={styles.visit} data-hover>
+                  <span data-hover-label>{language === "ko" ? `${section.title} 보기` : `Explore ${section.title}`}</span><span data-hover-arrow aria-hidden="true">↗</span>
+                  <i className={styles.linkRule} data-hover-rule aria-hidden="true" />
                 </Link>
               </div>
             </motion.section>
@@ -79,15 +94,15 @@ export default function HomePageClient({ artistInfo, homeMeta, homeSections, ter
       {homeSections.length > 4 && (
         <div className={styles.secondary}>
           {homeSections.slice(4).map((section, index) => (
-            <Link key={`${section.path}-${index}`} href={section.path}>
-              <h2>{section.title}</h2><p>{section.description}</p><span aria-hidden="true">↗</span>
+            <Link key={`${section.path}-${index}`} href={section.path} data-reveal data-hover>
+              <h2 data-hover-label>{section.title}</h2><p>{section.description}</p><span data-hover-arrow aria-hidden="true">↗</span>
             </Link>
           ))}
         </div>
       )}
       {terminalInfo.url && (
         <section className={styles.terminal} aria-labelledby={`${panelId}-terminal`}>
-          <div className={styles.terminalIntro}>
+          <div className={styles.terminalIntro} data-reveal>
             <h2 id={`${panelId}-terminal`}>{t("home_terminal_side_project")}</h2>
             <p>{terminalInfo.description}</p>
             <div className={styles.terminalLinks}>
@@ -98,7 +113,7 @@ export default function HomePageClient({ artistInfo, homeMeta, homeSections, ter
           {!!terminalInfo.customFields?.length && (
             <dl className={styles.fields}>
               {terminalInfo.customFields.map((field) => (
-                <div key={field.id}>
+                <div key={field.id} data-reveal="row">
                   <dt>{field.fieldKey}</dt>
                   <dd>{field.fieldType === "url" ? (
                     <a href={field.fieldValue} target="_blank" rel="noopener noreferrer">{field.fieldValue}<span className="sr-only">{newTabLabel}</span></a>

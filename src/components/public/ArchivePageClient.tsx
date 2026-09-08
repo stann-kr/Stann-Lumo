@@ -15,13 +15,14 @@ function GridItem({ photo }: { photo: GalleryPhoto }) {
   const { language } = useLanguage();
   const label = photo.caption || photo.altText || photo.filename;
   return (
-    <li>
+    <li data-reveal="card">
       <article>
-        <Link href={`/archive/${photo.id}`} className={styles.tile} aria-label={`${language === 'ko' ? '아카이브 항목 열기' : 'Open archive item'}: ${label}`}>
+        <Link href={`/archive/${photo.id}`} className={styles.tile} data-hover aria-label={`${language === 'ko' ? '아카이브 항목 열기' : 'Open archive item'}: ${label}`}>
           <div className={styles.media} data-video={photo.mediaType !== 'image'}>
-            {photo.mediaType === 'video_youtube' ? <img src={photo.videoThumbnailUrl || undefined} alt={photo.altText || photo.filename} loading="lazy" />
+            {photo.mediaType === 'video_youtube' ? <img src={photo.videoThumbnailUrl || undefined} alt={photo.altText || photo.filename} loading="lazy" data-hover-image />
               : photo.mediaType === 'video_file' ? <video src={`/api/media/${photo.id}`} preload="none" muted playsInline aria-hidden="true" />
-              : <img src={getPublicImageUrl(photo.id)} alt={photo.altText || photo.filename} loading="lazy" />}
+              : <img src={getPublicImageUrl(photo.id)} alt={photo.altText || photo.filename} loading="lazy" data-hover-image />}
+            <span className={styles.corners} aria-hidden="true" />
           </div>
           {photo.caption && <p className={styles.caption}>{photo.caption}</p>}
         </Link>
@@ -54,7 +55,7 @@ export default function ArchivePageClient({ photos }: { photos: GalleryPhoto[] }
     return <button key={value} type="button" className={`${controlClass} ${value === currentPage ? 'bg-[var(--color-accent)]/15 !border-[var(--color-accent)]' : ''}`} aria-label={t('gallery_page', { page: value })} aria-current={value === currentPage ? 'page' : undefined} onClick={() => changePage(value)}>{value}</button>;
   }
   return (
-    <PageLayout title={t('gallery_title')} subtitle={t('gallery_subtitle')}>
+    <PageLayout title={t('gallery_title')} subtitle={t('gallery_subtitle')} motionRevision={`${sort}:${seed}:${currentPage}`}>
       {photos.length === 0 ? <div className={styles.empty}><p className="text-[var(--color-text-muted)] text-sm font-mono tracking-widest">{t('gallery_empty')}</p></div> : <div className="space-y-6">
         <div className="flex flex-col gap-3 border-b border-[var(--color-muted)] pb-4 sm:flex-row sm:items-center sm:justify-between">
           <p role="status" aria-atomic="true" className="text-xs font-mono text-[var(--color-text-muted)]">{t('gallery_range', { start: offset + 1, end: offset + pagePhotos.length, total: photos.length })}</p>

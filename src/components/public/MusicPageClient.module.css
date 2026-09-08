@@ -1,9 +1,12 @@
-.tracks { border-top: 1px solid var(--color-muted); }
-.tracks li { display: grid; grid-template-columns: minmax(0, 1fr) 12rem 11rem; gap: 2rem; align-items: center; padding: 2rem 0; border-bottom: 1px solid var(--color-muted); }
+.tracks { border-top: 1px solid var(--color-muted); counter-reset: tracks; }
+.tracks li { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) 12rem 11rem; gap: 2rem; align-items: center; padding: 2rem 0 2rem 3rem; border-bottom: 1px solid var(--color-muted); }
+.tracks li::before { counter-increment: tracks; content: counter(tracks, decimal-leading-zero) / ''; position: absolute; top: 2.35rem; left: 0; font: .65rem 'JetBrains Mono', monospace; color: var(--color-secondary); }
 .tracks h2 { font-size: clamp(1.25rem, 2vw, 1.75rem); font-weight: 600; line-height: 1.4; letter-spacing: -.025em; overflow-wrap: anywhere; }
 .meta { display: flex; flex-wrap: wrap; gap: .5rem 1rem; font: .8rem 'JetBrains Mono', monospace; color: var(--color-secondary); }
 .tracks a { display: flex; align-items: center; justify-content: space-between; gap: 1rem; min-height: 44px; padding-block: .75rem; border-bottom: 1px solid var(--color-muted); }
 .tracks a:hover { color: var(--color-accent); }
+.tracks li:focus-within::before, .tracks li:hover::before { color: var(--color-accent); }
+.rowRule { position: absolute; bottom: -1px; left: 0; right: 0; height: 1px; background: var(--color-accent); transform: scaleX(0); transform-origin: left; pointer-events: none; }
 .footer { display: flex; flex-wrap: wrap; gap: 2rem 4rem; justify-content: space-between; margin-top: 3rem; color: var(--color-secondary); }
 .footer p { max-width: 60ch; }
 .footer div { display: flex; flex-wrap: wrap; gap: 1.5rem; }
@@ -15,6 +18,7 @@
   .tracks a { grid-column: 2; grid-row: 1 / 3; }
 }
 @media (max-width: 599px) {
+  .tracks li { padding-left: 2rem; }
   .tracks li { grid-template-columns: minmax(0, 1fr); }
   .tracks a { grid-column: 1; grid-row: auto; margin-top: .5rem; }
 }

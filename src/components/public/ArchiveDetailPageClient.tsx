@@ -1,12 +1,13 @@
 'use client';
 
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getPublicImageUrl, type GalleryPhoto } from '@/capabilities/media/media';
 import styles from './ArchiveDetailPageClient.module.css';
+import { useContentMotion } from '../feature/useContentMotion';
 
 interface ArchiveDetailPageClientProps {
   photo: GalleryPhoto;
@@ -17,6 +18,8 @@ interface ArchiveDetailPageClientProps {
 }
 
 export default function ArchiveDetailPageClient({ photo, previous, next, index, total }: ArchiveDetailPageClientProps) {
+  const pageRef = useRef<HTMLElement>(null);
+  useContentMotion(pageRef, photo.id);
   const router = useRouter();
   const { t } = useTranslation();
   const { language } = useLanguage();
@@ -40,13 +43,13 @@ export default function ArchiveDetailPageClient({ photo, previous, next, index, 
   }, [handleKeyDown]);
 
   return (
-    <article className={styles.page} aria-label={`Archive item: ${itemLabel}`}>
+    <article ref={pageRef} className={styles.page} aria-label={`Archive item: ${itemLabel}`}>
       <header className={styles.header}>
         <Link href="/archive"><span aria-hidden="true">←</span> {t('gallery_title')}</Link>
         <h1>{t('gallery_label')} <span>{index + 1} / {total}</span></h1>
       </header>
       <div className={styles.detail}>
-        <div className={styles.media}>
+        <div className={styles.media} data-reveal={photo.mediaType === 'image' ? 'card' : undefined}>
           {photo.mediaType === 'video_youtube' && photo.videoYoutubeId ? <iframe src={`https://www.youtube.com/embed/${photo.videoYoutubeId}`} allow="encrypted-media; fullscreen" allowFullScreen title={photo.altText || photo.filename} />
             : photo.mediaType === 'video_file' ? <video src={`/api/media/${photo.id}`} controls preload="metadata" aria-label={itemLabel} />
             : <img src={getPublicImageUrl(photo.id)} alt={photo.altText || photo.filename} />}

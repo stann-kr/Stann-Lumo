@@ -9,5 +9,5 @@
 .prose p { font-size: 1.125rem; line-height: 1.8; color: var(--color-secondary); overflow-wrap: anywhere; white-space: pre-line; }
 .prose p + p { margin-top: 1.5rem; }
 .philosophy + .philosophy { margin-top: 3rem; }
-.philosophy blockquote { font-size: clamp(1.5rem, 2.5vw, 2.25rem); line-height: 1.5; letter-spacing: -.025em; margin-bottom: 1.5rem; overflow-wrap: anywhere; }
+.philosophy blockquote { font-size: clamp(1.5rem, 2.5vw, 2.25rem); line-height: 1.5; letter-spacing: -.025em; padding-left: 1.25rem; border-left: 2px solid var(--color-accent); margin-bottom: 1.5rem; overflow-wrap: anywhere; }
 @media (max-width: 699px) { .about { grid-template-columns: minmax(0, 1fr); } .facts { display: flex; flex-wrap: wrap; gap: 1.5rem 3rem; } .facts > div { margin: 0; } }

@@ -14,11 +14,11 @@ export default function AboutPageClient({ artistInfo, aboutSections }: AboutPage
     <PageLayout title={t("about_title")}>
       <div className={styles.about}>
         {artistInfo.length > 0 && <dl className={styles.facts}>
-          {artistInfo.map((info) => <div key={info.id}><dt>{info.key}</dt><dd>{info.value}</dd></div>)}
+          {artistInfo.map((info) => <div key={info.id} data-reveal="row"><dt>{info.key}</dt><dd>{info.value}</dd></div>)}
         </dl>}
         <div className={styles.prose}>
           {sortedSections.map((section) => (
-            <section key={section.id}>
+            <section key={section.id} data-reveal>
               <h2>{section.title}</h2>
               {section.type === "paragraphs" && (section.paragraphs ?? []).map((paragraph, index) => <p key={index}>{paragraph}</p>)}
               {section.type === "philosophy-items" && (section.items ?? []).map((item) => (

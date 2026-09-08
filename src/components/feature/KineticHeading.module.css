@@ -1,0 +1,4 @@
+.line { display: block; }
+.word { display: inline-block; max-width: 100%; overflow: clip; vertical-align: bottom; padding: .14em .06em; margin: -.14em -.06em; }
+.glyph { display: inline-block; transform-origin: 50% 100%; }
+@media (prefers-reduced-motion: reduce) { .word { overflow: visible; } }

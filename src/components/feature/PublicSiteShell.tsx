@@ -7,6 +7,7 @@ import { useLanguage } from "../../contexts/LanguageContext";
 import { SITE_NAME, TERMINAL_URL, HUB_URL } from "../../constants/site";
 import SignalNet from "../base/SignalNet";
 import styles from "./PublicSiteShell.module.css";
+import { useShellMotion } from './useShellMotion';
 
 interface PublicSiteShellProps {
   children: ReactNode;
@@ -20,6 +21,8 @@ const PublicSiteShell = ({ children, artistName = SITE_NAME }: PublicSiteShellPr
   const mobileMenuOpen = mobileMenuPath === pathname;
   const { t } = useTranslation();
   const { language, setLanguage } = useLanguage();
+  const shellRef = useRef<HTMLDivElement>(null);
+  useShellMotion(shellRef, pathname, language, mobileMenuOpen);
   const mainRef = useRef<HTMLElement | null>(null);
   const brandRef = useRef<HTMLAnchorElement | null>(null);
   const mobileMenuButtonRef = useRef<HTMLButtonElement | null>(null);
@@ -150,9 +153,9 @@ const PublicSiteShell = ({ children, artistName = SITE_NAME }: PublicSiteShellPr
       <ul className={styles.navList}>
         {navItems.map((item) => (
           <li key={item.path}>
-            <Link href={item.path} onNavigate={() => handleNavClick(item.path)}
+            <Link href={item.path} onNavigate={() => handleNavClick(item.path)} data-nav-roll
               aria-current={(item.path === "/" ? pathname === "/" : pathname === item.path || pathname.startsWith(item.path + "/")) ? "page" : undefined}>
-              {item.label}
+              <span className={styles.navText}><span data-nav-label>{item.label}</span><span className={styles.navCopy} data-nav-copy aria-hidden="true">{item.label}</span></span>
             </Link>
           </li>
         ))}
@@ -167,10 +170,11 @@ const PublicSiteShell = ({ children, artistName = SITE_NAME }: PublicSiteShellPr
   );
 
   return (
-    <div className={styles.shell}>
+    <div ref={shellRef} className={styles.shell}>
       <div inert={mobileMenuOpen || undefined} className={styles.document}>
         <a href="#main-content" className={styles.skipLink}>{skipLinkLabel}</a>
         <header className={styles.header}>
+          <span className={styles.scrollProgress} data-scroll-progress aria-hidden="true" />
           <Link ref={brandRef} href="/" onNavigate={() => handleNavClick("/")} className={styles.brand}>{artistName}</Link>
           <div className={styles.desktopNav}>{navigation(mainNavigationLabel)}{languageControls}</div>
           <button ref={mobileMenuButtonRef} type="button" className={styles.menuButton}
@@ -181,6 +185,7 @@ const PublicSiteShell = ({ children, artistName = SITE_NAME }: PublicSiteShellPr
         </header>
         <main ref={mainRef} id="main-content" tabIndex={-1} aria-busy={isNavigating} className={styles.main}>{children}</main>
         <footer className={styles.footer}>
+          <span className={styles.footerRule} data-footer-rule aria-hidden="true" />
           <SignalNet />
           <div className={styles.externalLinks}>
             <a href={HUB_URL} target="_blank" rel="noopener noreferrer">HUB <span aria-hidden="true">↗</span><span className="sr-only">{language === "ko" ? " (새 창)" : " (opens in a new tab)"}</span></a>
