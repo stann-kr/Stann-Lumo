@@ -18,13 +18,13 @@ export default function MusicPageClient({ musicMeta, tracks }: MusicPageClientPr
     <PageLayout title={musicMeta.title || t("music_title")} subtitle={musicMeta.subtitle}>
       {tracks.length ? <ul className={styles.tracks}>
         {tracks.map((track, index) => (
-          <li key={track.id} data-featured={index === 0} data-hover>
+          <li key={track.id} data-featured={index === 0}>
             <h2 data-hover-label>{track.title}</h2>
             <div className={styles.meta}><span>{track.type}</span><span>{track.year}</span>{track.duration && <span>{track.duration}</span>}</div>
-            {track.link && <a href={track.link} target="_blank" rel="noopener noreferrer" aria-label={`${track.title} — ${t('music_listen_on', { platform: track.platform })}${newTabLabel}`}>
+            {track.link && <a href={track.link} target="_blank" rel="noopener noreferrer" data-hover aria-label={`${track.title} — ${t('music_listen_on', { platform: track.platform })}${newTabLabel}`}>
               {t('music_listen_on', { platform: track.platform })}<span data-hover-arrow aria-hidden="true">↗</span>
+              <i className={styles.rowRule} data-hover-rule aria-hidden="true" />
             </a>}
-            <i className={styles.rowRule} data-hover-rule aria-hidden="true" />
           </li>
         ))}
       </ul> : <p className={styles.empty}>{isKorean ? '등록된 음악이 없습니다.' : 'No music has been added yet.'}</p>}

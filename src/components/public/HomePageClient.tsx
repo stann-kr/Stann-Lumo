@@ -105,7 +105,7 @@ export default function HomePageClient({ artistInfo, homeMeta, homeSections, ter
         <section className={styles.terminal} aria-labelledby={`${panelId}-terminal`}>
           <div className={styles.terminalIntro}>
             <h2 id={`${panelId}-terminal`}>{t("home_terminal_side_project")}</h2>
-            <p>{terminalInfo.description}</p>
+            {!/^terminal platform$/i.test(terminalInfo.description.trim()) && <p>{terminalInfo.description}</p>}
             <div className={styles.terminalLinks}>
               <a href="https://stann.kr/lumo" target="_blank" rel="noopener noreferrer">{language === "ko" ? "뮤직 허브" : "Music hub"}<span aria-hidden="true"> ↗</span><span className="sr-only">{newTabLabel}</span></a>
               <a href={terminalInfo.url} target="_blank" rel="noopener noreferrer">Terminal<span aria-hidden="true"> ↗</span><span className="sr-only">{newTabLabel}</span></a>

@@ -95,7 +95,11 @@ const PublicSiteShell = ({ children, artistName = SITE_NAME }: PublicSiteShellPr
     if (!shouldFocusMainRef.current || isNavigating) return;
 
     const frame = window.requestAnimationFrame(() => {
-      mainRef.current?.focus();
+      let anchor: HTMLElement | null = null;
+      try { anchor = document.getElementById(decodeURIComponent(window.location.hash.slice(1))); } catch { /* Malformed fragments fall back to the main landmark. */ }
+      // Preserve router/back scroll restoration and the archive's selected tile.
+      const target = anchor && mainRef.current?.contains(anchor) ? anchor : mainRef.current;
+      target?.focus({ preventScroll: true });
       shouldFocusMainRef.current = false;
     });
 

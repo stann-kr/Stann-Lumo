@@ -7,6 +7,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { getPublicImageUrl, type GalleryPhoto } from '@/capabilities/media/media';
 import styles from './ArchiveDetailPageClient.module.css';
 import { useContentMotion } from '../feature/useContentMotion';
+import { archiveHref, archiveReturnHref, type ArchiveBrowseState } from '@/capabilities/media/archiveBrowsing';
 
 interface ArchiveDetailPageClientProps {
   photo: GalleryPhoto;
@@ -14,9 +15,10 @@ interface ArchiveDetailPageClientProps {
   next: GalleryPhoto | null;
   index: number;
   total: number;
+  browse?: ArchiveBrowseState;
 }
 
-export default function ArchiveDetailPageClient({ photo, previous, next, index, total }: ArchiveDetailPageClientProps) {
+export default function ArchiveDetailPageClient({ photo, previous, next, index, total, browse = { sort: 'newest', seed: 1, page: 1, from: '' } }: ArchiveDetailPageClientProps) {
   const pageRef = useRef<HTMLElement>(null);
   useContentMotion(pageRef, photo.id);
   const navigate = usePublicNavigation();
@@ -26,16 +28,19 @@ export default function ArchiveDetailPageClient({ photo, previous, next, index, 
   const itemLabel = photo.caption || photo.altText || `${t('gallery_label')} ${index + 1}`;
   const previousLabel = isKorean ? '이전 아카이브 항목' : 'Previous archive item';
   const nextLabel = isKorean ? '다음 아카이브 항목' : 'Next archive item';
+  const backHref = archiveReturnHref(browse);
+  const previousHref = previous ? archiveHref(browse, previous.id) : null;
+  const nextHref = next ? archiveHref(browse, next.id) : null;
   const handleKeyDown = useCallback((event: KeyboardEvent) => {
     if (pageRef.current?.closest('[inert]')) return;
     if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
     // Player controls, text entry and an open navigation dialog own their own keys.
     if (event.target instanceof Element && event.target.closest('input, textarea, select, video, audio, iframe, [contenteditable]:not([contenteditable="false"]), [role="dialog"], [role="slider"]')) return;
-    const href = event.key === 'ArrowLeft' && previous ? `/archive/${previous.id}`
-      : event.key === 'ArrowRight' && next ? `/archive/${next.id}`
-      : event.key === 'Escape' ? '/archive' : null;
-    if (href) { event.preventDefault(); navigate(href); }
-  }, [next, previous, navigate]);
+    const href = event.key === 'ArrowLeft' ? previousHref
+      : event.key === 'ArrowRight' ? nextHref
+      : event.key === 'Escape' ? backHref : null;
+    if (href) { event.preventDefault(); navigate(href, event.key === 'Escape' ? { scroll: false } : undefined); }
+  }, [nextHref, previousHref, backHref, navigate]);
 
   useEffect(() => {
     window.addEventListener('keydown', handleKeyDown);
@@ -45,11 +50,11 @@ export default function ArchiveDetailPageClient({ photo, previous, next, index, 
   return (
     <article ref={pageRef} className={styles.page} aria-label={`Archive item: ${itemLabel}`}>
       <header className={styles.header}>
-        <Link href="/archive"><span aria-hidden="true">←</span> {t('gallery_title')}</Link>
-        <h1>{t('gallery_label')} <span>{index + 1} / {total}</span></h1>
+        <Link href={backHref} scroll={false}><span aria-hidden="true">←</span> {t('gallery_title')}</Link>
+        <h1>{t('gallery_sort_' + browse.sort)} <span>{index + 1} / {total}</span><span className="sr-only"> — {itemLabel}</span></h1>
       </header>
       <div className={styles.detail}>
-        <div className={styles.media} data-reveal={photo.mediaType === 'image' ? 'card' : undefined}>
+        <div className={styles.media}>
           {photo.mediaType === 'video_youtube' && photo.videoYoutubeId ? <iframe src={`https://www.youtube.com/embed/${photo.videoYoutubeId}`} allow="encrypted-media; fullscreen" allowFullScreen title={photo.altText || photo.filename} />
             : photo.mediaType === 'video_file' ? <video src={`/api/media/${photo.id}`} controls preload="metadata" aria-label={itemLabel} />
             : <img src={getPublicImageUrl(photo.id)} alt={photo.altText || photo.filename} />}
@@ -60,9 +65,9 @@ export default function ArchiveDetailPageClient({ photo, previous, next, index, 
           {photo.eventDate && <time dateTime={photo.eventDate.replace(/\./g, '-')}>{photo.eventDate}</time>}
           {photo.linkedEventId && <Link href={`/events/${photo.linkedEventId}`} className={styles.event}>{isKorean ? '공연 보기' : 'View event'} <span aria-hidden="true">↗</span></Link>}
           <nav className={styles.navigation} aria-label={isKorean ? '아카이브 탐색' : 'Archive navigation'}>
-            {previous ? <Link href={`/archive/${previous.id}`} aria-label={previousLabel} aria-keyshortcuts="ArrowLeft"><span aria-hidden="true">←</span> {isKorean ? '이전' : 'Previous'}</Link>
+            {previousHref ? <Link href={previousHref} aria-label={previousLabel} aria-keyshortcuts="ArrowLeft"><span aria-hidden="true">←</span> {isKorean ? '이전' : 'Previous'}</Link>
               : <button type="button" aria-label={isKorean ? '이전 아카이브 항목 없음' : 'No previous archive item'} disabled><span aria-hidden="true">←</span> {isKorean ? '이전' : 'Previous'}</button>}
-            {next ? <Link href={`/archive/${next.id}`} aria-label={nextLabel} aria-keyshortcuts="ArrowRight">{isKorean ? '다음' : 'Next'} <span aria-hidden="true">→</span></Link>
+            {nextHref ? <Link href={nextHref} aria-label={nextLabel} aria-keyshortcuts="ArrowRight">{isKorean ? '다음' : 'Next'} <span aria-hidden="true">→</span></Link>
               : <button type="button" aria-label={isKorean ? '다음 아카이브 항목 없음' : 'No next archive item'} disabled>{isKorean ? '다음' : 'Next'} <span aria-hidden="true">→</span></button>}
           </nav>
           <p className={styles.hint}>{isKorean ? '← → 이전·다음 / Esc 목록으로' : '← → Previous / next · Esc back to archive'}</p>

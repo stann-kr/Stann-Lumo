@@ -201,6 +201,19 @@ describe('PublicSiteShell public navigation', () => {
     await waitFor(() => expect(screen.getByRole('main')).toHaveFocus());
   });
 
+  it('keeps an archive return anchor focused without resetting the restored scroll position', async () => {
+    const { rerender } = render(<PublicSiteShell><h1>Detail</h1></PublicSiteShell>);
+    mocks.pathname = '/archive/first';
+    rerender(<PublicSiteShell><h1>Detail</h1></PublicSiteShell>);
+    await waitFor(() => expect(screen.getByRole('main')).toHaveFocus());
+    window.history.replaceState(null, '', '/archive#archive-item-first');
+    mocks.pathname = '/archive';
+    rerender(<PublicSiteShell><PublicLink id="archive-item-first" href="/archive/first">Selected image</PublicLink></PublicSiteShell>);
+    await waitFor(() => expect(screen.getByRole('link', { name: 'Selected image' })).toHaveFocus());
+    expect(window.scrollTo).not.toHaveBeenCalled();
+    window.history.replaceState(null, '', '/');
+  });
+
   it('shows loading immediately after a mobile link closes and releases it when the route is ready', async () => {
     const user = userEvent.setup();
     const { resolve } = renderPendingNavigation();

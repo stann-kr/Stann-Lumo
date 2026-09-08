@@ -77,8 +77,8 @@ export function useHomeMotion(rootRef: RefObject<HTMLDivElement | null>, selecte
         }, { opacity: 1, duration: PUBLIC_MOTION.feedback, clearProps: 'opacity' }, isStacked ? 0 : 0.04);
       }
       const content = root.querySelector('[data-expanded="true"] [data-panel-content]');
-      if (content) transition.fromTo(content.children, { y: 8, opacity: 0 }, {
-        y: 0, opacity: 1, duration: 0.2, stagger: { amount: 0.04 }, clearProps: 'transform,opacity',
+      if (content) transition.fromTo(content.children, { opacity: 0 }, {
+        opacity: 1, duration: PUBLIC_MOTION.feedback, clearProps: 'opacity',
       }, 0.04);
       return () => { active.current = null; };
     }, rootRef);

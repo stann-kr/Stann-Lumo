@@ -12,9 +12,10 @@ vi.mock('next/navigation', () => ({
 }));
 
 vi.mock('next/link', () => ({
-  default: ({ href, children, ...props }: ComponentProps<'a'> & { href: string }) => (
-    <a href={href} {...props}>{children}</a>
-  ),
+  default: ({ href, children, ...props }: ComponentProps<'a'> & { href: string; scroll?: boolean }) => {
+    delete props.scroll;
+    return <a href={href} {...props}>{children}</a>;
+  },
 }));
 
 vi.mock('@/contexts/LanguageContext', () => ({ useLanguage: () => ({ language: 'en' }) }));
@@ -106,11 +107,20 @@ describe('GalleryPhotoPage', () => {
     await user.keyboard('{ArrowRight}');
     expect(push).toHaveBeenCalledWith('/archive/middle');
     await user.keyboard('{Escape}');
-    expect(push).toHaveBeenLastCalledWith('/archive');
+    expect(push).toHaveBeenLastCalledWith('/archive', { scroll: false });
 
     for (const icon of container.querySelectorAll('i')) {
       expect(icon).toHaveAttribute('aria-hidden', 'true');
     }
+  });
+  it('keeps seeded neighbours and restores the original collection point with Escape', () => {
+    render(<ArchiveDetailPageClient photo={photos[1]} previous={photos[0]} next={photos[2]} index={25} total={53}
+      browse={{ sort: 'random', seed: 42, page: 2, from: 'first' }} />);
+    expect(screen.getByRole('link', { name: 'Next archive item' })).toHaveAttribute('href', '/archive/last?sort=random&seed=42&page=2&from=first');
+    const back = '/archive?sort=random&seed=42&page=2#archive-item-first';
+    expect(screen.getByRole('link', { name: 'gallery_title' })).toHaveAttribute('href', back);
+    fireEvent.keyDown(window, { key: 'Escape' });
+    expect(push).toHaveBeenLastCalledWith(back, { scroll: false });
   });
   it('leaves player, editing, modal and modified keys with their owning control', () => {
     const { container } = render(<>

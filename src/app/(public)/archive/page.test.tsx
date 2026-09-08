@@ -1,13 +1,21 @@
 import type { ComponentProps, ReactNode } from 'react';
 import { fireEvent, render, screen, within } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
 import type { GalleryPhoto } from '@/capabilities/media/media';
 import ArchivePageClient from '@/components/public/ArchivePageClient';
-import { sortArchivePhotos } from '@/capabilities/media/archiveBrowsing';
+import { archiveBrowseState, archiveDetailContext, archiveHref, archiveReturnHref, sortArchivePhotos } from '@/capabilities/media/archiveBrowsing';
+
+vi.mock('next/navigation', async () => {
+  const { useSyncExternalStore } = await import('react');
+  return { useSearchParams: () => new URLSearchParams(useSyncExternalStore(
+    (listener) => { window.addEventListener('popstate', listener); return () => window.removeEventListener('popstate', listener); },
+    () => window.location.search,
+  )) };
+});
 
 vi.mock('next/link', () => ({
-  default: ({ href, children, ...props }: ComponentProps<'a'> & { href: string }) => (
-    <a href={href} {...props}>{children}</a>
+  default: ({ href, children, onNavigate, ...props }: ComponentProps<'a'> & { href: string; onNavigate?: (event: { preventDefault: () => void }) => void }) => (
+    <a href={href} {...props} onClick={(event) => { event.preventDefault(); onNavigate?.({ preventDefault: () => {} }); }}>{children}</a>
   ),
 }));
 
@@ -56,6 +64,18 @@ const photos: GalleryPhoto[] = [
 ];
 
 describe('GalleryPage', () => {
+  beforeEach(() => {
+    window.history.replaceState(null, '', '/archive');
+    sessionStorage.clear();
+    vi.stubGlobal('scrollTo', vi.fn());
+    const replace = window.history.replaceState.bind(window.history);
+    // Next publishes native History updates through useSearchParams.
+    vi.spyOn(window.history, 'replaceState').mockImplementation((data, title, url) => {
+      replace(data, title, url);
+      window.dispatchEvent(new PopStateEvent('popstate'));
+    });
+  });
+  afterEach(() => { vi.restoreAllMocks(); vi.unstubAllGlobals(); });
   it('renders each archive tile as an article containing a named native link', () => {
     const { container } = render(<ArchivePageClient photos={photos} />);
 
@@ -123,7 +143,7 @@ describe('GalleryPage', () => {
     rerender(<ArchivePageClient photos={[...items]} />);
     expect(links()).toEqual(first);
     fireEvent.click(screen.getByRole('radio', { name: 'gallery_sort_oldest' }));
-    expect(links()[0]).toBe('/archive/item-0');
+    expect(links()[0]).toBe('/archive/item-0?sort=oldest');
     expect(screen.getByRole('button', { name: 'gallery_previous' })).toBeDisabled();
   });
 
@@ -145,5 +165,40 @@ describe('GalleryPage', () => {
     expect(screen.getByText('gallery_empty')).toBeInTheDocument();
     expect(screen.queryByRole('navigation')).not.toBeInTheDocument();
     expect(screen.queryByRole('group', { name: 'gallery_sort' })).not.toBeInTheDocument();
+  });
+
+  it('restores sort, random seed, page, selected tile and scroll after opening a detail', () => {
+    const items = Array.from({ length: 53 }, (_, index) => ({ ...photos[0]!, id: `item-${index}`, caption: `Item ${index}` }));
+    window.history.replaceState(null, '', '/archive?sort=random&seed=42&page=2');
+    vi.stubGlobal('scrollY', 780);
+    const view = render(<ArchivePageClient photos={items} />);
+    const links = within(screen.getByRole('list')).getAllByRole('link');
+    const selected = links[3]!;
+    const href = selected.getAttribute('href');
+    fireEvent.click(selected);
+    expect(window.location.hash).toMatch(/^#archive-item-/);
+    view.unmount();
+    render(<ArchivePageClient photos={items} />);
+    expect(screen.getByRole('radio', { name: 'gallery_sort_random' })).toBeChecked();
+    expect(document.activeElement).toHaveAttribute('href', href);
+    expect(window.scrollTo).toHaveBeenLastCalledWith({ top: 780, behavior: 'instant' });
+    expect(within(screen.getByRole('list')).getAllByRole('link')).toHaveLength(24);
+  });
+
+  it('uses the grid order for detail numbering and neighbours, retaining the original return item', () => {
+    for (const sort of ['newest', 'oldest', 'random'] as const) {
+      const browse = archiveBrowseState(new URLSearchParams(`sort=${sort}&seed=42`));
+      const ordered = sortArchivePhotos(photos, sort, browse.seed);
+      const detail = archiveDetailContext(photos, ordered[0]!.id, browse)!;
+      expect(detail.index).toBe(0);
+      expect(detail.previous).toBeNull();
+      expect(detail.next?.id).toBe(ordered[1]!.id);
+      const next = archiveDetailContext(photos, detail.next!.id, detail.browse)!;
+      expect(next.index).toBe(1);
+      expect(next.browse.from).toBe(ordered[0]!.id);
+      expect(archiveReturnHref(next.browse)).toContain(`#archive-item-${ordered[0]!.id}`);
+      expect(archiveHref(next.browse, next.photo.id)).toContain(`from=${ordered[0]!.id}`);
+    }
+    expect(archiveBrowseState(new URLSearchParams('sort=unknown&page=NaN&seed=Infinity'))).toEqual({ sort: 'newest', page: 1, seed: 1, from: '' });
   });
 });

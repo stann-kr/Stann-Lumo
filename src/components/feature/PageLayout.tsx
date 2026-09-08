@@ -11,11 +11,12 @@ interface PageLayoutProps {
   children: ReactNode;
   motionRevision?: string | number;
   titleSize?: 'label' | 'display';
+  animateEntry?: boolean;
 }
 
-export default function PageLayout({ title, titleExtra, subtitle, children, motionRevision, titleSize = 'label' }: PageLayoutProps) {
+export default function PageLayout({ title, titleExtra, subtitle, children, motionRevision, titleSize = 'label', animateEntry = true }: PageLayoutProps) {
   const pageRef = useRef<HTMLDivElement>(null);
-  useContentMotion(pageRef, `${title}:${motionRevision ?? ''}`);
+  useContentMotion(pageRef, `${title}:${motionRevision ?? ''}`, animateEntry);
   return (
     <div ref={pageRef} className={styles.page}>
       <header className={styles.header} data-size={titleSize}>

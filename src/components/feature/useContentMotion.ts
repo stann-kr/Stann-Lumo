@@ -9,8 +9,9 @@ import { PUBLIC_MOTION, usePublicMotionInput } from './publicMotion';
 gsap.registerPlugin(useGSAP);
 
 /** The page opts individual elements into motion; content stays readable without JS. */
-export function useContentMotion(rootRef: RefObject<HTMLElement | null>, revision?: string | number) {
+export function useContentMotion(rootRef: RefObject<HTMLElement | null>, revision?: string | number, enter = false) {
   const revealed = useRef(new WeakSet<HTMLElement>());
+  const entered = useRef(false);
   const input = usePublicMotionInput();
 
   useGSAP(() => {
@@ -21,6 +22,12 @@ export function useContentMotion(rootRef: RefObject<HTMLElement | null>, revisio
 
     media.add('(prefers-reduced-motion: no-preference)', () => {
       const reveals = new Map<HTMLElement, gsap.core.Tween>();
+      if (enter && !entered.current && input?.current !== 'keyboard' && !document.hidden) {
+        entered.current = true;
+        reveals.set(root, gsap.fromTo(root, { opacity: 0 }, {
+          opacity: 1, duration: PUBLIC_MOTION.feedback, ease: PUBLIC_MOTION.ease, clearProps: 'opacity',
+        }));
+      }
       root.querySelectorAll<HTMLElement>('[data-reveal]').forEach((element, index) => {
         if (revealed.current.has(element)) return;
         if (input?.current === 'keyboard' || document.hidden) {
@@ -46,6 +53,7 @@ export function useContentMotion(rootRef: RefObject<HTMLElement | null>, revisio
       // Tabbing directly to a link must never wait for its scroll reveal.
       const revealFocused = (event: FocusEvent) => {
         if (!(event.target instanceof Element)) return;
+        reveals.get(root)?.progress(1);
         const element = event.target.closest<HTMLElement>('[data-reveal]');
         if (element) reveals.get(element)?.progress(1);
       };
@@ -76,6 +84,7 @@ export function useContentMotion(rootRef: RefObject<HTMLElement | null>, revisio
         window.removeEventListener('keydown', finishReveals, true);
       };
     }, rootRef);
+    entered.current = true;
 
     media.add('(prefers-reduced-motion: no-preference) and (hover: hover) and (pointer: fine)', () => {
       const cleanups: Array<() => void> = [];
@@ -84,7 +93,7 @@ export function useContentMotion(rootRef: RefObject<HTMLElement | null>, revisio
         const rule = surface.querySelector<HTMLElement>('[data-hover-rule]');
         if (!arrow && !rule) return;
         const hover = gsap.timeline({ paused: true, defaults: { duration: PUBLIC_MOTION.feedback, ease: PUBLIC_MOTION.ease } });
-        if (arrow) hover.to(arrow, { x: 2, y: -2 }, 0);
+        if (arrow) hover.to(arrow, { x: 2, y: arrow.textContent?.includes('↗') ? -2 : 0 }, 0);
         if (rule) hover.fromTo(rule, { scaleX: 0 }, { scaleX: 1, transformOrigin: '0% 50%' }, 0);
 
         const enter = (event: PointerEvent) => { if (event.pointerType !== 'touch') hover.timeScale(1).play(); };
@@ -103,5 +112,5 @@ export function useContentMotion(rootRef: RefObject<HTMLElement | null>, revisio
     }, rootRef);
 
     return () => media.revert();
-  }, { scope: rootRef, dependencies: [revision], revertOnUpdate: true });
+  }, { scope: rootRef, dependencies: [revision, enter], revertOnUpdate: true });
 }
