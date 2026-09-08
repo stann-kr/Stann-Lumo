@@ -8,16 +8,9 @@ import { BlendFunction } from 'postprocessing';
 import * as THREE from 'three';
 import { COLORS } from '../../styles/colors';
 import type { Track } from '@/capabilities/content/content';
+import { calcOrbitalPos, calcOrbitalTangent, createOrbitBasis, type OrbitParams } from './sceneOrbit';
 
 // ─── 궤도 파라미터 타입 ───────────────────────────────────────────────────────
-
-interface OrbitParams {
-  radius: number;
-  speed: number;
-  phase: number;
-  inclination: number;
-  node: number;
-}
 
 interface AsteroidData extends OrbitParams {
   size: number;
@@ -28,38 +21,6 @@ interface VesselData extends OrbitParams {
   sublabel: string; // DB 기반 짧은 제목 (truncated)
   streakLength: number;
   streakThickness: number;
-}
-
-// ─── 궤도 헬퍼 (out-parameter 패턴 — 매 프레임 벡터 재할당 방지) ─────────────
-
-function calcOrbitalPos(p: OrbitParams, phase: number, out: THREE.Vector3): void {
-  const cos = Math.cos(phase);
-  const sin = Math.sin(phase);
-  const sinI = Math.sin(p.inclination);
-  const cosI = Math.cos(p.inclination);
-  const sinN = Math.sin(p.node);
-  const cosN = Math.cos(p.node);
-  out.set(
-    p.radius * (cosN * cos - sinN * sin * cosI),
-    p.radius * sinN * sinI * sin,
-    p.radius * (sinN * cos + cosN * sin * cosI) - 18,
-  );
-}
-
-function calcOrbitalTangent(p: OrbitParams, phase: number, out: THREE.Vector3): void {
-  const sin = Math.sin(phase);
-  const cos = Math.cos(phase);
-  const sinI = Math.sin(p.inclination);
-  const cosI = Math.cos(p.inclination);
-  const sinN = Math.sin(p.node);
-  const cosN = Math.cos(p.node);
-  out
-    .set(
-      -(cosN * sin + sinN * cos * cosI),
-      sinN * sinI * cos,
-      -(sinN * sin - cosN * cos * cosI),
-    )
-    .normalize();
 }
 
 // ─── 모듈 레벨 상수 데이터 (react-hooks/purity 위반 방지) ────────────────────
@@ -89,6 +50,7 @@ const VESSEL_ORBITAL_POOL = Array.from({ length: 20 }, () => ({
 }));
 
 const ASTEROID_DATA = createAsteroidData(55);
+const ASTEROID_BASES = ASTEROID_DATA.map(createOrbitBasis);
 
 /** 팔각형 코어 초기 회전 오프셋 — 페이지 로드마다 랜덤 시작 각도 (전 축) */
 const OCTAGON_INIT_X = Math.random() * Math.PI * 2;
@@ -105,7 +67,7 @@ const AsteroidBelt = ({ color = '#444444' }: { color?: string }) => {
   const posBuffer = useMemo(() => new Float32Array(count * 3), [count]);
   const geometry = useMemo(() => {
     const geo = new THREE.BufferGeometry();
-    geo.setAttribute('position', new THREE.BufferAttribute(posBuffer, 3));
+    geo.setAttribute('position', new THREE.BufferAttribute(posBuffer, 3).setUsage(THREE.DynamicDrawUsage));
     return geo;
   }, [posBuffer]);
 
@@ -114,7 +76,7 @@ const AsteroidBelt = ({ color = '#444444' }: { color?: string }) => {
   useFrame(() => {
     ASTEROID_DATA.forEach((ast, i) => {
       ast.phase += ast.speed;
-      calcOrbitalPos(ast, ast.phase, tmp.current);
+      calcOrbitalPos(ASTEROID_BASES[i], ast.phase, tmp.current);
       posBuffer[i * 3] = tmp.current.x;
       posBuffer[i * 3 + 1] = tmp.current.y;
       posBuffer[i * 3 + 2] = tmp.current.z;
@@ -143,8 +105,9 @@ const OrbitPath = ({ orbit, color }: { orbit: OrbitParams; color: string }) => {
   const points = useMemo(() => {
     const pts: THREE.Vector3[] = [];
     const tmp = new THREE.Vector3();
+    const basis = createOrbitBasis(orbit);
     for (let i = 0; i <= 96; i++) {
-      calcOrbitalPos(orbit, (i / 96) * Math.PI * 2, tmp);
+      calcOrbitalPos(basis, (i / 96) * Math.PI * 2, tmp);
       pts.push(tmp.clone());
     }
     return pts;
@@ -170,12 +133,13 @@ const Vessel = ({ data, color }: { data: VesselData; color: string }) => {
   const dir = useRef(new THREE.Vector3());
   const up = useRef(new THREE.Vector3(0, 1, 0));
   const pos = useRef(new THREE.Vector3());
+  const basis = useMemo(() => createOrbitBasis(data), [data]);
 
   useFrame(() => {
     phase.current += data.speed;
 
-    calcOrbitalPos(data, phase.current, pos.current);
-    calcOrbitalTangent(data, phase.current, dir.current);
+    calcOrbitalPos(basis, phase.current, pos.current);
+    calcOrbitalTangent(basis, phase.current, dir.current);
 
     if (groupRef.current) {
       groupRef.current.position.copy(pos.current);
@@ -189,18 +153,13 @@ const Vessel = ({ data, color }: { data: VesselData; color: string }) => {
         up.current.set(0, 1, 0);
       }
       mesh.quaternion.setFromUnitVectors(up.current, dir.current);
-      mesh.scale.set(
-        data.streakThickness,
-        data.streakLength * data.streakThickness,
-        data.streakThickness,
-      );
     }
   });
 
   return (
     <group ref={groupRef}>
       {/* 우주선 스트릭 본체 */}
-      <mesh ref={meshRef}>
+      <mesh ref={meshRef} scale={[data.streakThickness, data.streakLength * data.streakThickness, data.streakThickness]}>
         <cylinderGeometry args={[1, 1, 1, 4, 1]} />
         <meshStandardMaterial
           color={color}
@@ -241,10 +200,12 @@ const Vessel = ({ data, color }: { data: VesselData; color: string }) => {
 /** FUI 레이더 링 */
 const FuiRings = ({ color = '#00ff00' }) => {
   const groupRef = useRef<THREE.Group>(null);
+  const elapsed = useRef(0);
 
-  useFrame((state) => {
+  useFrame((_, delta) => {
+    elapsed.current += delta;
     if (groupRef.current) {
-      const t = state.clock.getElapsedTime();
+      const t = elapsed.current;
       groupRef.current.rotation.z = t * 0.05;
       groupRef.current.rotation.x = Math.sin(t * 0.1) * 0.2;
       groupRef.current.rotation.y = Math.cos(t * 0.1) * 0.2;
@@ -290,10 +251,12 @@ const FuiRings = ({ color = '#00ff00' }) => {
 /** 팔각형 프리즘 코어 */
 const OctagonCore = ({ color = '#00ff00' }) => {
   const meshRef = useRef<THREE.Mesh>(null);
+  const elapsed = useRef(0);
 
-  useFrame((state) => {
+  useFrame((_, delta) => {
+    elapsed.current += delta;
     if (meshRef.current) {
-      const t = state.clock.getElapsedTime();
+      const t = elapsed.current;
       meshRef.current.rotation.x = OCTAGON_INIT_X + t * 0.07;
       meshRef.current.rotation.y = OCTAGON_INIT_Y + t * 0.17;
       meshRef.current.rotation.z = OCTAGON_INIT_Z + t * 0.11;
@@ -335,7 +298,7 @@ const CameraRig = () => {
 
 // ─── Scene3D ──────────────────────────────────────────────────────────────────
 
-export default function Scene3D({ tracks }: { tracks: Track[] }) {
+export default function Scene3D({ tracks, isVisible = true }: { tracks: Track[]; isVisible?: boolean }) {
   const accentColor = COLORS.scene3d.accent;
   const mutedColor  = COLORS.scene3d.muted;
 
@@ -364,6 +327,7 @@ export default function Scene3D({ tracks }: { tracks: Track[] }) {
   return (
     <div className="fixed inset-0 pointer-events-none z-[-10]">
       <Canvas
+        frameloop={isVisible ? 'always' : 'never'}
         camera={{ position: [0, 0, 5], fov: 75 }}
         dpr={[1, 1.5]}
         performance={{ min: 0.5 }}

@@ -2,7 +2,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { D1Database, D1PreparedStatement } from '@/lib/db';
 import { getDB } from '@/lib/db';
 import { assertPublicPayloadSafe } from '@/lib/security/publicPayload';
-import { getArchiveDetail, getHomeProjection, getMusicProjection } from './publicContent.server';
+import { getArchiveDetail, getArchivePhotos, getHomeProjection, getMusicProjection } from './publicContent.server';
+import { createSqliteD1 } from '@/test/sqliteD1';
 
 vi.mock('@/lib/db', () => ({ getDB: vi.fn() }));
 
@@ -71,5 +72,24 @@ describe('public server content projections', () => {
     vi.mocked(getDB).mockReturnValue(null);
 
     await expect(getMusicProjection('en')).rejects.toThrow('Public content is unavailable');
+  });
+
+  it('projects the linked event date without dropping unlinked archive media', async () => {
+    const { db, sqlite, close } = createSqliteD1();
+    vi.mocked(getDB).mockReturnValue(db);
+    try {
+      sqlite.exec(`
+        INSERT INTO performances (id, date, venue, title) VALUES ('event', '2021-04-10', 'Venue', 'Event');
+        INSERT INTO gallery_photos (id, filename, linked_event_id) VALUES ('flyer', 'flyer.jpg', 'event');
+        INSERT INTO gallery_photos (id, filename) VALUES ('photo', 'photo.jpg');
+      `);
+      const result = await getArchivePhotos();
+      expect(result).toHaveLength(2);
+      expect(result.find(photo => photo.id === 'flyer')).toMatchObject({ eventDate: '2021-04-10', linkedEventId: 'event' });
+      expect(result.find(photo => photo.id === 'photo')).not.toHaveProperty('eventDate');
+      expect(() => assertPublicPayloadSafe(result)).not.toThrow();
+    } finally {
+      close();
+    }
   });
 });
