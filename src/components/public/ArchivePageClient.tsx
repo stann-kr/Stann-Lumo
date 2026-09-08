@@ -1,5 +1,7 @@
 'use client';
 
+import { getPublicImageUrl } from '@/capabilities/media/media';
+
 import Link from 'next/link';
 import { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -20,7 +22,7 @@ function GridItem({ photo }: { photo: GalleryPhoto }) {
   const mediaClass = 'w-full block transition-transform duration-500 group-hover:scale-105';
   const media = photo.mediaType === 'video_youtube' ? <div className="relative"><img src={photo.videoThumbnailUrl ?? ''} alt={photo.altText || photo.filename} className={mediaClass} loading="lazy" /><div className="absolute inset-0 flex items-center justify-center"><i aria-hidden="true" className="ri-play-fill text-white text-xl" /></div></div>
     : photo.mediaType === 'video_file' ? <div className="relative"><video src={`/api/media/${photo.id}`} className={mediaClass} preload="metadata" muted playsInline aria-hidden="true" /><div className="absolute inset-0 flex items-center justify-center"><i aria-hidden="true" className="ri-play-fill text-[var(--color-secondary)] text-lg" /></div></div>
-    : <img src={`/api/media/${photo.id}`} alt={photo.altText || photo.filename} className={mediaClass} style={{ objectPosition: `${photo.focalX}% ${photo.focalY}%` }} loading="lazy" />;
+    : <img src={getPublicImageUrl(photo.id)} alt={photo.altText || photo.filename} className={mediaClass} style={{ objectPosition: `${photo.focalX}% ${photo.focalY}%` }} loading="lazy" />;
 
   return (
     <li className={`break-inside-avoid ${margins[ARCHIVE_SETTINGS.gapSize]}`}>
@@ -60,22 +62,24 @@ export default function ArchivePageClient({ photos }: { photos: GalleryPhoto[] }
   const containerClasses = `${columns[ARCHIVE_SETTINGS.columnsMobile]} md:${columns[ARCHIVE_SETTINGS.columnsTablet]} lg:${columns[ARCHIVE_SETTINGS.columnsDesktop]} ${gaps[ARCHIVE_SETTINGS.gapSize]}`;
   return (
     <PageLayout title={t('gallery_title')} subtitle={t('gallery_subtitle')}>
-      {photos.length === 0 ? <div className="hud-panel flex items-center justify-center py-24"><p className="text-[var(--color-text-muted)] text-sm font-mono tracking-widest">{t('gallery_empty')}</p></div> : <>
-        <div className="flex flex-wrap items-center justify-between gap-4">
+      {photos.length === 0 ? <div className="hud-panel flex items-center justify-center py-24"><p className="text-[var(--color-text-muted)] text-sm font-mono tracking-widest">{t('gallery_empty')}</p></div> : <div className="space-y-6">
+        <div className="flex flex-col gap-3 border-b border-[var(--color-muted)] pb-4 sm:flex-row sm:items-center sm:justify-between">
           <p role="status" aria-atomic="true" className="text-xs font-mono text-[var(--color-text-muted)]">{t('gallery_range', { start: offset + 1, end: offset + pagePhotos.length, total: photos.length })}</p>
-          <div className="flex items-center gap-3">
-            <label htmlFor="archive-sort" className="text-xs font-mono tracking-wider text-[var(--color-text-muted)]">{t('gallery_sort')}</label>
-            <select id="archive-sort" className={`${controlClass} bg-[var(--color-bg)]`} value={sort} onChange={(event) => {
-              const value = event.target.value as ArchiveSort;
-              if (value === 'random') setSeed(crypto.getRandomValues(new Uint32Array(1))[0]!);
-              setSort(value);
-              setPage(1);
-            }}>
-              <option value="newest">{t('gallery_sort_newest')}</option>
-              <option value="random">{t('gallery_sort_random')}</option>
-              <option value="oldest">{t('gallery_sort_oldest')}</option>
-            </select>
-          </div>
+          <fieldset className="min-w-0">
+            <legend className="sr-only">{t('gallery_sort')}</legend>
+            <div className="flex items-center gap-1">
+              {(['newest', 'random', 'oldest'] as const).map((value) => (
+                <label key={value} className="relative flex-1 cursor-pointer sm:flex-none">
+                  <input type="radio" name="archive-sort" value={value} checked={sort === value} className="peer sr-only" onChange={() => {
+                    if (value === 'random') setSeed(crypto.getRandomValues(new Uint32Array(1))[0]!);
+                    setSort(value);
+                    setPage(1);
+                  }} />
+                  <span className="flex min-h-11 items-center justify-center border-b-2 border-transparent px-3 font-mono text-xs uppercase tracking-wider text-[var(--color-text-muted)] transition-colors hover:text-[var(--color-primary)] peer-checked:border-[var(--color-accent)] peer-checked:bg-[var(--color-accent)]/10 peer-checked:text-[var(--color-primary)] peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-[var(--color-accent)] motion-reduce:transition-none">{t(`gallery_sort_${value}`)}</span>
+                </label>
+              ))}
+            </div>
+          </fieldset>
         </div>
         <ul ref={listRef} tabIndex={-1} aria-label={t('gallery_items')} className={`${containerClasses} scroll-mt-8 focus:outline-none`}>{pagePhotos.map((photo) => <GridItem key={photo.id} photo={photo} />)}</ul>
         {totalPages > 1 && <nav aria-label={t('gallery_pagination')} className="flex flex-wrap items-center justify-center gap-2">
@@ -85,7 +89,7 @@ export default function ArchivePageClient({ photos }: { photos: GalleryPhoto[] }
           {firstPage + pageNumbers.length <= totalPages && <>{firstPage + pageNumbers.length < totalPages && <span aria-hidden="true" className="text-[var(--color-text-muted)]">…</span>}{pageButton(totalPages)}</>}
           <button type="button" className={controlClass} disabled={currentPage === totalPages} onClick={() => changePage(currentPage + 1)}>{t('gallery_next')}</button>
         </nav>}
-      </>}
+      </div>}
     </PageLayout>
   );
 }
