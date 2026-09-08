@@ -148,6 +148,7 @@ interface GalleryPhotoRow {
   video_youtube_id: string | null;
   video_thumbnail_url: string | null;
   linked_event_id: string | null;
+  event_date?: string | null;
 }
 
 function getPublicDB(): D1Database {
@@ -224,6 +225,7 @@ function mapGalleryPhoto(row: GalleryPhotoRow): GalleryPhoto {
     ...(row.video_youtube_id !== null && { videoYoutubeId: row.video_youtube_id }),
     ...(row.video_thumbnail_url !== null && { videoThumbnailUrl: row.video_thumbnail_url }),
     ...(row.linked_event_id !== null && { linkedEventId: row.linked_event_id }),
+    ...(row.event_date != null && { eventDate: row.event_date }),
   };
 }
 
@@ -450,7 +452,10 @@ export const getLinkProjection = cache(async (locale: PublicLocale): Promise<Lin
 
 export const getArchivePhotos = cache(async (): Promise<GalleryPhoto[]> => {
   const db = getPublicDB();
-  const photoRows = await rows<GalleryPhotoRow>(db, 'SELECT * FROM gallery_photos ORDER BY sort_order ASC, created_at DESC');
+  const photoRows = await rows<GalleryPhotoRow>(db,
+    `SELECT g.*, p.date AS event_date FROM gallery_photos g
+     LEFT JOIN performances p ON p.id = g.linked_event_id
+     ORDER BY g.sort_order ASC, g.created_at DESC`);
   const photos = photoRows.map(mapGalleryPhoto);
   assertPublicPayloadSafe(photos);
   return photos;

@@ -1,9 +1,11 @@
 'use client';
 
 import Link from 'next/link';
+import { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import PageLayout from '@/components/feature/PageLayout';
 import type { GalleryPhoto, GallerySettings } from '@/capabilities/media/media';
+import { ARCHIVE_PAGE_SIZE, sortArchivePhotos, type ArchiveSort } from '@/capabilities/media/archiveBrowsing';
 
 const ARCHIVE_SETTINGS: GallerySettings = {
   layoutMode: 'masonry', columnsMobile: 2, columnsTablet: 3, columnsDesktop: 4,
@@ -35,10 +37,55 @@ function GridItem({ photo }: { photo: GalleryPhoto }) {
 
 export default function ArchivePageClient({ photos }: { photos: GalleryPhoto[] }) {
   const { t } = useTranslation();
+  const [sort, setSort] = useState<ArchiveSort>('newest');
+  const [seed, setSeed] = useState(1);
+  const [page, setPage] = useState(1);
+  const listRef = useRef<HTMLUListElement>(null);
+  const sortedPhotos = useMemo(() => sortArchivePhotos(photos, sort, seed), [photos, sort, seed]);
+  const totalPages = Math.max(1, Math.ceil(sortedPhotos.length / ARCHIVE_PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const offset = (currentPage - 1) * ARCHIVE_PAGE_SIZE;
+  const pagePhotos = sortedPhotos.slice(offset, offset + ARCHIVE_PAGE_SIZE);
+  const firstPage = Math.max(1, Math.min(currentPage - 2, totalPages - 4));
+  const pageNumbers = Array.from({ length: Math.min(5, totalPages) }, (_, index) => firstPage + index);
+  const controlClass = 'min-h-11 min-w-11 border border-[var(--color-muted)] px-3 text-xs font-mono tracking-wider text-[var(--color-secondary)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-accent)] disabled:opacity-40 disabled:cursor-not-allowed';
+  function changePage(nextPage: number) {
+    setPage(nextPage);
+    listRef.current?.focus({ preventScroll: true });
+    listRef.current?.scrollIntoView?.({ block: 'start', behavior: 'instant' });
+  }
+  function pageButton(value: number) {
+    return <button key={value} type="button" className={`${controlClass} ${value === currentPage ? 'bg-[var(--color-accent)]/15 !border-[var(--color-accent)]' : ''}`} aria-label={t('gallery_page', { page: value })} aria-current={value === currentPage ? 'page' : undefined} onClick={() => changePage(value)}>{value}</button>;
+  }
   const containerClasses = `${columns[ARCHIVE_SETTINGS.columnsMobile]} md:${columns[ARCHIVE_SETTINGS.columnsTablet]} lg:${columns[ARCHIVE_SETTINGS.columnsDesktop]} ${gaps[ARCHIVE_SETTINGS.gapSize]}`;
   return (
     <PageLayout title={t('gallery_title')} subtitle={t('gallery_subtitle')}>
-      {photos.length === 0 ? <div className="hud-panel flex items-center justify-center py-24"><p className="text-[var(--color-text-muted)] text-sm font-mono tracking-widest">{t('gallery_empty')}</p></div> : <ul className={containerClasses}>{photos.map((photo) => <GridItem key={photo.id} photo={photo} />)}</ul>}
+      {photos.length === 0 ? <div className="hud-panel flex items-center justify-center py-24"><p className="text-[var(--color-text-muted)] text-sm font-mono tracking-widest">{t('gallery_empty')}</p></div> : <>
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <p role="status" aria-atomic="true" className="text-xs font-mono text-[var(--color-text-muted)]">{t('gallery_range', { start: offset + 1, end: offset + pagePhotos.length, total: photos.length })}</p>
+          <div className="flex items-center gap-3">
+            <label htmlFor="archive-sort" className="text-xs font-mono tracking-wider text-[var(--color-text-muted)]">{t('gallery_sort')}</label>
+            <select id="archive-sort" className={`${controlClass} bg-[var(--color-bg)]`} value={sort} onChange={(event) => {
+              const value = event.target.value as ArchiveSort;
+              if (value === 'random') setSeed(crypto.getRandomValues(new Uint32Array(1))[0]!);
+              setSort(value);
+              setPage(1);
+            }}>
+              <option value="newest">{t('gallery_sort_newest')}</option>
+              <option value="random">{t('gallery_sort_random')}</option>
+              <option value="oldest">{t('gallery_sort_oldest')}</option>
+            </select>
+          </div>
+        </div>
+        <ul ref={listRef} tabIndex={-1} aria-label={t('gallery_items')} className={`${containerClasses} scroll-mt-8 focus:outline-none`}>{pagePhotos.map((photo) => <GridItem key={photo.id} photo={photo} />)}</ul>
+        {totalPages > 1 && <nav aria-label={t('gallery_pagination')} className="flex flex-wrap items-center justify-center gap-2">
+          <button type="button" className={controlClass} disabled={currentPage === 1} onClick={() => changePage(currentPage - 1)}>{t('gallery_previous')}</button>
+          {firstPage > 1 && <>{pageButton(1)}{firstPage > 2 && <span aria-hidden="true" className="text-[var(--color-text-muted)]">…</span>}</>}
+          {pageNumbers.map(pageButton)}
+          {firstPage + pageNumbers.length <= totalPages && <>{firstPage + pageNumbers.length < totalPages && <span aria-hidden="true" className="text-[var(--color-text-muted)]">…</span>}{pageButton(totalPages)}</>}
+          <button type="button" className={controlClass} disabled={currentPage === totalPages} onClick={() => changePage(currentPage + 1)}>{t('gallery_next')}</button>
+        </nav>}
+      </>}
     </PageLayout>
   );
 }
