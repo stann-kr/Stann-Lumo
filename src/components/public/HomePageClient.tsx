@@ -39,7 +39,7 @@ export default function HomePageClient({ artistInfo, homeMeta, homeSections, ter
     <div ref={homeRef} className={styles.home} data-motion={isMotionEnabled ? "on" : "off"}>
       <header className={styles.intro}>
         <KineticHeading title={artistName} />
-        <p data-reveal>{homeMeta.navTitle || t("home_nav_title")}</p>
+        {homeMeta.navTitle && <p>{homeMeta.navTitle}</p>}
       </header>
       <div className={styles.panels} data-home-panels>
         {panels.map((section, index) => {
@@ -58,24 +58,33 @@ export default function HomePageClient({ artistInfo, homeMeta, homeSections, ter
                 </button>
               </h2>
               <div id={contentId} hidden={!isExpanded} className={styles.panelContent} data-panel-content>
-                <p>{section.description}</p>
+                {!['/music', '/events', '/archive', '/about'].includes(section.path) && section.description && <p>{section.description}</p>}
                 {section.path === '/music' && !!previews?.tracks.length && <ul className={styles.trackPreview}>
-                  {previews.tracks.map((track) => <li key={track.id}><strong>{track.title}</strong><span>{track.type} / {track.year}</span></li>)}
+                  {previews.tracks.map((track, trackIndex) => <li key={track.id} data-featured={trackIndex === 0}>
+                    <span>{[track.type, track.year].filter(Boolean).join(' / ')}</span>
+                    <strong>{track.title}</strong>
+                    {trackIndex === 0 && track.link && <a href={track.link} target="_blank" rel="noopener noreferrer">{t('music_listen_on', { platform: track.platform })}<span aria-hidden="true"> ↗</span><span className="sr-only">{newTabLabel}</span></a>}
+                  </li>)}
                 </ul>}
                 {section.path === '/events' && !!previews?.events.length && <div className={styles.eventPreview}>
                   {previews.events.map((event) => <Link key={event.id} href={`/events/${event.id}`}>
                     {event.posterImageId && <img src={getPublicImageUrl(event.posterImageId)} alt="" loading="lazy" />}
-                    <div><time dateTime={event.date.replace(/\./g, '-')}>{event.date}</time><strong>{event.title}</strong><span>{event.venue} / {event.status}</span></div>
+                    <div><time dateTime={event.date.replace(/\./g, '-')}>{event.date.replace(/\./g, '-')}</time><strong>{event.title}</strong><span>{event.venue}{event.status === 'Cancelled' ? ` / ${event.status}` : ''}</span></div>
                   </Link>)}
                 </div>}
+                {section.path === '/events' && !previews?.events.length && <p>{language === 'ko' ? '예정된 공연이 없습니다.' : 'No upcoming events.'}</p>}
                 {section.path === '/archive' && !!previews?.photos.length && <div className={styles.photoPreview}>
                   {previews.photos.map((photo) => <Link key={photo.id} href={`/archive/${photo.id}`} aria-label={photo.caption || photo.altText || (language === 'ko' ? '이미지 보기' : 'View image')}><img src={getPublicImageUrl(photo.id)} alt={photo.altText || photo.caption} loading="lazy" /></Link>)}
                 </div>}
                 {section.path === '/about' && artistInfo.length > 0 && <dl className={styles.artistPreview}>
-                  {artistInfo.map((info) => <div key={info.id}><dt>{info.key}</dt><dd>{info.value}</dd></div>)}
+                  {artistInfo.filter((info) => !['name', '이름'].includes(info.key.toLowerCase())).map((info) => <div key={info.id}><dt>{info.key}</dt><dd>{info.value}</dd></div>)}
                 </dl>}
                 <Link href={section.path} className={styles.visit} data-hover>
-                  <span data-hover-label>{language === "ko" ? `${section.title} 보기` : `Explore ${section.title}`}</span><span data-hover-arrow aria-hidden="true">↗</span>
+                  <span data-hover-label>{section.path === '/music' ? (language === 'ko' ? '전체 음악' : 'All recordings')
+                    : section.path === '/events' ? (language === 'ko' ? '전체 공연' : 'All events')
+                    : section.path === '/archive' ? (language === 'ko' ? '아카이브 열기' : 'Open archive')
+                    : section.path === '/about' ? (language === 'ko' ? '소개 읽기' : 'Read biography')
+                    : section.title}</span><span data-hover-arrow aria-hidden="true">→</span>
                   <i className={styles.linkRule} data-hover-rule aria-hidden="true" />
                 </Link>
               </div>
@@ -86,26 +95,26 @@ export default function HomePageClient({ artistInfo, homeMeta, homeSections, ter
       {homeSections.length > 4 && (
         <div className={styles.secondary}>
           {homeSections.slice(4).map((section, index) => (
-            <Link key={`${section.path}-${index}`} href={section.path} data-reveal data-hover>
-              <h2 data-hover-label>{section.title}</h2><p>{section.description}</p><span data-hover-arrow aria-hidden="true">↗</span>
+            <Link key={`${section.path}-${index}`} href={section.path} data-hover>
+              <h2 data-hover-label>{section.title}</h2>{section.path !== '/link' && <p>{section.description}</p>}<span data-hover-arrow aria-hidden="true">→</span>
             </Link>
           ))}
         </div>
       )}
       {terminalInfo.url && (
         <section className={styles.terminal} aria-labelledby={`${panelId}-terminal`}>
-          <div className={styles.terminalIntro} data-reveal>
+          <div className={styles.terminalIntro}>
             <h2 id={`${panelId}-terminal`}>{t("home_terminal_side_project")}</h2>
             <p>{terminalInfo.description}</p>
             <div className={styles.terminalLinks}>
               <a href="https://stann.kr/lumo" target="_blank" rel="noopener noreferrer">{language === "ko" ? "뮤직 허브" : "Music hub"}<span aria-hidden="true"> ↗</span><span className="sr-only">{newTabLabel}</span></a>
-              <a href={terminalInfo.url} target="_blank" rel="noopener noreferrer">{t("home_terminal_enter")}<span aria-hidden="true"> ↗</span><span className="sr-only">{newTabLabel}</span></a>
+              <a href={terminalInfo.url} target="_blank" rel="noopener noreferrer">Terminal<span aria-hidden="true"> ↗</span><span className="sr-only">{newTabLabel}</span></a>
             </div>
           </div>
           {!!terminalInfo.customFields?.length && (
             <dl className={styles.fields}>
               {terminalInfo.customFields.map((field) => (
-                <div key={field.id} data-reveal="row">
+                <div key={field.id}>
                   <dt>{field.fieldKey}</dt>
                   <dd>{field.fieldType === "url" ? (
                     <a href={field.fieldValue} target="_blank" rel="noopener noreferrer">{field.fieldValue}<span className="sr-only">{newTabLabel}</span></a>

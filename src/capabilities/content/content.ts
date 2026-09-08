@@ -69,7 +69,7 @@ export interface PageMeta {
 }
 
 export interface HomePreviews {
-  tracks: Pick<Track, 'id' | 'title' | 'type' | 'year'>[];
+  tracks: Pick<Track, 'id' | 'title' | 'type' | 'year' | 'platform' | 'link'>[];
   events: Pick<Performance, 'id' | 'title' | 'date' | 'venue' | 'status' | 'posterImageId'>[];
   photos: { id: string; caption: string; altText: string }[];
 }

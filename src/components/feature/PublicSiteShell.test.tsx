@@ -284,12 +284,12 @@ describe('PublicSiteShell public navigation', () => {
       expect(gsap.getTweensOf(intro, true)).toHaveLength(0);
       const user = userEvent.setup();
       await user.click(screen.getByRole('button', { name: 'Archive' }));
-      screen.getByRole('link', { name: /Explore Archive/ }).focus();
-      expect(screen.getByRole('link', { name: /Explore Archive/ })).toBeVisible();
+      screen.getByRole('link', { name: /Open archive/ }).focus();
+      expect(screen.getByRole('link', { name: /Open archive/ })).toBeVisible();
 
       await changePreference(true);
       await waitFor(() => expect(ScrollTrigger.getAll()).toEqual([unrelated]));
-      expect(screen.getByRole('link', { name: /Explore Archive/ })).toBeVisible();
+      expect(screen.getByRole('link', { name: /Open archive/ })).toBeVisible();
       const headingLines = container.querySelectorAll<HTMLElement>('[data-heading-line]');
       expect(headingLines).toHaveLength(1);
       for (const line of headingLines) {
@@ -314,24 +314,25 @@ const sections = ['About', 'Music', 'Events', 'Archive', 'Contact', 'Link'].map(
 describe('Home panels', () => {
   it('keeps CMS order and separates keyboard expansion from route links', async () => {
     const user = userEvent.setup();
-    render(<HomePageClient artistInfo={[]} homeMeta={{ navTitle: 'Explore' }} homeSections={sections} previews={{ tracks: [{ id: 'track', title: 'Real track', type: 'Original', year: '2026' }], events: [], photos: [{ id: 'poster', caption: 'Real poster', altText: 'Poster' }] }} terminalInfo={{ url: '', description: '' }} />);
+    render(<HomePageClient artistInfo={[]} homeMeta={{ navTitle: 'Explore' }} homeSections={sections} previews={{ tracks: [{ id: 'track', title: 'Real track', type: 'Original', year: '2026', platform: 'Bandcamp', link: 'https://music.example/track' }], events: [], photos: [{ id: 'poster', caption: 'Real poster', altText: 'Poster' }] }} terminalInfo={{ url: '', description: '' }} />);
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('STANN LUMO');
     expect(screen.getAllByRole('button').map((button) => button.textContent?.replace(/[+−]/g, ''))).toEqual(['About', 'Music', 'Events', 'Archive']);
-    expect(screen.getByRole('link', { name: /Explore Music/ })).toHaveAttribute('href', '/music');
+    expect(screen.getByRole('link', { name: /All recordings/ })).toHaveAttribute('href', '/music');
     expect(screen.getByText('Real track')).toBeVisible();
-    expect(screen.queryByRole('link', { name: /Explore Archive/ })).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /music_listen_on/ })).toHaveAttribute('href', 'https://music.example/track');
+    expect(screen.queryByRole('link', { name: /Open archive/ })).not.toBeInTheDocument();
     const archive = screen.getByRole('button', { name: 'Archive' });
     archive.focus();
     await user.keyboard('{Enter}');
     expect(archive).toHaveAttribute('aria-expanded', 'true');
-    expect(screen.getByRole('link', { name: /Explore Archive/ })).toHaveAttribute('href', '/archive');
+    expect(screen.getByRole('link', { name: /Open archive/ })).toHaveAttribute('href', '/archive');
     expect(screen.getByRole('link', { name: 'Real poster' })).toHaveAttribute('href', '/archive/poster');
     expect(screen.getByRole('img', { name: 'Poster' })).toHaveAttribute('src', '/api/media/poster?v=2');
-    expect(screen.queryByRole('link', { name: /Explore Music/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /All recordings/ })).not.toBeInTheDocument();
     await user.keyboard(' ');
     expect(archive).toHaveAttribute('aria-expanded', 'false');
-    expect(screen.queryByRole('link', { name: /Explore Archive/ })).not.toBeInTheDocument();
-    for (const title of ['Contact', 'Link']) expect(screen.getByRole('link', { name: new RegExp(`${title} ${title} description`) })).toHaveAttribute('href', `/${title.toLowerCase()}`);
+    expect(screen.queryByRole('link', { name: /Open archive/ })).not.toBeInTheDocument();
+    for (const title of ['Contact', 'Link']) expect(screen.getByRole('link', { name: new RegExp(title === 'Link' ? '^Link$' : `${title} ${title} description`) })).toHaveAttribute('href', `/${title.toLowerCase()}`);
   });
 
   it('animates pointer category changes, accepts the latest choice and finishes before keyboard navigation', async () => {
@@ -342,7 +343,7 @@ describe('Home panels', () => {
     await waitFor(() => expect(container.querySelector('[data-motion]')).toHaveAttribute('data-motion', 'on'));
 
     fireEvent.click(screen.getByRole('button', { name: 'About' }), { detail: 1 });
-    const about = screen.getByText('About description');
+    const about = screen.getByRole('link', { name: 'Read biography' });
     const entry = gsap.getTweensOf(about)[0];
     expect(entry).toBeDefined();
     expect(Number(gsap.getProperty(about, 'opacity'))).toBeLessThan(1);
@@ -351,17 +352,17 @@ describe('Home panels', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Music' }), { detail: 1 });
     fireEvent.click(screen.getByRole('button', { name: 'Archive' }), { detail: 1 });
     expect(screen.getByRole('button', { name: 'Archive' })).toHaveAttribute('aria-expanded', 'true');
-    expect(screen.queryByRole('link', { name: /Explore Music/ })).not.toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: /Explore About/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /All recordings/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /Read biography/ })).not.toBeInTheDocument();
     expect(entry.isActive()).toBe(false);
 
     fireEvent.keyDown(screen.getByRole('button', { name: 'Archive' }), { key: 'Tab' });
-    expect(screen.getByText('Archive description')).toBeVisible();
-    expect(gsap.getTweensOf(screen.getByText('Archive description'), true)).toHaveLength(0);
+    expect(screen.getByRole('link', { name: 'Open archive' })).toBeVisible();
+    expect(gsap.getTweensOf(screen.getByRole('link', { name: 'Open archive' }), true)).toHaveLength(0);
     fireEvent.click(screen.getByRole('button', { name: 'About' }), { detail: 0 });
     expect(about).toBeVisible();
     expect(gsap.getTweensOf(about, true)).toHaveLength(0);
-    expect(screen.getByRole('link', { name: /Explore About/ })).toBeVisible();
+    expect(screen.getByRole('link', { name: /Read biography/ })).toBeVisible();
     for (const panel of container.querySelectorAll<HTMLElement>('[data-expanded]')) {
       expect(panel.style.width).toBe('');
       expect(panel.style.height).toBe('');
@@ -377,15 +378,15 @@ describe('Home panels', () => {
     const { container } = render(<HomePageClient artistInfo={[]} homeMeta={{ navTitle: 'Explore' }} homeSections={sections} terminalInfo={{ url: '', description: '' }} />);
     await waitFor(() => expect(container.querySelector('[data-motion]')).toHaveAttribute('data-motion', 'on'));
     fireEvent.click(screen.getByRole('button', { name: 'About' }), { detail: 1 });
-    expect(gsap.getTweensOf(screen.getByText('About description')).length).toBeGreaterThan(0);
+    expect(gsap.getTweensOf(screen.getByRole('link', { name: 'Read biography' })).length).toBeGreaterThan(0);
 
     await changePreference(true);
-    expect(screen.getByText('About description')).toBeVisible();
-    expect(gsap.getTweensOf(screen.getByText('About description'), true)).toHaveLength(0);
+    expect(screen.getByRole('link', { name: 'Read biography' })).toBeVisible();
+    expect(gsap.getTweensOf(screen.getByRole('link', { name: 'Read biography' }), true)).toHaveLength(0);
     fireEvent.click(screen.getByRole('button', { name: 'Events' }), { detail: 1 });
-    expect(screen.getByText('Events description')).toBeVisible();
-    expect(screen.getByRole('link', { name: /Explore Events/ })).toBeVisible();
-    expect(gsap.getTweensOf(screen.getByText('Events description'), true)).toHaveLength(0);
+    expect(screen.getByRole('link', { name: 'All events' })).toBeVisible();
+    expect(screen.getByRole('link', { name: /All events/ })).toBeVisible();
+    expect(gsap.getTweensOf(screen.getByRole('link', { name: 'All events' }), true)).toHaveLength(0);
   });
 
   it('preserves actual Terminal fields, URL and optional embed without inventing home items', () => {
@@ -396,7 +397,7 @@ describe('Home panels', () => {
     }} />);
     expect(screen.queryByRole('button')).not.toBeInTheDocument();
     expect(screen.getByText('Live')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /home_terminal_enter/ })).toHaveAttribute('href', 'https://terminal.example');
+    expect(screen.getByRole('link', { name: /Terminal/ })).toHaveAttribute('href', 'https://terminal.example');
     expect(screen.getByTitle('Terminal')).toHaveAttribute('src', 'https://terminal.example');
     expect(screen.getByTitle('Terminal')).toHaveStyle({ height: '420px' });
   });

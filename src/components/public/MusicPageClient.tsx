@@ -3,6 +3,7 @@
 import { useTranslation } from "react-i18next";
 import { useLanguage } from "@/contexts/LanguageContext";
 import PageLayout from "@/components/feature/PageLayout";
+import Link from '../feature/PublicLink';
 import type { MusicPageMeta, Track } from "@/capabilities/content/content";
 import styles from "./MusicPageClient.module.css";
 
@@ -14,21 +15,21 @@ export default function MusicPageClient({ musicMeta, tracks }: MusicPageClientPr
   const isKorean = language === 'ko';
   const newTabLabel = isKorean ? ' (새 창)' : ' (opens in a new tab)';
   return (
-    <PageLayout title={musicMeta.title || t("music_title")} subtitle={musicMeta.subtitle || t("music_subtitle")}>
+    <PageLayout title={musicMeta.title || t("music_title")} subtitle={musicMeta.subtitle}>
       {tracks.length ? <ul className={styles.tracks}>
-        {tracks.map((track) => (
-          <li key={track.id} data-reveal="row" data-hover>
+        {tracks.map((track, index) => (
+          <li key={track.id} data-featured={index === 0} data-hover>
             <h2 data-hover-label>{track.title}</h2>
-            <div className={styles.meta}><span>{track.type}</span><span>{track.year}</span></div>
-            <a href={track.link} target="_blank" rel="noopener noreferrer" aria-label={`${track.title} — ${track.platform}${newTabLabel}`}>
-              {track.platform}<span data-hover-arrow aria-hidden="true">↗</span>
-            </a>
+            <div className={styles.meta}><span>{track.type}</span><span>{track.year}</span>{track.duration && <span>{track.duration}</span>}</div>
+            {track.link && <a href={track.link} target="_blank" rel="noopener noreferrer" aria-label={`${track.title} — ${t('music_listen_on', { platform: track.platform })}${newTabLabel}`}>
+              {t('music_listen_on', { platform: track.platform })}<span data-hover-arrow aria-hidden="true">↗</span>
+            </a>}
             <i className={styles.rowRule} data-hover-rule aria-hidden="true" />
           </li>
         ))}
       </ul> : <p className={styles.empty}>{isKorean ? '등록된 음악이 없습니다.' : 'No music has been added yet.'}</p>}
-      <footer className={styles.footer} data-reveal>
-        <p>{t("music_note")}</p>
+      <footer className={styles.footer}>
+        <Link href="/contact">{t('music_licensing')}</Link>
         <div>
           <a href="https://stann.kr/lumo" target="_blank" rel="noopener noreferrer">{isKorean ? '뮤직 허브' : 'Music hub'}<span aria-hidden="true"> ↗</span><span className="sr-only">{newTabLabel}</span></a>
           <a href="https://terminal.stann.kr" target="_blank" rel="noopener noreferrer">{isKorean ? '라이브 인터페이스' : 'Live interface'}<span aria-hidden="true"> ↗</span><span className="sr-only">{newTabLabel}</span></a>

@@ -42,14 +42,15 @@ export default {
   home_section_events_title: 'EVENTS',
   home_section_events_desc: 'Performance schedule & info',
   home_section_contact_title: 'CONTACT',
-  home_section_contact_desc: 'Guestbook & messages',
+  home_section_contact_desc: 'Contact & booking',
   home_section_link_title: 'LINK',
   home_section_link_desc: 'External connections',
   home_terminal_side_project: 'SIDE PROJECT',
   home_terminal_enter: 'ENTER',
   
   // About page
-  about_title: 'ARTIST PROFILE',
+  about_title: 'ABOUT',
+  about_work_links: 'Recordings and performances',
   about_label_name: 'NAME',
   about_label_genre: 'GENRE',
   about_label_location: 'LOCATION',
@@ -60,6 +61,8 @@ export default {
   
   // Music page
   music_title: 'MUSIC',
+  music_listen_on: 'Listen on {{platform}}',
+  music_licensing: 'Licensing enquiries →',
   music_subtitle: 'TRACKS & MIXES',
   music_note: 'All tracks are available for streaming on Multiple Platforms. For licensing inquiries, please visit the Booking section.',
   music_col_id: 'ID',
@@ -99,7 +102,7 @@ export default {
   
   // Contact page
   contact_title: 'CONTACT',
-  contact_subtitle: 'GUESTBOOK & DIRECT CONTACT',
+  contact_subtitle: 'CONTACT & BOOKING',
   contact_guestbook: 'GUESTBOOK',
   contact_direct: 'DIRECT CONTACT',
   contact_booking_info: 'BOOKING INFO',

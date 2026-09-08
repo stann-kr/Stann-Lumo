@@ -1,7 +1,6 @@
 'use client';
 
 import { useRef, type ReactNode } from 'react';
-import KineticHeading from './KineticHeading';
 import { useContentMotion } from './useContentMotion';
 import styles from './PageLayout.module.css';
 
@@ -11,16 +10,17 @@ interface PageLayoutProps {
   subtitle?: string;
   children: ReactNode;
   motionRevision?: string | number;
+  titleSize?: 'label' | 'display';
 }
 
-export default function PageLayout({ title, titleExtra, subtitle, children, motionRevision }: PageLayoutProps) {
+export default function PageLayout({ title, titleExtra, subtitle, children, motionRevision, titleSize = 'label' }: PageLayoutProps) {
   const pageRef = useRef<HTMLDivElement>(null);
   useContentMotion(pageRef, `${title}:${motionRevision ?? ''}`);
   return (
     <div ref={pageRef} className={styles.page}>
-      <header className={styles.header}>
-        <KineticHeading title={title} extra={titleExtra} />
-        {subtitle && <p data-reveal>{subtitle}</p>}
+      <header className={styles.header} data-size={titleSize}>
+        <h1>{title}{titleExtra?.map((line, index) => <span key={index}>{line}</span>)}</h1>
+        {subtitle && <p>{subtitle}</p>}
       </header>
       {children}
     </div>

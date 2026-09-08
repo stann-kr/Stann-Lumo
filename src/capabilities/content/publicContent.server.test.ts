@@ -101,14 +101,14 @@ describe('public server content projections', () => {
     try {
       for (let index = 0; index < 5; index++) {
         sqlite.prepare("INSERT INTO tracks (id, lang, title, type, duration, year, platform, sort_order) VALUES (?, 'en', ?, 'Original', '0:00', '2026', 'Bandcamp', ?)").run(`track-${index}`, `Track ${index}`, index);
-        sqlite.prepare("INSERT INTO performances (id, title, date, venue) VALUES (?, ?, ?, 'Venue')").run(`event-${index}`, `Event ${index}`, `2026-09-0${index + 1}`);
+        sqlite.prepare("INSERT INTO performances (id, title, date, venue) VALUES (?, ?, ?, 'Venue')").run(`event-${index}`, `Event ${index}`, index === 0 ? '2000-01-01' : `2999.09.0${index}`);
         sqlite.prepare("INSERT INTO gallery_photos (id, filename, caption, sort_order) VALUES (?, ?, ?, ?)").run(`photo-${index}`, `photo-${index}.jpg`, `Photo ${index}`, index);
       }
       const { previews } = await getHomeProjection('ko');
       expect(previews.tracks.map((track) => track.id)).toEqual(['track-0', 'track-1', 'track-2']);
-      expect(previews.events.map((event) => event.id)).toEqual(['event-4', 'event-3']);
+      expect(previews.events.map((event) => event.id)).toEqual(['event-1', 'event-2']);
       expect(previews.photos.map((photo) => photo.id)).toEqual(['photo-0', 'photo-1', 'photo-2']);
-      expect(previews.tracks[0]).toEqual({ id: 'track-0', title: 'Track 0', type: 'Original', year: '2026' });
+      expect(previews.tracks[0]).toEqual({ id: 'track-0', title: 'Track 0', type: 'Original', year: '2026', platform: 'Bandcamp', link: '' });
       expect(previews.photos[0]).toEqual({ id: 'photo-0', caption: 'Photo 0', altText: '' });
       expect(() => assertPublicPayloadSafe(previews)).not.toThrow();
     } finally { close(); }

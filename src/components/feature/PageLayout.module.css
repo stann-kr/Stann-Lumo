@@ -1,4 +1,6 @@
-.page { padding: clamp(2.5rem, 6vw, 6rem) var(--page-gutter, 1.25rem) clamp(4rem, 8vw, 8rem); max-width: 1800px; margin-inline: auto; }
-.header { position: relative; padding-bottom: clamp(2.75rem, 4.5vw, 4.5rem); }
-.header h1 { max-width: 18ch; font-family: var(--font-display, sans-serif); font-size: clamp(2.5rem, 7vw, 8rem); font-weight: 900; line-height: 1.04; letter-spacing: -.045em; overflow-wrap: anywhere; }
-.header p { margin-top: 1.5rem; max-width: 65ch; font-size: 1rem; color: var(--color-secondary); overflow-wrap: anywhere; }
+.page { padding: clamp(1.5rem, 3vw, 3rem) var(--page-gutter, 1.25rem) clamp(4rem, 8vw, 8rem); max-width: 1800px; margin-inline: auto; }
+.header { position: relative; padding-bottom: clamp(1.5rem, 3vw, 3rem); }
+.header h1 { font-family: var(--font-display, sans-serif); font-size: clamp(1.25rem, 2vw, 2rem); font-weight: 700; line-height: 1.15; letter-spacing: -.025em; overflow-wrap: anywhere; }
+.header h1 span { display: block; }
+.header[data-size='display'] h1 { max-width: 26ch; font-size: clamp(2rem, 4.5vw, 5rem); font-weight: 800; letter-spacing: -.045em; }
+.header p { margin-top: .75rem; max-width: 65ch; font-size: .95rem; color: var(--color-secondary); overflow-wrap: anywhere; }
