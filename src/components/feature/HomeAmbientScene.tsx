@@ -52,12 +52,20 @@ export function supportsAmbientScene(navigatorInfo: SceneNavigator): boolean {
 const StaticSceneFallback = () => <div className="home-scene-fallback" aria-hidden="true" />;
 
 /**
- * Home-only ambient layer. It keeps a quiet static fallback available while
+ * Public ambient layer. It keeps a quiet static fallback available while
  * the optional WebGL scene is unavailable, reduced, or too costly to render.
  */
 export default function HomeAmbientScene({ tracks }: { tracks: Track[] }) {
   const { isResolved, prefersReducedMotion } = useMotionPreference();
   const [isDesktop, setIsDesktop] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    const updateVisibility = () => setIsVisible(document.visibilityState !== 'hidden');
+    updateVisibility();
+    document.addEventListener('visibilitychange', updateVisibility);
+    return () => document.removeEventListener('visibilitychange', updateVisibility);
+  }, []);
 
   useEffect(() => {
     const desktopQuery = window.matchMedia('(min-width: 1024px)');
@@ -81,7 +89,7 @@ export default function HomeAmbientScene({ tracks }: { tracks: Track[] }) {
       <StaticSceneFallback />
       {canRenderScene && (
         <SceneErrorBoundary>
-          <Scene3D tracks={tracks} />
+          <Scene3D tracks={tracks} isVisible={isVisible} />
         </SceneErrorBoundary>
       )}
     </>

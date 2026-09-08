@@ -13,6 +13,7 @@ export interface GalleryPhoto {
   videoYoutubeId?: string;
   videoThumbnailUrl?: string;
   linkedEventId?: string;
+  eventDate?: string;
 }
 
 export interface GallerySettings {
