@@ -21,6 +21,7 @@ const PublicSiteShell = ({ children, artistName = SITE_NAME }: PublicSiteShellPr
   const { t } = useTranslation();
   const { language, setLanguage } = useLanguage();
   const mainRef = useRef<HTMLElement | null>(null);
+  const brandRef = useRef<HTMLAnchorElement | null>(null);
   const mobileMenuButtonRef = useRef<HTMLButtonElement | null>(null);
   const mobileDialogRef = useRef<HTMLDivElement | null>(null);
   const previousPathnameRef = useRef(pathname);
@@ -90,12 +91,16 @@ const PublicSiteShell = ({ children, artistName = SITE_NAME }: PublicSiteShellPr
   useEffect(() => {
     const desktopBreakpoint = window.matchMedia("(min-width: 1200px)");
     const handleBreakpointChange = (event: MediaQueryListEvent) => {
-      if (event.matches) closeMobileMenu();
+      if (event.matches && mobileMenuOpen) {
+        closeMobileMenu(false);
+        // The menu trigger disappears at desktop width; keep focus on visible navigation.
+        brandRef.current?.focus();
+      }
     };
 
     desktopBreakpoint.addEventListener("change", handleBreakpointChange);
     return () => desktopBreakpoint.removeEventListener("change", handleBreakpointChange);
-  }, [closeMobileMenu]);
+  }, [closeMobileMenu, mobileMenuOpen]);
 
   const navItems = [
     { label: t("nav_home"), path: "/" },
@@ -166,7 +171,7 @@ const PublicSiteShell = ({ children, artistName = SITE_NAME }: PublicSiteShellPr
       <div inert={mobileMenuOpen || undefined} className={styles.document}>
         <a href="#main-content" className={styles.skipLink}>{skipLinkLabel}</a>
         <header className={styles.header}>
-          <Link href="/" onNavigate={() => handleNavClick("/")} className={styles.brand}>{artistName}</Link>
+          <Link ref={brandRef} href="/" onNavigate={() => handleNavClick("/")} className={styles.brand}>{artistName}</Link>
           <div className={styles.desktopNav}>{navigation(mainNavigationLabel)}{languageControls}</div>
           <button ref={mobileMenuButtonRef} type="button" className={styles.menuButton}
             onClick={() => setMobileMenuPath(pathname)} aria-label={t("nav_open_menu")}

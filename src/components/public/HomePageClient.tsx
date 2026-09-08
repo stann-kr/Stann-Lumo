@@ -2,6 +2,7 @@
 
 import { useId, useState } from "react";
 import Link from "next/link";
+import { motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useMotionPreference } from "@/hooks/useMotionPreference";
@@ -24,6 +25,7 @@ export default function HomePageClient({ artistInfo, homeMeta, homeSections, ter
   const { language } = useLanguage();
   const { isResolved, prefersReducedMotion } = useMotionPreference();
   const panelId = useId();
+  const isMotionEnabled = isResolved && !prefersReducedMotion;
   // The CMS owns order: the first four sections are panels, all remaining sections stay visible below.
   const panels = homeSections.slice(0, 4);
   const [selectedPath, setSelectedPath] = useState<string | null>(() => panels.find((section) => section.path === "/music")?.path ?? panels[0]?.path ?? null);
@@ -31,7 +33,7 @@ export default function HomePageClient({ artistInfo, homeMeta, homeSections, ter
   const newTabLabel = language === "ko" ? " (새 창)" : " (opens in a new tab)";
 
   return (
-    <div className={styles.home} data-motion={isResolved && !prefersReducedMotion ? "on" : "off"}>
+    <div className={styles.home} data-motion={isMotionEnabled ? "on" : "off"}>
       <header className={styles.intro}>
         <h1>{artistName}</h1>
         <p>{homeMeta.navTitle || t("home_nav_title")}</p>
@@ -41,14 +43,14 @@ export default function HomePageClient({ artistInfo, homeMeta, homeSections, ter
           const isExpanded = section.path === selectedPath;
           const contentId = `${panelId}-${index}`;
           return (
-            <section key={`${section.path}-${index}`} className={styles.panel} data-expanded={isExpanded}>
-              <h2>
+            <motion.section key={`${section.path}-${index}`} layout={isMotionEnabled} transition={{ layout: { duration: 0.55, ease: [0.22, 1, 0.36, 1] } }} className={styles.panel} data-expanded={isExpanded}>
+              <motion.h2 layout={isMotionEnabled ? 'position' : false}>
                 <button type="button" id={`${contentId}-trigger`} aria-expanded={isExpanded} aria-controls={contentId}
                   onClick={() => setSelectedPath(isExpanded ? null : section.path)}>
                   <span className={styles.panelTitle}>{section.title}</span>
                   <span className={styles.toggle} aria-hidden="true">{isExpanded ? "−" : "+"}</span>
                 </button>
-              </h2>
+              </motion.h2>
               <div id={contentId} hidden={!isExpanded} className={styles.panelContent}>
                 <p>{section.description}</p>
                 {section.path === '/music' && !!previews?.tracks.length && <ul className={styles.trackPreview}>
@@ -70,7 +72,7 @@ export default function HomePageClient({ artistInfo, homeMeta, homeSections, ter
                   {language === "ko" ? `${section.title} 보기` : `Explore ${section.title}`}<span aria-hidden="true">↗</span>
                 </Link>
               </div>
-            </section>
+            </motion.section>
           );
         })}
       </div>

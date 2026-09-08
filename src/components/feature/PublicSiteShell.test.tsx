@@ -114,7 +114,12 @@ describe('PublicSiteShell public navigation', () => {
       }
     });
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
-    await waitFor(() => expect(menuButton).toHaveFocus());
+    await waitFor(() => expect(screen.getByRole('link', { name: 'STANN LUMO' })).toHaveFocus());
+    screen.getByRole('main').focus();
+    act(() => {
+      for (const listener of desktopBreakpointListeners) listener({ matches: true } as MediaQueryListEvent);
+    });
+    expect(screen.getByRole('main')).toHaveFocus();
   });
 
   it('moves focus to main content after a public route transition', async () => {
