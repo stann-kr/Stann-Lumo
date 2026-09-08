@@ -21,7 +21,6 @@ export default function PageLayout({ title, titleExtra, subtitle, children, moti
       <header className={styles.header}>
         <KineticHeading title={title} extra={titleExtra} />
         {subtitle && <p data-reveal>{subtitle}</p>}
-        <div className={styles.registration} aria-hidden="true"><span data-draw-rule /><i /><span data-draw-rule /></div>
       </header>
       {children}
     </div>

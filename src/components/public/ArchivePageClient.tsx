@@ -22,7 +22,6 @@ function GridItem({ photo }: { photo: GalleryPhoto }) {
             {photo.mediaType === 'video_youtube' ? <img src={photo.videoThumbnailUrl || undefined} alt={photo.altText || photo.filename} loading="lazy" data-hover-image />
               : photo.mediaType === 'video_file' ? <video src={`/api/media/${photo.id}`} preload="none" muted playsInline aria-hidden="true" />
               : <img src={getPublicImageUrl(photo.id)} alt={photo.altText || photo.filename} loading="lazy" data-hover-image />}
-            <span className={styles.corners} aria-hidden="true" />
           </div>
           {photo.caption && <p className={styles.caption}>{photo.caption}</p>}
         </Link>

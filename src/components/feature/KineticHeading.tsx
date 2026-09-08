@@ -3,6 +3,7 @@
 import { useRef } from 'react';
 import { gsap } from 'gsap';
 import { useGSAP } from '@gsap/react';
+import { PUBLIC_MOTION, usePublicMotionInput } from './publicMotion';
 import styles from './KineticHeading.module.css';
 
 gsap.registerPlugin(useGSAP);
@@ -14,6 +15,7 @@ interface KineticHeadingProps {
 
 export default function KineticHeading({ title, extra }: KineticHeadingProps) {
   const headingRef = useRef<HTMLHeadingElement>(null);
+  const input = usePublicMotionInput();
   const lines = [title, ...(extra ?? [])];
   const label = lines.join(' ');
 
@@ -21,21 +23,16 @@ export default function KineticHeading({ title, extra }: KineticHeadingProps) {
     if (!window.matchMedia) return;
     const media = gsap.matchMedia();
     media.add('(prefers-reduced-motion: no-preference)', () => {
-      const glyphs = headingRef.current?.querySelectorAll('[data-glyph]');
-      if (!glyphs?.length) return;
-      gsap.fromTo(glyphs, {
-        yPercent: 115,
-        rotation: (index: number) => index % 2 ? 7 : -5,
-        skewX: -9,
-      }, {
-        yPercent: 0,
-        rotation: 0,
-        skewX: 0,
-        duration: 0.95,
-        stagger: { amount: Math.min(glyphs.length * 0.022, 0.38), from: 'start' },
-        ease: 'expo.out',
+      const lines = headingRef.current?.querySelectorAll('[data-heading-line]');
+      if (!lines?.length || input?.current === 'keyboard' || document.hidden) return;
+      const entry = gsap.fromTo(lines, { yPercent: 100 }, {
+        yPercent: 0, duration: PUBLIC_MOTION.heading, stagger: 0.04,
+        ease: PUBLIC_MOTION.ease,
         clearProps: 'transform',
       });
+      const finish = () => { entry.progress(1); };
+      window.addEventListener('keydown', finish, true);
+      return () => window.removeEventListener('keydown', finish, true);
     }, headingRef);
     return () => media.revert();
   }, { scope: headingRef, dependencies: [label], revertOnUpdate: true });
@@ -44,13 +41,7 @@ export default function KineticHeading({ title, extra }: KineticHeadingProps) {
     <h1 ref={headingRef} aria-label={label}>
       {lines.map((line, lineIndex) => (
         <span className={styles.line} aria-hidden="true" key={lineIndex}>
-          {line.split(/(\s+)/).map((word, wordIndex) => /^\s+$/.test(word) ? word : (
-            <span className={styles.word} key={wordIndex}>
-              {Array.from(word).map((glyph, glyphIndex) => (
-                <span className={styles.glyph} data-glyph key={glyphIndex}>{glyph}</span>
-              ))}
-            </span>
-          ))}
+          <span className={styles.text} data-heading-line>{line}</span>
         </span>
       ))}
     </h1>

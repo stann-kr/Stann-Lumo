@@ -1,7 +1,8 @@
-import { act, render, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { gsap } from 'gsap';
 import PublicSiteShell from './PublicSiteShell';
 import HomePageClient from '../public/HomePageClient';
 
@@ -61,6 +62,37 @@ const matchMedia = vi.fn(() => ({
     }
   },
 }));
+
+function installMotionPreference() {
+  let isReduced = false;
+  const queries = new Map<string, Set<(event: MediaQueryListEvent) => void>>();
+  const matches = (query: string) => query.includes('no-preference') ? !isReduced
+    : query.includes('prefers-reduced-motion: reduce') ? isReduced
+    : query.includes('min-width') || query.includes('pointer: fine');
+  vi.stubGlobal('matchMedia', (query: string) => {
+    if (!queries.has(query)) queries.set(query, new Set());
+    const listeners = queries.get(query)!;
+    return {
+      media: query,
+      get matches() { return matches(query); },
+      addEventListener: (_type: string, listener: (event: MediaQueryListEvent) => void) => listeners.add(listener),
+      removeEventListener: (_type: string, listener: (event: MediaQueryListEvent) => void) => listeners.delete(listener),
+      addListener: (listener: (event: MediaQueryListEvent) => void) => listeners.add(listener),
+      removeListener: (listener: (event: MediaQueryListEvent) => void) => listeners.delete(listener),
+    };
+  });
+  const changePreference = async (value: boolean) => {
+    await act(async () => {
+      // Native media changes happen in distinct browser tasks; GSAP debounces them.
+      await new Promise((resolve) => setTimeout(resolve, 20));
+      isReduced = value;
+      for (const [query, listeners] of queries) {
+        for (const listener of listeners) listener({ matches: matches(query), media: query } as MediaQueryListEvent);
+      }
+    });
+  };
+  return changePreference;
+}
 
 describe('PublicSiteShell public navigation', () => {
   beforeEach(() => {
@@ -145,33 +177,7 @@ describe('PublicSiteShell public navigation', () => {
   });
 
   it('restores readable content when motion is reduced and releases only its own animations on unmount', async () => {
-    let isReduced = false;
-    const queries = new Map<string, Set<(event: MediaQueryListEvent) => void>>();
-    const matches = (query: string) => query.includes('no-preference') ? !isReduced
-      : query.includes('prefers-reduced-motion: reduce') ? isReduced
-      : query.includes('min-width') || query.includes('pointer: fine');
-    vi.stubGlobal('matchMedia', (query: string) => {
-      if (!queries.has(query)) queries.set(query, new Set());
-      const listeners = queries.get(query)!;
-      return {
-        media: query,
-        get matches() { return matches(query); },
-        addEventListener: (_type: string, listener: (event: MediaQueryListEvent) => void) => listeners.add(listener),
-        removeEventListener: (_type: string, listener: (event: MediaQueryListEvent) => void) => listeners.delete(listener),
-        addListener: (listener: (event: MediaQueryListEvent) => void) => listeners.add(listener),
-        removeListener: (listener: (event: MediaQueryListEvent) => void) => listeners.delete(listener),
-      };
-    });
-    const changePreference = async (value: boolean) => {
-      await act(async () => {
-        // Native media changes happen in distinct browser tasks; GSAP debounces them.
-        await new Promise((resolve) => setTimeout(resolve, 20));
-        isReduced = value;
-        for (const [query, listeners] of queries) {
-          for (const listener of listeners) listener({ matches: matches(query), media: query } as MediaQueryListEvent);
-        }
-      });
-    };
+    const changePreference = installMotionPreference();
 
     const { container, unmount } = render(<PublicSiteShell>
       <HomePageClient artistInfo={[]} homeMeta={{ navTitle: 'Explore' }} homeSections={sections} terminalInfo={{ url: '', description: '' }} />
@@ -180,6 +186,11 @@ describe('PublicSiteShell public navigation', () => {
     try {
       expect(screen.getByRole('heading', { level: 1, name: 'STANN LUMO' })).toBeInTheDocument();
       expect(ScrollTrigger.getAll().length).toBeGreaterThan(1);
+      const intro = screen.getByText('Explore');
+      act(() => { gsap.getTweensOf(intro)[0]?.pause(0); });
+      fireEvent.keyDown(screen.getByRole('link', { name: 'STANN LUMO' }), { key: 'PageDown' });
+      expect(intro).toBeVisible();
+      expect(gsap.getTweensOf(intro, true)).toHaveLength(0);
       const user = userEvent.setup();
       await user.click(screen.getByRole('button', { name: 'Archive' }));
       screen.getByRole('link', { name: /Explore Archive/ }).focus();
@@ -188,8 +199,10 @@ describe('PublicSiteShell public navigation', () => {
       await changePreference(true);
       await waitFor(() => expect(ScrollTrigger.getAll()).toEqual([unrelated]));
       expect(screen.getByRole('link', { name: /Explore Archive/ })).toBeVisible();
-      for (const glyph of container.querySelectorAll<HTMLElement>('[data-glyph]')) {
-        expect(glyph.style.transform).toBe('');
+      const headingLines = container.querySelectorAll<HTMLElement>('[data-heading-line]');
+      expect(headingLines).toHaveLength(1);
+      for (const line of headingLines) {
+        expect(line.style.transform).toBe('');
       }
 
       await changePreference(false);
@@ -228,6 +241,52 @@ describe('Home panels', () => {
     expect(archive).toHaveAttribute('aria-expanded', 'false');
     expect(screen.queryByRole('link', { name: /Explore Archive/ })).not.toBeInTheDocument();
     for (const title of ['Contact', 'Link']) expect(screen.getByRole('link', { name: new RegExp(`${title} ${title} description`) })).toHaveAttribute('href', `/${title.toLowerCase()}`);
+  });
+
+  it('animates pointer category changes, accepts the latest choice and finishes before keyboard navigation', async () => {
+    installMotionPreference();
+    const { container } = render(<PublicSiteShell>
+      <HomePageClient artistInfo={[]} homeMeta={{ navTitle: 'Explore' }} homeSections={sections} terminalInfo={{ url: '', description: '' }} />
+    </PublicSiteShell>);
+    await waitFor(() => expect(container.querySelector('[data-motion]')).toHaveAttribute('data-motion', 'on'));
+
+    fireEvent.click(screen.getByRole('button', { name: 'About' }), { detail: 1 });
+    const about = screen.getByText('About description');
+    const entry = gsap.getTweensOf(about)[0];
+    expect(entry).toBeDefined();
+    expect(Number(gsap.getProperty(about, 'opacity'))).toBeLessThan(1);
+    act(() => { entry.parent?.progress(0.4); });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Music' }), { detail: 1 });
+    fireEvent.click(screen.getByRole('button', { name: 'Archive' }), { detail: 1 });
+    expect(screen.getByRole('button', { name: 'Archive' })).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.queryByRole('link', { name: /Explore Music/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /Explore About/ })).not.toBeInTheDocument();
+    expect(entry.isActive()).toBe(false);
+
+    fireEvent.keyDown(screen.getByRole('button', { name: 'Archive' }), { key: 'Tab' });
+    expect(screen.getByText('Archive description')).toBeVisible();
+    expect(gsap.getTweensOf(screen.getByText('Archive description'), true)).toHaveLength(0);
+    fireEvent.click(screen.getByRole('button', { name: 'About' }), { detail: 0 });
+    expect(about).toBeVisible();
+    expect(gsap.getTweensOf(about, true)).toHaveLength(0);
+    expect(screen.getByRole('link', { name: /Explore About/ })).toBeVisible();
+  });
+
+  it('settles a running category transition when motion is reduced and keeps subsequent choices readable', async () => {
+    const changePreference = installMotionPreference();
+    const { container } = render(<HomePageClient artistInfo={[]} homeMeta={{ navTitle: 'Explore' }} homeSections={sections} terminalInfo={{ url: '', description: '' }} />);
+    await waitFor(() => expect(container.querySelector('[data-motion]')).toHaveAttribute('data-motion', 'on'));
+    fireEvent.click(screen.getByRole('button', { name: 'About' }), { detail: 1 });
+    expect(gsap.getTweensOf(screen.getByText('About description')).length).toBeGreaterThan(0);
+
+    await changePreference(true);
+    expect(screen.getByText('About description')).toBeVisible();
+    expect(gsap.getTweensOf(screen.getByText('About description'), true)).toHaveLength(0);
+    fireEvent.click(screen.getByRole('button', { name: 'Events' }), { detail: 1 });
+    expect(screen.getByText('Events description')).toBeVisible();
+    expect(screen.getByRole('link', { name: /Explore Events/ })).toBeVisible();
+    expect(gsap.getTweensOf(screen.getByText('Events description'), true)).toHaveLength(0);
   });
 
   it('preserves actual Terminal fields, URL and optional embed without inventing home items', () => {

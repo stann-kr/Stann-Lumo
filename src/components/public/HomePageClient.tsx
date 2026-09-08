@@ -2,7 +2,6 @@
 
 import { useId, useRef, useState } from "react";
 import Link from "next/link";
-import { motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useMotionPreference } from "@/hooks/useMotionPreference";
@@ -32,7 +31,7 @@ export default function HomePageClient({ artistInfo, homeMeta, homeSections, ter
   const panels = homeSections.slice(0, 4);
   const [selectedPath, setSelectedPath] = useState<string | null>(() => panels.find((section) => section.path === "/music")?.path ?? panels[0]?.path ?? null);
   const homeRef = useRef<HTMLDivElement>(null);
-  useHomeMotion(homeRef, selectedPath);
+  const preparePanelTransition = useHomeMotion(homeRef, selectedPath, isMotionEnabled);
   const artistName = artistInfo.find((item) => item.key === "Name" || item.key === "이름")?.value || SITE_NAME;
   const newTabLabel = language === "ko" ? " (새 창)" : " (opens in a new tab)";
 
@@ -41,30 +40,23 @@ export default function HomePageClient({ artistInfo, homeMeta, homeSections, ter
       <header className={styles.intro}>
         <KineticHeading title={artistName} />
         <p data-reveal>{homeMeta.navTitle || t("home_nav_title")}</p>
-        <div className={styles.signalTrack} aria-hidden="true">
-          <div className={styles.signal} data-signal>
-            {[24, 44, 72, 38, 100, 58, 84, 32, 66, 92, 48, 76, 36, 60, 20].map((height, index) => (
-              <i key={index} data-signal-bar style={{ height: `${height}%` }} />
-            ))}
-          </div>
-          <span className={styles.signalEnd} />
-        </div>
       </header>
       <div className={styles.panels}>
         {panels.map((section, index) => {
           const isExpanded = section.path === selectedPath;
           const contentId = `${panelId}-${index}`;
           return (
-            <motion.section key={`${section.path}-${index}`} layout={isMotionEnabled} transition={{ layout: { duration: 0.55, ease: [0.22, 1, 0.36, 1] } }} className={styles.panel} data-expanded={isExpanded}>
+            <section key={`${section.path}-${index}`} className={styles.panel} data-expanded={isExpanded}>
+              <span className={styles.panelEdge} data-panel-edge aria-hidden="true" />
               <span className={styles.panelIndex} data-panel-index aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
               <span className={styles.panelRule} data-panel-rule aria-hidden="true" />
-              <motion.h2 layout={isMotionEnabled ? 'position' : false}>
+              <h2 data-panel-heading>
                 <button type="button" id={`${contentId}-trigger`} aria-expanded={isExpanded} aria-controls={contentId}
-                  onClick={() => setSelectedPath(isExpanded ? null : section.path)}>
-                  <span className={styles.panelTitle}>{section.title}</span>
+                  onClick={(event) => { preparePanelTransition(event.detail > 0); setSelectedPath(isExpanded ? null : section.path); }}>
+                  <span className={styles.panelTitle} data-panel-title>{section.title}</span>
                   <span className={styles.toggle} aria-hidden="true">{isExpanded ? "−" : "+"}</span>
                 </button>
-              </motion.h2>
+              </h2>
               <div id={contentId} hidden={!isExpanded} className={styles.panelContent} data-panel-content>
                 <p>{section.description}</p>
                 {section.path === '/music' && !!previews?.tracks.length && <ul className={styles.trackPreview}>
@@ -87,7 +79,7 @@ export default function HomePageClient({ artistInfo, homeMeta, homeSections, ter
                   <i className={styles.linkRule} data-hover-rule aria-hidden="true" />
                 </Link>
               </div>
-            </motion.section>
+            </section>
           );
         })}
       </div>
