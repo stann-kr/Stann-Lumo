@@ -1,5 +1,5 @@
 import type { ComponentProps, ReactNode } from 'react';
-import { render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { GalleryPhoto } from '@/capabilities/media/media';
@@ -16,6 +16,8 @@ vi.mock('next/link', () => ({
     <a href={href} {...props}>{children}</a>
   ),
 }));
+
+vi.mock('@/contexts/LanguageContext', () => ({ useLanguage: () => ({ language: 'en' }) }));
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
@@ -110,4 +112,21 @@ describe('GalleryPhotoPage', () => {
       expect(icon).toHaveAttribute('aria-hidden', 'true');
     }
   });
+  it('leaves player, editing, modal and modified keys with their owning control', () => {
+    const { container } = render(<>
+      <ArchiveDetailPageClient photo={{ ...photos[1], mediaType: 'video_file' }} previous={photos[0]} next={photos[2]} index={1} total={3} />
+      <input aria-label="Search" />
+      <div role="dialog" aria-label="Menu"><button type="button">Close</button></div>
+    </>);
+    const video = container.querySelector('video')!;
+    expect(video).toHaveAttribute('controls');
+    for (const target of [video, screen.getByRole('textbox'), screen.getByRole('button', { name: 'Close' })]) {
+      for (const key of ['ArrowRight', 'ArrowLeft', 'Escape']) fireEvent.keyDown(target, { key });
+    }
+    fireEvent.keyDown(window, { key: 'ArrowRight', altKey: true });
+    expect(push).not.toHaveBeenCalled();
+    fireEvent.keyDown(window, { key: 'ArrowRight' });
+    expect(push).toHaveBeenCalledWith('/archive/last');
+  });
+
 });

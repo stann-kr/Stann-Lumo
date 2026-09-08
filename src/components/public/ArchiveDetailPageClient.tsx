@@ -1,14 +1,12 @@
 'use client';
 
-import { getPublicImageUrl } from '@/capabilities/media/media';
-
 import { useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
-import PageLayout from '@/components/feature/PageLayout';
-import { createBorderAccent, createBorderFaint, createBorderMid } from '@/utils/colorMix';
-import type { GalleryPhoto } from '@/capabilities/media/media';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { getPublicImageUrl, type GalleryPhoto } from '@/capabilities/media/media';
+import styles from './ArchiveDetailPageClient.module.css';
 
 interface ArchiveDetailPageClientProps {
   photo: GalleryPhoto;
@@ -21,15 +19,19 @@ interface ArchiveDetailPageClientProps {
 export default function ArchiveDetailPageClient({ photo, previous, next, index, total }: ArchiveDetailPageClientProps) {
   const router = useRouter();
   const { t } = useTranslation();
-  const borderFaint = createBorderFaint();
-  const borderMid = createBorderMid();
-  const borderAccent = createBorderAccent();
-  const pageTitle = photo.caption || photo.altText || `${t('gallery_label') || 'ARCHIVE'} ${index + 1}`;
-  const category = photo.linkedEventId ? ['EVENT', 'ri-calendar-event-line'] : photo.mediaType === 'video_youtube' ? ['YOUTUBE', 'ri-youtube-line'] : photo.mediaType === 'video_file' ? ['VIDEO', 'ri-film-line'] : ['PHOTO', 'ri-image-line'];
+  const { language } = useLanguage();
+  const isKorean = language === 'ko';
+  const itemLabel = photo.caption || photo.altText || `${t('gallery_label')} ${index + 1}`;
+  const previousLabel = isKorean ? '이전 아카이브 항목' : 'Previous archive item';
+  const nextLabel = isKorean ? '다음 아카이브 항목' : 'Next archive item';
   const handleKeyDown = useCallback((event: KeyboardEvent) => {
-    if (event.key === 'ArrowLeft' && previous) router.push(`/archive/${previous.id}`);
-    if (event.key === 'ArrowRight' && next) router.push(`/archive/${next.id}`);
-    if (event.key === 'Escape') router.push('/archive');
+    if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+    // Player controls, text entry and an open navigation dialog own their own keys.
+    if (event.target instanceof Element && event.target.closest('input, textarea, select, video, audio, iframe, [contenteditable]:not([contenteditable="false"]), [role="dialog"], [role="slider"]')) return;
+    const href = event.key === 'ArrowLeft' && previous ? `/archive/${previous.id}`
+      : event.key === 'ArrowRight' && next ? `/archive/${next.id}`
+      : event.key === 'Escape' ? '/archive' : null;
+    if (href) { event.preventDefault(); router.push(href); }
   }, [next, previous, router]);
 
   useEffect(() => {
@@ -37,21 +39,32 @@ export default function ArchiveDetailPageClient({ photo, previous, next, index, 
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleKeyDown]);
 
-  const media = photo.mediaType === 'video_youtube' && photo.videoYoutubeId ? <div className="w-full aspect-video"><iframe src={`https://www.youtube.com/embed/${photo.videoYoutubeId}`} allow="encrypted-media; fullscreen" allowFullScreen className="w-full h-full" title={photo.altText || photo.filename} /></div>
-    : photo.mediaType === 'video_file' ? <video src={`/api/media/${photo.id}`} controls className="w-full max-h-[70vh] object-contain" aria-label={pageTitle} />
-    : <img src={getPublicImageUrl(photo.id)} alt={photo.altText || photo.filename} className="w-full object-contain" style={{ objectPosition: `${photo.focalX}% ${photo.focalY}%` }} />;
-
   return (
-    <PageLayout title={pageTitle}>
-      <article className="space-y-10" aria-label={`Archive item: ${pageTitle}`}>
-        <header className="flex items-center justify-between"><Link href="/archive" className="inline-flex min-h-11 items-center gap-2 text-xs tracking-widest text-[var(--color-text-muted)] hover:text-[var(--color-secondary)] transition-colors"><i className="ri-arrow-left-line" aria-hidden="true" />ARCHIVE</Link><div className="flex items-center gap-4"><span className="inline-flex items-center gap-1.5 text-xs tracking-widest px-2 py-1 border text-[var(--color-accent)]" style={borderAccent}><i className={`${category[1]} text-xs`} aria-hidden="true" />{category[0]}</span><span className="text-xs text-[var(--color-text-muted)] tracking-widest">{index + 1} / {total}</span></div></header>
-        <div className="relative">{media}
-          {previous && <Link href={`/archive/${previous.id}`} className="absolute left-0 top-0 bottom-0 w-16 flex items-center justify-start pl-3 opacity-0 hover:opacity-100 focus-visible:opacity-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--color-accent)] transition-opacity bg-gradient-to-r from-[var(--color-bg)]/60 to-transparent" aria-label="Previous archive item" aria-keyshortcuts="ArrowLeft"><i className="ri-arrow-left-s-line text-3xl text-[var(--color-secondary)]" aria-hidden="true" /></Link>}
-          {next && <Link href={`/archive/${next.id}`} className="absolute right-0 top-0 bottom-0 w-16 flex items-center justify-end pr-3 opacity-0 hover:opacity-100 focus-visible:opacity-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--color-accent)] transition-opacity bg-gradient-to-l from-[var(--color-bg)]/60 to-transparent" aria-label="Next archive item" aria-keyshortcuts="ArrowRight"><i className="ri-arrow-right-s-line text-3xl text-[var(--color-secondary)]" aria-hidden="true" /></Link>}
+    <article className={styles.page} aria-label={`Archive item: ${itemLabel}`}>
+      <header className={styles.header}>
+        <Link href="/archive"><span aria-hidden="true">←</span> {t('gallery_title')}</Link>
+        <h1>{t('gallery_label')} <span>{index + 1} / {total}</span></h1>
+      </header>
+      <div className={styles.detail}>
+        <div className={styles.media}>
+          {photo.mediaType === 'video_youtube' && photo.videoYoutubeId ? <iframe src={`https://www.youtube.com/embed/${photo.videoYoutubeId}`} allow="encrypted-media; fullscreen" allowFullScreen title={photo.altText || photo.filename} />
+            : photo.mediaType === 'video_file' ? <video src={`/api/media/${photo.id}`} controls preload="metadata" aria-label={itemLabel} />
+            : <img src={getPublicImageUrl(photo.id)} alt={photo.altText || photo.filename} />}
         </div>
-        <div className="flex items-start justify-between gap-6 border-t pt-6" style={borderFaint}><div className="space-y-2 flex-1">{photo.caption && <p className="text-base text-[var(--color-text-muted)] tracking-wider leading-relaxed">{photo.caption}</p>}{photo.linkedEventId && <Link href={`/events/${photo.linkedEventId}`} className="inline-flex items-center gap-2 text-xs tracking-widest text-[var(--color-accent)] hover:opacity-70 transition-opacity"><i className="ri-calendar-event-line" aria-hidden="true" />VIEW EVENT</Link>}</div><nav className="flex items-center gap-2 shrink-0" aria-label="Archive navigation">{previous ? <Link href={`/archive/${previous.id}`} className="w-11 h-11 border flex items-center justify-center transition-colors text-[var(--color-secondary)] hover:bg-[var(--color-secondary)]/10 cursor-pointer" style={borderMid} aria-label="Previous archive item" aria-keyshortcuts="ArrowLeft"><i className="ri-arrow-left-line text-sm" aria-hidden="true" /></Link> : <button type="button" className="w-11 h-11 border flex items-center justify-center text-[var(--color-text-muted)] cursor-not-allowed" style={borderMid} aria-label="No previous archive item" disabled><i className="ri-arrow-left-line text-sm" aria-hidden="true" /></button>}{next ? <Link href={`/archive/${next.id}`} className="w-11 h-11 border flex items-center justify-center transition-colors text-[var(--color-secondary)] hover:bg-[var(--color-secondary)]/10 cursor-pointer" style={borderMid} aria-label="Next archive item" aria-keyshortcuts="ArrowRight"><i className="ri-arrow-right-line text-sm" aria-hidden="true" /></Link> : <button type="button" className="w-11 h-11 border flex items-center justify-center text-[var(--color-text-muted)] cursor-not-allowed" style={borderMid} aria-label="No next archive item" disabled><i className="ri-arrow-right-line text-sm" aria-hidden="true" /></button>}</nav></div>
-        <p className="text-[var(--color-text-muted)] text-xs tracking-widest">← → NAVIGATE · ESC BACK TO GALLERY</p>
-      </article>
-    </PageLayout>
+        <div className={styles.info}>
+          <p className={styles.type}>{photo.mediaType === 'video_youtube' ? 'YouTube' : photo.mediaType === 'video_file' ? (isKorean ? '영상' : 'Video') : (isKorean ? '이미지' : 'Image')}</p>
+          {photo.caption && <p className={styles.caption}>{photo.caption}</p>}
+          {photo.eventDate && <time dateTime={photo.eventDate.replace(/\./g, '-')}>{photo.eventDate}</time>}
+          {photo.linkedEventId && <Link href={`/events/${photo.linkedEventId}`} className={styles.event}>{isKorean ? '공연 보기' : 'View event'} <span aria-hidden="true">↗</span></Link>}
+          <nav className={styles.navigation} aria-label={isKorean ? '아카이브 탐색' : 'Archive navigation'}>
+            {previous ? <Link href={`/archive/${previous.id}`} aria-label={previousLabel} aria-keyshortcuts="ArrowLeft"><span aria-hidden="true">←</span> {isKorean ? '이전' : 'Previous'}</Link>
+              : <button type="button" aria-label={isKorean ? '이전 아카이브 항목 없음' : 'No previous archive item'} disabled><span aria-hidden="true">←</span> {isKorean ? '이전' : 'Previous'}</button>}
+            {next ? <Link href={`/archive/${next.id}`} aria-label={nextLabel} aria-keyshortcuts="ArrowRight">{isKorean ? '다음' : 'Next'} <span aria-hidden="true">→</span></Link>
+              : <button type="button" aria-label={isKorean ? '다음 아카이브 항목 없음' : 'No next archive item'} disabled>{isKorean ? '다음' : 'Next'} <span aria-hidden="true">→</span></button>}
+          </nav>
+          <p className={styles.hint}>{isKorean ? '← → 이전·다음 / Esc 목록으로' : '← → Previous / next · Esc back to archive'}</p>
+        </div>
+      </div>
+    </article>
   );
 }
