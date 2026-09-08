@@ -41,7 +41,7 @@ export default function HomePageClient({ artistInfo, homeMeta, homeSections, ter
         <KineticHeading title={artistName} />
         <p data-reveal>{homeMeta.navTitle || t("home_nav_title")}</p>
       </header>
-      <div className={styles.panels}>
+      <div className={styles.panels} data-home-panels>
         {panels.map((section, index) => {
           const isExpanded = section.path === selectedPath;
           const contentId = `${panelId}-${index}`;

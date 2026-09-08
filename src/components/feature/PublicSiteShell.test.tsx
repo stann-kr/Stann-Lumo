@@ -165,15 +165,23 @@ describe('PublicSiteShell public navigation', () => {
     await waitFor(() => expect(screen.getByRole('main')).toHaveFocus());
   });
 
-  it('keeps background content inert only while the mobile dialog is open', async () => {
+  it('keeps background content inert and locks document scrolling only while the mobile dialog is open', async () => {
     const user = userEvent.setup();
-    render(<PublicSiteShell><h1>Archive</h1></PublicSiteShell>);
+    const { unmount } = render(<PublicSiteShell><h1>Archive</h1></PublicSiteShell>);
     const main = screen.getByRole('main');
     await user.click(screen.getByRole('button', { name: 'Open menu' }));
     expect(main.closest('[inert]')).not.toBeNull();
+    expect(document.documentElement.style.overflow).toBe('hidden');
+    expect(document.body.style.overflow).toBe('hidden');
     await waitFor(() => expect(within(screen.getByRole('dialog')).getByRole('link', { name: 'HOME' })).toHaveFocus());
     await user.keyboard('{Escape}');
     expect(main.closest('[inert]')).toBeNull();
+    expect(document.documentElement.style.overflow).toBe('');
+    expect(document.body.style.overflow).toBe('');
+    await user.click(screen.getByRole('button', { name: 'Open menu' }));
+    unmount();
+    expect(document.documentElement.style.overflow).toBe('');
+    expect(document.body.style.overflow).toBe('');
   });
 
   it('restores readable content when motion is reduced and releases only its own animations on unmount', async () => {
@@ -271,6 +279,14 @@ describe('Home panels', () => {
     expect(about).toBeVisible();
     expect(gsap.getTweensOf(about, true)).toHaveLength(0);
     expect(screen.getByRole('link', { name: /Explore About/ })).toBeVisible();
+    for (const panel of container.querySelectorAll<HTMLElement>('[data-expanded]')) {
+      expect(panel.style.width).toBe('');
+      expect(panel.style.height).toBe('');
+      expect(panel.style.flex).toBe('');
+      expect(panel.querySelector<HTMLElement>('[data-panel-edge]')?.style.transform).toBe('');
+      expect(panel.querySelector<HTMLElement>('[data-panel-heading]')?.style.width).toBe('');
+    }
+    expect(container.querySelector<HTMLElement>('[data-home-panels]')?.style.height).toBe('');
   });
 
   it('settles a running category transition when motion is reduced and keeps subsequent choices readable', async () => {

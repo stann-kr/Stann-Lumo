@@ -2,16 +2,15 @@
 
 import { useRef, type RefObject } from 'react';
 import { gsap } from 'gsap';
-import { Flip } from 'gsap/dist/Flip';
 import { useGSAP } from '@gsap/react';
 import { useContentMotion } from '../feature/useContentMotion';
 import { PUBLIC_MOTION } from '../feature/publicMotion';
 
-gsap.registerPlugin(useGSAP, Flip);
+gsap.registerPlugin(useGSAP);
 
 interface PanelSnapshot {
-  edges: Flip.FlipState;
-  headings: Array<{ element: HTMLElement; left: number; top: number; wasExpanded: boolean }>;
+  height: number;
+  panels: Array<{ element: HTMLElement; width: number; height: number; wasExpanded: boolean }>;
 }
 
 export function useHomeMotion(rootRef: RefObject<HTMLDivElement | null>, selectedPath: string | null, isMotionEnabled: boolean) {
@@ -46,21 +45,36 @@ export function useHomeMotion(rootRef: RefObject<HTMLDivElement | null>, selecte
     media.add('(prefers-reduced-motion: no-preference)', () => {
       const root = rootRef.current;
       if (!root || document.hidden) return;
-      const transition = gsap.timeline({ defaults: { ease: PUBLIC_MOTION.ease } });
+      const group = root.querySelector<HTMLElement>('[data-home-panels]');
+      if (!group) return;
+      const isStacked = window.matchMedia('(max-width: 899px)').matches;
+      // Read the final layout together, before applying any animation styles.
+      const height = group.getBoundingClientRect().height;
+      const targets = snapshot.panels.map((panel) => ({
+        ...panel,
+        bounds: panel.element.getBoundingClientRect(),
+        isExpanded: panel.element.dataset.expanded === 'true',
+      }));
+      const transition = gsap.timeline({ defaults: { duration: PUBLIC_MOTION.panel, ease: PUBLIC_MOTION.ease, autoRound: false } });
       active.current = transition;
-      // Only the dividing lines resize. Text and artwork keep their natural proportions.
-      transition.add(Flip.from(snapshot.edges, {
-        scale: true, prune: true, duration: PUBLIC_MOTION.panel, ease: PUBLIC_MOTION.ease,
-      }), 0);
-      for (const { element, left, top, wasExpanded } of snapshot.headings) {
-        const bounds = element.getBoundingClientRect();
-        const hasChanged = element.closest('[data-expanded]')?.getAttribute('data-expanded') !== String(wasExpanded);
-        transition.fromTo(element, { x: left - bounds.left, y: top - bounds.top }, {
-          x: 0, y: 0, duration: PUBLIC_MOTION.panel, clearProps: 'transform',
+      // These four panels must move the actual document flow. Transforming only
+      // their borders leaves hit areas and following mobile rows at the destination.
+      if (!isStacked) transition.fromTo(group, { height: snapshot.height }, { height, clearProps: 'height' }, 0);
+      for (const { element, width, height: previousHeight, bounds, wasExpanded, isExpanded } of targets) {
+        transition.set(element, { flex: 'none', overflow: 'clip', minHeight: 0 }, 0);
+        transition.fromTo(element, isStacked ? { height: previousHeight } : { width }, {
+          ...(isStacked ? { height: bounds.height } : { width: bounds.width }),
+          clearProps: 'width,height,flex,minHeight,overflow',
         }, 0);
-        if (hasChanged) transition.fromTo(element.querySelector('[data-panel-title]'), { opacity: 0.15 }, {
-          opacity: 1, duration: PUBLIC_MOTION.feedback, clearProps: 'opacity',
-        }, 0.04);
+        if (!isStacked && isExpanded) {
+          // Keep text wrapping stable while its containing panel opens.
+          const surfaces = element.querySelectorAll('[data-panel-heading], [data-panel-content]');
+          transition.set(surfaces, { width: bounds.width }, 0);
+          transition.set(surfaces, { clearProps: 'width' }, PUBLIC_MOTION.panel);
+        }
+        if (wasExpanded !== isExpanded) transition.fromTo(element.querySelector('[data-panel-title]'), {
+          opacity: isStacked ? 0.65 : 0,
+        }, { opacity: 1, duration: PUBLIC_MOTION.feedback, clearProps: 'opacity' }, isStacked ? 0 : 0.04);
       }
       const content = root.querySelector('[data-expanded="true"] [data-panel-content]');
       if (content) transition.fromTo(content.children, { y: 8, opacity: 0 }, {
@@ -78,13 +92,16 @@ export function useHomeMotion(rootRef: RefObject<HTMLDivElement | null>, selecte
       active.current?.progress(1);
       return;
     }
-    // Capture the currently drawn positions before completing an interrupted transition.
-    const headings = Array.from(root.querySelectorAll<HTMLElement>('[data-panel-heading]'), (element) => {
+    const group = root.querySelector<HTMLElement>('[data-home-panels]');
+    if (!group) return;
+    // Retarget from the drawn sizes, then release the previous context before
+    // measuring the next natural layout. No inverse transforms are recaptured.
+    const height = group.getBoundingClientRect().height;
+    const panels = Array.from(group.querySelectorAll<HTMLElement>('[data-expanded]'), (element) => {
       const bounds = element.getBoundingClientRect();
-      return { element, left: bounds.left, top: bounds.top, wasExpanded: element.closest('[data-expanded]')?.getAttribute('data-expanded') === 'true' };
+      return { element, width: bounds.width, height: bounds.height, wasExpanded: element.dataset.expanded === 'true' };
     });
-    const edges = Flip.getState(root.querySelectorAll('[data-panel-edge], [data-panel-rule], [data-panel-index]'), { props: 'opacity' });
     active.current?.progress(1);
-    pending.current = { edges, headings };
+    pending.current = { height, panels };
   };
 }

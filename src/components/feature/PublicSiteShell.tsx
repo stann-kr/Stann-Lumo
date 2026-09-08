@@ -49,6 +49,21 @@ const PublicSiteShell = ({ children, artistName = SITE_NAME }: PublicSiteShellPr
     };
   }, []);
 
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+    const documentStyle = document.documentElement.style;
+    const bodyStyle = document.body.style;
+    const previous = { overflow: documentStyle.overflow, gutter: documentStyle.scrollbarGutter, bodyOverflow: bodyStyle.overflow };
+    documentStyle.scrollbarGutter = 'stable';
+    documentStyle.overflow = 'hidden';
+    bodyStyle.overflow = 'hidden';
+    return () => {
+      documentStyle.overflow = previous.overflow;
+      documentStyle.scrollbarGutter = previous.gutter;
+      bodyStyle.overflow = previous.bodyOverflow;
+    };
+  }, [mobileMenuOpen]);
+
   const closeMobileMenu = useCallback((restoreFocus = true) => {
     restoreMobileMenuFocusRef.current = restoreFocus;
     setMobileMenuPath(null);
