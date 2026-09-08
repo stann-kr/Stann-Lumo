@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { D1Database, D1PreparedStatement } from '@/lib/db';
 import { getDB } from '@/lib/db';
 import { assertPublicPayloadSafe } from '@/lib/security/publicPayload';
-import { getArchiveDetail, getArchivePhotos, getHomeProjection, getMusicProjection } from './publicContent.server';
+import { getArchiveDetail, getArchivePhotos, getHomeProjection, getMusicProjection, getPublicShellProjection } from './publicContent.server';
 import { createSqliteD1 } from '@/test/sqliteD1';
 
 vi.mock('@/lib/db', () => ({ getDB: vi.fn() }));
@@ -51,6 +51,8 @@ describe('public server content projections', () => {
     vi.mocked(getDB).mockReturnValue(database);
 
     const projection = await getHomeProjection('ko');
+    const shell = await getPublicShellProjection('ko');
+    expect(shell).toEqual({ artistName: 'STANN LUMO' });
 
     expect(projection.artistInfo).toContainEqual(expect.objectContaining({ value: 'STANN LUMO' }));
     expect(projection.homeSections).toHaveLength(1);

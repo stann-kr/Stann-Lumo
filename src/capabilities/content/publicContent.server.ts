@@ -311,18 +311,14 @@ async function getTerminalInfo(db: D1Database): Promise<TerminalInfo> {
 
 export interface PublicShellProjection {
   artistName: string;
-  sceneTracks: Track[];
 }
 
 export const getPublicShellProjection = cache(async (locale: PublicLocale): Promise<PublicShellProjection> => {
   const db = getPublicDB();
 
-  const [artistRows, trackRows] = await Promise.all([
-    localizedRows<ArtistInfoRow>(db, 'SELECT id, key, value FROM artist_info WHERE lang = ? ORDER BY sort_order', locale),
-    localizedRows<TrackRow>(db, 'SELECT id, title, type, duration, year, platform, link FROM tracks WHERE lang = ? ORDER BY sort_order LIMIT 20', locale),
-  ]);
+  const artistRows = await localizedRows<ArtistInfoRow>(db, 'SELECT id, key, value FROM artist_info WHERE lang = ? ORDER BY sort_order', locale);
   const artistName = artistRows.find((row) => row.key === 'Name' || row.key === '이름')?.value ?? 'STANN LUMO';
-  const projection = { artistName, sceneTracks: mapTracks(trackRows) };
+  const projection = { artistName };
   assertPublicPayloadSafe(projection);
   return projection;
 });

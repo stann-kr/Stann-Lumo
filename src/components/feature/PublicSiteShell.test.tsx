@@ -1,7 +1,8 @@
 import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import TerminalLayout from './TerminalLayout';
+import PublicSiteShell from './PublicSiteShell';
+import HomePageClient from '../public/HomePageClient';
 
 const mocks = vi.hoisted(() => ({
   language: 'en' as 'en' | 'ko',
@@ -14,8 +15,8 @@ vi.mock('next/navigation', () => ({
 }));
 
 vi.mock('next/link', () => ({
-  default: ({ children, href, ...props }: React.ComponentProps<'a'>) => (
-    <a href={href} {...props}>{children}</a>
+  default: ({ children, href, onNavigate, ...props }: React.ComponentProps<'a'> & { onNavigate?: unknown }) => (
+    <a href={href} {...props} onClick={() => { if (typeof onNavigate === 'function') onNavigate(); }}>{children}</a>
   ),
 }));
 
@@ -43,21 +44,6 @@ vi.mock('@/contexts/LanguageContext', () => ({
   }),
 }));
 
-vi.mock('framer-motion', () => ({
-  AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-  motion: {
-    div: ({ children, ...props }: React.ComponentProps<'div'> & {
-      initial?: unknown;
-      animate?: unknown;
-      exit?: unknown;
-      transition?: unknown;
-    }) => <div {...(props as React.ComponentProps<'div'>)}>{children}</div>,
-  },
-}));
-
-vi.mock('../home/CursorGlow', () => ({ default: () => null }));
-vi.mock('../home/LiveClock', () => ({ default: () => <span>12:00</span> }));
-vi.mock('./HomeAmbientScene', () => ({ default: () => <span data-testid="home-ambient-scene" /> }));
 vi.mock('../base/SignalNet', () => ({ default: () => null }));
 
 const desktopBreakpointListeners = new Set<(event: MediaQueryListEvent) => void>();
@@ -75,7 +61,7 @@ const matchMedia = vi.fn(() => ({
   },
 }));
 
-describe('TerminalLayout public navigation', () => {
+describe('PublicSiteShell public navigation', () => {
   beforeEach(() => {
     mocks.language = 'en';
     mocks.pathname = '/archive';
@@ -86,7 +72,7 @@ describe('TerminalLayout public navigation', () => {
   });
 
   it('provides a skip link and exposes the current route to assistive technology', () => {
-    render(<TerminalLayout><h1>Archive</h1></TerminalLayout>);
+    render(<PublicSiteShell><h1>Archive</h1></PublicSiteShell>);
 
     expect(screen.getByRole('link', { name: 'Skip to main content' })).toHaveAttribute('href', '#main-content');
     expect(screen.getByRole('main')).toHaveAttribute('id', 'main-content');
@@ -95,7 +81,7 @@ describe('TerminalLayout public navigation', () => {
 
   it('traps mobile navigation focus and restores the trigger after closing it', async () => {
     const user = userEvent.setup();
-    render(<TerminalLayout><h1>Archive</h1></TerminalLayout>);
+    render(<PublicSiteShell><h1>Archive</h1></PublicSiteShell>);
 
     expect(screen.queryByRole('dialog', { name: 'Mobile navigation' })).not.toBeInTheDocument();
 
@@ -132,23 +118,60 @@ describe('TerminalLayout public navigation', () => {
   });
 
   it('moves focus to main content after a public route transition', async () => {
-    const { rerender } = render(<TerminalLayout><h1>Archive</h1></TerminalLayout>);
+    const { rerender } = render(<PublicSiteShell><h1>Archive</h1></PublicSiteShell>);
 
     mocks.pathname = '/music';
-    rerender(<TerminalLayout><h1>Music</h1></TerminalLayout>);
+    rerender(<PublicSiteShell><h1>Music</h1></PublicSiteShell>);
 
     await waitFor(() => expect(screen.getByRole('main')).toHaveFocus());
   });
 
-  it('keeps the optional ambient scene available across public routes', () => {
-    mocks.pathname = '/';
-    const { rerender } = render(<TerminalLayout><h1>Home</h1></TerminalLayout>);
+  it('keeps background content inert only while the mobile dialog is open', async () => {
+    const user = userEvent.setup();
+    render(<PublicSiteShell><h1>Archive</h1></PublicSiteShell>);
+    const main = screen.getByRole('main');
+    await user.click(screen.getByRole('button', { name: 'Open menu' }));
+    expect(main.closest('[inert]')).not.toBeNull();
+    await waitFor(() => expect(within(screen.getByRole('dialog')).getByRole('link', { name: 'HOME' })).toHaveFocus());
+    await user.keyboard('{Escape}');
+    expect(main.closest('[inert]')).toBeNull();
+  });
+});
 
-    expect(screen.getByTestId('home-ambient-scene')).toBeInTheDocument();
+const sections = ['About', 'Music', 'Events', 'Archive', 'Contact', 'Link'].map((title) => ({
+  title, description: `${title} description`, path: `/${title.toLowerCase()}`, icon: '',
+}));
 
-    mocks.pathname = '/archive';
-    rerender(<TerminalLayout><h1>Archive</h1></TerminalLayout>);
+describe('Home panels', () => {
+  it('keeps CMS order and separates keyboard expansion from route links', async () => {
+    const user = userEvent.setup();
+    render(<HomePageClient artistInfo={[]} homeMeta={{ navTitle: 'Explore' }} homeSections={sections} terminalInfo={{ url: '', description: '' }} />);
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('STANN LUMO');
+    expect(screen.getAllByRole('button').map((button) => button.textContent?.replace(/[+−]/g, ''))).toEqual(['About', 'Music', 'Events', 'Archive']);
+    expect(screen.getByRole('link', { name: /Explore Music/ })).toHaveAttribute('href', '/music');
+    expect(screen.queryByRole('link', { name: /Explore Archive/ })).not.toBeInTheDocument();
+    const archive = screen.getByRole('button', { name: 'Archive' });
+    archive.focus();
+    await user.keyboard('{Enter}');
+    expect(archive).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByRole('link', { name: /Explore Archive/ })).toHaveAttribute('href', '/archive');
+    expect(screen.queryByRole('link', { name: /Explore Music/ })).not.toBeInTheDocument();
+    await user.keyboard(' ');
+    expect(archive).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.queryByRole('link', { name: /Explore Archive/ })).not.toBeInTheDocument();
+    for (const title of ['Contact', 'Link']) expect(screen.getByRole('link', { name: new RegExp(`${title} ${title} description`) })).toHaveAttribute('href', `/${title.toLowerCase()}`);
+  });
 
-    expect(screen.getByTestId('home-ambient-scene')).toBeInTheDocument();
+  it('preserves actual Terminal fields, URL and optional embed without inventing home items', () => {
+    render(<HomePageClient artistInfo={[]} homeMeta={{ navTitle: 'Explore' }} homeSections={[]} terminalInfo={{
+      url: 'https://terminal.example', description: 'Live interface',
+      customFields: [{ id: 'one', fieldKey: 'Set', fieldValue: 'Live', fieldType: 'badge', sortOrder: 0 }],
+      style: { fontSize: 'md', animationSpeed: 'normal', promptText: '>', showEmbed: true, embedHeight: '420px' },
+    }} />);
+    expect(screen.queryByRole('button')).not.toBeInTheDocument();
+    expect(screen.getByText('Live')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /home_terminal_enter/ })).toHaveAttribute('href', 'https://terminal.example');
+    expect(screen.getByTitle('Terminal')).toHaveAttribute('src', 'https://terminal.example');
+    expect(screen.getByTitle('Terminal')).toHaveStyle({ height: '420px' });
   });
 });

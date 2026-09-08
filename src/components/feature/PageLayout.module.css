@@ -1,0 +1,5 @@
+.page { padding: clamp(2.5rem, 6vw, 6rem) var(--page-gutter, 1.25rem) clamp(4rem, 8vw, 8rem); max-width: 1800px; margin-inline: auto; }
+.header { padding-bottom: clamp(2rem, 4vw, 4rem); }
+.header h1 { max-width: 18ch; font-family: var(--font-display, sans-serif); font-size: clamp(2.5rem, 7vw, 8rem); font-weight: 900; line-height: 1.04; letter-spacing: -.045em; overflow-wrap: anywhere; }
+.header h1 span { display: block; }
+.header p { margin-top: 1.5rem; max-width: 65ch; font-size: 1rem; color: var(--color-secondary); overflow-wrap: anywhere; }

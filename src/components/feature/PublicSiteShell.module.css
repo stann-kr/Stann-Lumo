@@ -1,0 +1,44 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+.shell {
+  --font-display: 'Inter', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  --page-gutter: clamp(1.25rem, 4vw, 5rem);
+  min-height: 100svh;
+  background: var(--color-bg);
+  color: var(--color-primary);
+  font-family: var(--font-display);
+  line-height: 1.6;
+}
+.shell :global(.font-sans) { font-family: var(--font-display); }
+.document { min-height: 100svh; display: flex; flex-direction: column; }
+.header {
+  position: sticky; top: 0; z-index: 40;
+  display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+  min-height: calc(4.5rem + env(safe-area-inset-top, 0px));
+  padding: env(safe-area-inset-top, 0px) var(--page-gutter) 0;
+  border-bottom: 1px solid var(--color-muted); background: var(--color-bg);
+}
+.brand { font-size: 1.15rem; font-weight: 900; letter-spacing: -.045em; overflow-wrap: anywhere; }
+.desktopNav { display: flex; align-items: center; gap: 2rem; }
+.navList { display: flex; align-items: center; gap: 1.25rem; }
+.navList a { display: flex; align-items: center; min-height: 44px; font-size: .8rem; font-weight: 600; }
+.navList a[aria-current] { text-decoration: underline; text-decoration-color: var(--color-accent); text-underline-offset: .6rem; text-decoration-thickness: 2px; }
+.navList a:hover, .externalLinks a:hover { color: var(--color-secondary); }
+.languages { display: flex; }
+.languages button { min-width: 44px; min-height: 44px; font-family: 'JetBrains Mono', monospace; font-size: .75rem; color: var(--color-secondary); }
+.languages button[aria-pressed='true'] { color: var(--color-primary); text-decoration: underline; text-underline-offset: .4rem; }
+.menuButton { display: none; min-height: 44px; align-items: center; gap: 1rem; flex-shrink: 0; }
+.main { flex: 1; min-width: 0; scroll-margin-top: 5.5rem; }
+.footer { display: flex; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; gap: 2rem; border-top: 1px solid var(--color-muted); padding: 2rem var(--page-gutter); }
+.externalLinks { display: flex; flex-wrap: wrap; gap: 1.5rem; font-size: .8rem; }
+.externalLinks a { display: inline-flex; align-items: center; gap: .5rem; min-height: 44px; }
+.skipLink { position: fixed; left: 1rem; top: 1rem; z-index: 100; padding: 1rem; background: black; transform: translateY(-200%); }
+.skipLink:focus { transform: none; }
+.menuLayer { position: fixed; inset: 0; z-index: 60; }
+.backdrop { position: absolute; inset: 0; background: rgb(0 0 0 / 75%); }
+.dialog { position: relative; max-height: 100dvh; overflow-y: auto; background: black; border-bottom: 1px solid var(--color-muted); padding: calc(1rem + env(safe-area-inset-top, 0px)) var(--page-gutter) 1rem; }
+.dialog .navList { display: block; }
+.dialog .navList a { padding: .6rem 0; border-bottom: 1px solid var(--color-muted); font-size: clamp(1.25rem, 5vw, 2rem); }
+.dialogControls { display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; }
+.dialogControls > button { min-height: 44px; }
+@media (max-width: 1199px) { .desktopNav { display: none; } .menuButton { display: flex; } }
