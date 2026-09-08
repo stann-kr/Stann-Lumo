@@ -6,6 +6,7 @@ import { useContent } from '../../contexts/ContentContext';
 import { AdminEditGuardProvider, useAdminEditGuard } from '@/capabilities/admin/AdminEditGuard';
 import { createColorMixStyle } from '../../utils/colorMix';
 import { COLOR_VARS } from '../../constants/colors';
+import styles from './AdminLayout.module.css';
 import { TRANSITION } from '../../constants/styles';
 
 interface AdminLayoutProps {
@@ -65,7 +66,7 @@ const AdminLayoutContent = ({ children }: AdminLayoutProps) => {
   const borderStyle = createColorMixStyle(COLOR_VARS.SECONDARY, 15);
 
   return (
-    <div className="min-h-screen bg-[var(--color-bg)] text-[var(--color-secondary)] font-mono flex">
+    <div className={styles.admin}>
       {/* Desktop Sidebar */}
       <aside
         className="hidden lg:flex lg:flex-col lg:w-64 lg:fixed lg:left-0 lg:top-0 lg:h-screen lg:border-r lg:bg-[var(--color-bg)]"
@@ -80,7 +81,7 @@ const AdminLayoutContent = ({ children }: AdminLayoutProps) => {
 
           {/* Edit Language Indicator */}
           <div className="mt-4 flex items-center gap-2">
-            <span className="text-xs text-[var(--color-muted)]/60 tracking-wider">EDITING:</span>
+            <span className="text-xs text-[var(--color-text-muted)] tracking-wider">EDITING:</span>
             <div className="inline-flex items-center gap-1 bg-[var(--color-secondary)]/5 px-2 py-1 rounded">
               <button
                 type="button"
@@ -122,7 +123,7 @@ const AdminLayoutContent = ({ children }: AdminLayoutProps) => {
                     className={`w-full text-left px-4 py-3 cursor-pointer whitespace-nowrap relative group ${
                       isActive
                         ? 'text-[var(--color-primary)] bg-[var(--color-secondary)]/10'
-                        : 'text-[var(--color-secondary)]/50 hover:text-[var(--color-secondary)] hover:bg-[var(--color-secondary)]/5'
+                        : 'text-[var(--color-secondary)] hover:text-[var(--color-secondary)] hover:bg-[var(--color-secondary)]/5'
                     }`}
                     style={{ transition: `${TRANSITION.DURATION.MEDIUM} ${TRANSITION.TIMING.EASE_IN_OUT}` }}
                   >
@@ -171,7 +172,7 @@ const AdminLayoutContent = ({ children }: AdminLayoutProps) => {
               ADMIN
             </h1>
             <div className="flex items-center gap-2 mt-1">
-              <span className="text-xs text-[var(--color-muted)]/60 tracking-wider">EDITING:</span>
+              <span className="text-xs text-[var(--color-text-muted)] tracking-wider">EDITING:</span>
               <button
                 type="button"
                 onClick={() => handleLanguageChange(currentEditLanguage === 'en' ? 'ko' : 'en')}
@@ -214,7 +215,7 @@ const AdminLayoutContent = ({ children }: AdminLayoutProps) => {
                     className={`w-full text-left px-6 py-4 cursor-pointer ${
                       isActive
                         ? 'text-[var(--color-primary)] bg-[var(--color-secondary)]/10'
-                        : 'text-[var(--color-secondary)]/50 hover:text-[var(--color-secondary)] hover:bg-[var(--color-secondary)]/5'
+                        : 'text-[var(--color-secondary)] hover:text-[var(--color-secondary)] hover:bg-[var(--color-secondary)]/5'
                     }`}
                     style={{
                       ...(isActive ? { borderLeft: '2px solid var(--color-secondary)' } : {}),

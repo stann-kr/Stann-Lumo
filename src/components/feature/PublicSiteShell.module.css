@@ -1,7 +1,5 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
-
 .shell {
-  --font-display: 'Inter', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  composes: root from '../../styles/designV2.module.css';
   --page-gutter: clamp(1.25rem, 4vw, 5rem);
   min-height: 100svh;
   background: var(--color-bg);

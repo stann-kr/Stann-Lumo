@@ -1,5 +1,6 @@
 import { ReactNode } from 'react';
 import SaveButton from './SaveButton';
+import styles from './AdminSectionHeader.module.css';
 
 /**
  * AdminSectionHeader 컴포넌트 Props
@@ -55,24 +56,22 @@ export default function AdminSectionHeader({
   const actionContent = actions || action;
   
   return (
-    <div className={`flex justify-between items-start mb-8 ${className}`}>
+    <div className={`${styles.header} ${className}`}>
       <div>
-        <h1 
-          className="text-3xl font-bold tracking-wider mb-2"
+        <h1
           style={{ color: 'var(--color-primary)' }}
         >
           {title}
         </h1>
         {description && (
-          <p 
-            className="text-sm tracking-widest"
-            style={{ color: 'var(--color-accent)' }}
+          <p
+            style={{ color: 'var(--color-secondary)' }}
           >
             {description}
           </p>
         )}
       </div>
-      <div className="flex gap-3">
+      <div className={styles.actions}>
         {actionContent}
         {showSaveButton && onSave && (
           <SaveButton

@@ -221,7 +221,7 @@ const AdminHomePage = () => {
     <div className="space-y-8">
         <AdminSectionHeader
           title="HOME SECTION"
-          description={`홈 화면 네비게이션 카드 및 터미널 정보 관리 (${currentEditLanguage.toUpperCase()})`}
+          description={`홈 탐색 항목 및 Terminal 정보 관리 (${currentEditLanguage.toUpperCase()})`}
           onSave={saveChanges}
           isSaving={isSaving}
           action={
@@ -480,11 +480,13 @@ const AdminHomePage = () => {
         {/* Navigation Cards */}
         <div>
           <h2 className="text-xl font-bold text-[var(--color-secondary)] tracking-wider mb-4">
-            NAVIGATION CARDS
+            홈 탐색 항목
           </h2>
+          <p className="mb-4 text-sm text-[var(--color-secondary)]">저장한 순서대로 앞 4개 항목은 홈의 큰 패널에, 이후 항목은 패널 아래 보조 링크에 표시됩니다. 각 항목의 설명과 경로는 그대로 사용합니다.</p>
           <div className="space-y-4">
             {homeSections.map((section, index) => (
               <AdminCard key={index}>
+                <p className="mb-4 text-sm text-[var(--color-text-muted)]">{index < 4 ? `홈 패널 ${index + 1}` : `보조 링크 ${index - 3}`}</p>
                 {showDeleteModal === index ? (
                   <DeleteConfirmModal
                     show={true}

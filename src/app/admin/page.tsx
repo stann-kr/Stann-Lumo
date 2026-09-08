@@ -1,6 +1,7 @@
 'use client';
 import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
+import typography from '@/styles/designV2.module.css';
 import { authenticateAdmin } from '@/capabilities/auth/auth.client';
 
 const AdminLoginPage = () => {
@@ -29,19 +30,19 @@ const AdminLoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--color-bg)] text-[var(--color-secondary)] font-mono flex items-center justify-center p-6">
+    <div className={`${typography.root} min-h-screen flex items-center justify-center p-6`}>
       <div className="w-full max-w-md">
         <div className="text-center mb-12">
           <h1 className="text-3xl font-bold text-[var(--color-primary)] tracking-wider mb-2">
-            ADMIN ACCESS
+            Admin
           </h1>
-          <p className="text-sm text-[var(--color-muted)] tracking-widest">CONTENT MANAGEMENT SYSTEM</p>
+          <p className="text-sm text-[var(--color-text-muted)] tracking-widest">Content management</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <label htmlFor="password" className="block text-sm tracking-widest text-[var(--color-secondary)]/70 mb-3">
-              PASSWORD
+              Password
             </label>
             <input
               type="password"
@@ -53,14 +54,17 @@ const AdminLoginPage = () => {
               }}
               className="w-full bg-transparent border-b border-[var(--color-secondary)]/30 py-3 px-1 text-[var(--color-primary)] focus:outline-none focus:border-[var(--color-secondary)] transition-colors duration-200"
               placeholder="Enter admin password"
+              aria-invalid={!!error}
+              aria-describedby={error ? "login-error" : undefined}
+              autoComplete="current-password"
               autoFocus
               disabled={loading}
             />
           </div>
 
           {error && (
-            <div className="flex items-center gap-2 text-sm text-[var(--color-secondary)]/70 bg-[var(--color-secondary)]/5 px-4 py-3 border border-[var(--color-secondary)]/20">
-              <i className="ri-error-warning-line"></i>
+            <div id="login-error" role="alert" className="flex items-center gap-2 text-sm text-[var(--color-secondary)]/70 bg-[var(--color-secondary)]/5 px-4 py-3 border border-[var(--color-secondary)]/20">
+              <i aria-hidden="true" className="ri-error-warning-line"></i>
               <span>{error}</span>
             </div>
           )}
@@ -70,7 +74,7 @@ const AdminLoginPage = () => {
             disabled={loading}
             className="w-full bg-[var(--color-secondary)]/10 hover:bg-[var(--color-secondary)]/20 text-[var(--color-primary)] py-4 px-6 transition-all duration-200 cursor-pointer border border-[var(--color-secondary)]/30 hover:border-[var(--color-secondary)]/50 whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <span className="text-sm tracking-widest">{loading ? 'VERIFYING...' : 'ENTER ADMIN'}</span>
+            <span className="text-sm tracking-widest">{loading ? 'Signing in…' : 'Sign in'}</span>
           </button>
         </form>
 
