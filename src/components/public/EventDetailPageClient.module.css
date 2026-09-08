@@ -1,0 +1,20 @@
+.back { display: inline-flex; align-items: center; min-height: 44px; gap: .75rem; margin-bottom: 2rem; color: var(--color-secondary); }
+.detail { display: grid; grid-template-columns: minmax(15rem, 18rem) minmax(0, 1fr); gap: 3rem clamp(2rem, 6vw, 7rem); }
+.facts { align-self: start; position: sticky; top: 6rem; }
+.facts dl > div { border-top: 1px solid var(--color-muted); padding: 1.25rem 0; }
+.facts dt { margin-bottom: .75rem; font: .8rem 'JetBrains Mono', monospace; color: var(--color-secondary); }
+.facts dd { font-size: 1.2rem; overflow-wrap: anywhere; }
+.facts dd span { display: block; color: var(--color-secondary); font-size: 1rem; }
+.external { display: inline-flex; align-items: center; min-height: 44px; gap: .75rem; border-bottom: 1px solid var(--color-muted); padding-block: .75rem; }
+.poster { grid-column: 2; min-width: 0; }
+.poster img { width: 100%; max-height: 100svh; object-fit: contain; object-position: top; }
+.lineup { grid-column: 2; }
+.lineup h2 { font-size: 1.25rem; font-weight: 600; margin-bottom: 1rem; }
+.lineup p { white-space: pre-line; max-width: 65ch; line-height: 1.8; overflow-wrap: anywhere; }
+.detail[data-has-poster='false'] .lineup { grid-row: 1; }
+@media (max-width: 799px) {
+  .detail { grid-template-columns: minmax(0, 1fr); gap: 2rem; }
+  .facts { position: static; }
+  .poster, .lineup { grid-column: 1; }
+  .detail[data-has-poster='false'] .lineup { grid-row: auto; }
+}

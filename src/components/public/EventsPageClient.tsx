@@ -6,7 +6,8 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import PageLayout from '@/components/feature/PageLayout';
-import { createBorderMid } from '@/utils/colorMix';
+import { useLanguage } from '@/contexts/LanguageContext';
+import styles from './EventsPageClient.module.css';
 import type { EventsPageMeta } from '@/capabilities/content/content';
 import type { Performance } from '@/capabilities/events/events';
 
@@ -19,43 +20,21 @@ function parseEventDate(date: string): Date {
   return new Date(date.replace(/\./g, '-'));
 }
 
-function EventRow({ event, index, past }: { event: Performance; index: number; past?: boolean }) {
-  const id = (index + 1).toString().padStart(3, '0');
-  const subtle = 'text-[color:color-mix(in_srgb,var(--color-secondary)_72%,transparent)]';
-
+function EventRow({ event }: { event: Performance }) {
   return (
-    <Link
-      href={`/events/${event.id}`}
-      className={`bg-surface group relative min-h-11 overflow-hidden transition-colors ${past ? 'hover:bg-[var(--color-muted)]' : 'hover:bg-[var(--color-accent)]/5'} flex flex-col md:flex-row md:items-center p-4 gap-4`}
-    >
-      <div className={`hidden w-8 font-mono text-xs ${past ? subtle : 'text-[var(--color-accent)]'} md:block`}>[{id}]</div>
-      {event.posterImageId && (
-        <div className={`${past ? 'w-10 h-10' : 'w-12 h-12'} bg-black border border-[var(--color-muted)] shrink-0 overflow-hidden relative`}>
-          {!past && <div className="absolute inset-0 bg-[var(--color-accent)] opacity-20 mix-blend-overlay" />}
-          <img
-            src={getPublicImageUrl(event.posterImageId)}
-            alt={event.title}
-            className={`w-full h-full object-cover filter grayscale ${past ? 'opacity-50 transition-[filter,opacity] duration-300 group-hover:opacity-100' : 'transition-[filter] duration-500 group-hover:grayscale-0'}`}
-          />
-        </div>
-      )}
-      <div className="flex-1 min-w-0">
-        <h3 className={`font-mono text-base ${past ? 'tracking-widest' : 'tracking-[0.1em]'} ${past ? subtle : 'text-[var(--color-secondary)]'} group-hover:text-[var(--color-primary)] transition-colors uppercase truncate mb-1`}>{event.title}</h3>
-        <div className={`font-mono text-xs tracking-widest ${subtle} uppercase truncate`}>
-          {event.venue}{event.location && ` / ${event.location}`}
-        </div>
-      </div>
-      <div className="flex flex-col md:items-end justify-center shrink-0 md:w-32 font-mono">
-        <p className={`${past ? `text-xs ${subtle}` : 'text-base text-[var(--color-primary)]'} tracking-widest`}>{event.date}</p>
-        {!past && event.time && <p className="text-xs text-[var(--color-accent)] tracking-widest mt-1">{event.time}</p>}
-      </div>
+    <Link href={`/events/${event.id}`} className={styles.row}>
+      <div className={styles.date}><time dateTime={event.date.replace(/\./g, '-')}>{event.date}</time>{event.time && <span>{event.time}</span>}</div>
+      <h3>{event.title}</h3>
+      <div className={styles.venue}>{event.venue}{event.location && <span>{event.location}</span>}</div>
+      <span className={styles.status} data-cancelled={event.status === 'Cancelled'}>{event.status}</span>
+      {event.posterImageId && <img src={getPublicImageUrl(event.posterImageId)} alt="" className={styles.poster} loading="lazy" />}
     </Link>
   );
 }
 
 export default function EventsPageClient({ eventsMeta, performances }: EventsPageClientProps) {
   const { t } = useTranslation();
-  const borderMid = createBorderMid();
+  const { language } = useLanguage();
   const [visiblePastCount, setVisiblePastCount] = useState(10);
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -65,21 +44,17 @@ export default function EventsPageClient({ eventsMeta, performances }: EventsPag
 
   return (
     <PageLayout title={eventsMeta.title || t('events_title')} subtitle={eventsMeta.subtitle || t('events_subtitle')}>
-      <section className="space-y-6" aria-labelledby="upcoming-events-heading">
-        <h2 id="upcoming-events-heading" className="text-base font-mono font-semibold text-[var(--color-accent)] tracking-widest">{eventsMeta.upcomingTitle || t('events_upcoming')}</h2>
-        {upcomingEvents.length === 0 ? <p className="text-base text-[color:color-mix(in_srgb,var(--color-secondary)_72%,transparent)]">{t('msg_no_items')}</p> : (
-          <div className="border border-[var(--color-muted)] p-[1px] flex flex-col gap-[1px]">
-            {upcomingEvents.map((event, index) => <EventRow key={event.id} event={event} index={index} />)}
-          </div>
+      <section className={styles.section} aria-labelledby="upcoming-events-heading">
+        <h2 id="upcoming-events-heading">{eventsMeta.upcomingTitle || t('events_upcoming')} <span>{upcomingEvents.length}</span></h2>
+        {upcomingEvents.length === 0 ? <p className={styles.empty}>{language === 'ko' ? '예정된 공연이 없습니다.' : 'No upcoming events.'}</p> : (
+          <div>{upcomingEvents.map((event) => <EventRow key={event.id} event={event} />)}</div>
         )}
       </section>
-      <section className="space-y-6 pt-8 relative before:absolute before:top-0 before:left-0 before:w-16 before:h-px before:bg-[var(--color-accent)]" aria-labelledby="past-events-heading">
-        <h2 id="past-events-heading" className="text-base font-mono font-semibold text-[color:color-mix(in_srgb,var(--color-secondary)_72%,transparent)] tracking-widest">{eventsMeta.pastTitle || t('events_past')}</h2>
-        {pastEvents.length === 0 ? <p className="font-mono text-base text-[color:color-mix(in_srgb,var(--color-secondary)_72%,transparent)]">{t('msg_no_items')}</p> : <>
-          <div className="border border-[var(--color-muted)] p-[1px] flex flex-col gap-[1px]">
-            {visiblePastEvents.map((event, index) => <EventRow key={event.id} event={event} index={index} past />)}
-          </div>
-          {pastEvents.length > visiblePastCount && <div className="pt-4 flex justify-center"><button type="button" onClick={() => setVisiblePastCount((count) => count + 10)} className="min-h-[44px] border px-8 py-3 text-base tracking-widest text-[var(--color-secondary)] transition-opacity duration-300 hover:opacity-80 cursor-pointer whitespace-nowrap" style={borderMid}>{t('events_load_more')}</button></div>}
+      <section className={styles.section} aria-labelledby="past-events-heading">
+        <h2 id="past-events-heading">{eventsMeta.pastTitle || t('events_past')} <span>{pastEvents.length}</span></h2>
+        {pastEvents.length === 0 ? <p className={styles.empty}>{t('msg_no_items')}</p> : <>
+          <div>{visiblePastEvents.map((event) => <EventRow key={event.id} event={event} />)}</div>
+          {pastEvents.length > visiblePastCount && <button type="button" onClick={() => setVisiblePastCount((count) => count + 10)} className={styles.more}>{t('events_load_more')}</button>}
         </>}
       </section>
     </PageLayout>
