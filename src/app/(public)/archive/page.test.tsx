@@ -62,6 +62,7 @@ describe('GalleryPage', () => {
 
     expect(screen.getByRole('list')).toContainElement(nightSignal.closest('li'));
     expect(nightSignal).toHaveAttribute('href', '/archive/night-signal');
+    expect(within(nightSignal).getByRole('img')).toHaveAttribute('src', '/api/media/night-signal?v=2');
     expect(liveCut).toHaveAttribute('href', '/archive/live-cut');
     expect(nightSignal.closest('article')).toContainElement(nightSignal);
     expect(container.querySelectorAll('div[onclick]')).toHaveLength(0);
@@ -85,7 +86,7 @@ describe('GalleryPage', () => {
     render(<ArchivePageClient photos={items} />);
     const captions = () => within(screen.getByRole('list')).getAllByRole('link').map(link => link.textContent);
     expect(captions()).toEqual(['Photo', 'Newer event', 'Older event']);
-    fireEvent.change(screen.getByRole('combobox', { name: 'gallery_sort' }), { target: { value: 'oldest' } });
+    fireEvent.click(screen.getByRole('radio', { name: 'gallery_sort_oldest' }));
     expect(captions()).toEqual(['Older event', 'Newer event', 'Photo']);
     expect(items.map(item => item.id)).toEqual(['older-event', 'newer-event', 'photo']);
   });
@@ -103,7 +104,8 @@ describe('GalleryPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'gallery_next' }));
     expect(links()).toHaveLength(24);
     expect(screen.getByRole('list')).toHaveFocus();
-    fireEvent.change(screen.getByRole('combobox'), { target: { value: 'random' } });
+    fireEvent.click(screen.getByRole('radio', { name: 'gallery_sort_random' }));
+    expect(screen.getByRole('radio', { name: 'gallery_sort_random' })).toBeChecked();
     expect(screen.getByRole('button', { name: 'gallery_previous' })).toBeDisabled();
     const first = links();
     fireEvent.click(screen.getByRole('button', { name: 'gallery_next' }));
@@ -118,7 +120,7 @@ describe('GalleryPage', () => {
     expect(links()).toEqual(first);
     rerender(<ArchivePageClient photos={[...items]} />);
     expect(links()).toEqual(first);
-    fireEvent.change(screen.getByRole('combobox'), { target: { value: 'oldest' } });
+    fireEvent.click(screen.getByRole('radio', { name: 'gallery_sort_oldest' }));
     expect(links()[0]).toBe('/archive/item-0');
     expect(screen.getByRole('button', { name: 'gallery_previous' })).toBeDisabled();
   });
@@ -140,6 +142,6 @@ describe('GalleryPage', () => {
     render(<ArchivePageClient photos={[]} />);
     expect(screen.getByText('gallery_empty')).toBeInTheDocument();
     expect(screen.queryByRole('navigation')).not.toBeInTheDocument();
-    expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
+    expect(screen.queryByRole('group', { name: 'gallery_sort' })).not.toBeInTheDocument();
   });
 });

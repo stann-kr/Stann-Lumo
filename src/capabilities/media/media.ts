@@ -46,3 +46,8 @@ export function extractYouTubeId(url: string): string | null {
   }
   return null;
 }
+
+// Bypass incomplete image responses retained under the original immutable URLs.
+export function getPublicImageUrl(id: string): string {
+  return `/api/media/${encodeURIComponent(id)}?v=2`;
+}

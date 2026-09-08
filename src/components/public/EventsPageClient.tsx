@@ -1,5 +1,7 @@
 'use client';
 
+import { getPublicImageUrl } from '@/capabilities/media/media';
+
 import { useState } from 'react';
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
@@ -31,7 +33,7 @@ function EventRow({ event, index, past }: { event: Performance; index: number; p
         <div className={`${past ? 'w-10 h-10' : 'w-12 h-12'} bg-black border border-[var(--color-muted)] shrink-0 overflow-hidden relative`}>
           {!past && <div className="absolute inset-0 bg-[var(--color-accent)] opacity-20 mix-blend-overlay" />}
           <img
-            src={`/api/media/${event.posterImageId}`}
+            src={getPublicImageUrl(event.posterImageId)}
             alt={event.title}
             className={`w-full h-full object-cover filter grayscale ${past ? 'opacity-50 transition-[filter,opacity] duration-300 group-hover:opacity-100' : 'transition-[filter] duration-500 group-hover:grayscale-0'}`}
           />
