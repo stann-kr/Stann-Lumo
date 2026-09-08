@@ -1,7 +1,8 @@
 "use client";
-import { useCallback, useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { useCallback, useEffect, useRef, useState, useTransition, type KeyboardEvent, type ReactNode } from "react";
+import Link, { PublicNavigationContext } from './PublicLink';
+import PublicPageLoading from './PublicPageLoading';
+import { usePathname, useRouter } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { SITE_NAME, TERMINAL_URL, HUB_URL } from "../../constants/site";
@@ -17,7 +18,8 @@ interface PublicSiteShellProps {
 
 const PublicSiteShell = ({ children, artistName = SITE_NAME }: PublicSiteShellProps) => {
   const [mobileMenuPath, setMobileMenuPath] = useState<string | null>(null);
-  const [isNavigating, setIsNavigating] = useState(false);
+  const [isNavigating, startNavigation] = useTransition();
+  const router = useRouter();
   const pathname = usePathname();
   const mobileMenuOpen = mobileMenuPath === pathname;
   const { t } = useTranslation();
@@ -50,7 +52,7 @@ const PublicSiteShell = ({ children, artistName = SITE_NAME }: PublicSiteShellPr
   }, []);
 
   useEffect(() => {
-    if (!mobileMenuOpen) return;
+    if (!mobileMenuOpen && !isNavigating) return;
     const documentStyle = document.documentElement.style;
     const bodyStyle = document.body.style;
     const previous = { overflow: documentStyle.overflow, gutter: documentStyle.scrollbarGutter, bodyOverflow: bodyStyle.overflow };
@@ -62,18 +64,23 @@ const PublicSiteShell = ({ children, artistName = SITE_NAME }: PublicSiteShellPr
       documentStyle.scrollbarGutter = previous.gutter;
       bodyStyle.overflow = previous.bodyOverflow;
     };
-  }, [mobileMenuOpen]);
+  }, [mobileMenuOpen, isNavigating]);
 
   const closeMobileMenu = useCallback((restoreFocus = true) => {
     restoreMobileMenuFocusRef.current = restoreFocus;
     setMobileMenuPath(null);
   }, []);
 
-  // Announce pending navigation until the new route arrives.
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setIsNavigating(false);
-  }, [pathname]);
+  const navigate = useCallback((href: string, options?: { replace?: boolean; scroll?: boolean }) => {
+    const destination = new URL(href, window.location.href);
+    const sameDocument = destination.pathname === window.location.pathname && destination.search === window.location.search;
+    closeMobileMenu(sameDocument);
+    // React follows the router's actual commit, including interrupted navigation.
+    startNavigation(() => {
+      if (options?.replace) router.replace(href, { scroll: options.scroll });
+      else router.push(href, { scroll: options?.scroll });
+    });
+  }, [closeMobileMenu, router]);
 
   useEffect(() => {
     if (previousPathnameRef.current === pathname) return;
@@ -143,16 +150,6 @@ const PublicSiteShell = ({ children, artistName = SITE_NAME }: PublicSiteShellPr
     { label: t("nav_link"), path: "/link" },
   ];
 
-  const handleNavClick = (path: string) => {
-    if (path === pathname) {
-      closeMobileMenu();
-      return;
-    }
-
-    setIsNavigating(true);
-    closeMobileMenu(false);
-  };
-
   const handleMobileDialogKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     if (event.key === "Escape") {
       event.preventDefault();
@@ -181,7 +178,7 @@ const PublicSiteShell = ({ children, artistName = SITE_NAME }: PublicSiteShellPr
       <ul className={styles.navList}>
         {navItems.map((item) => (
           <li key={item.path}>
-            <Link href={item.path} onNavigate={() => handleNavClick(item.path)}
+            <Link href={item.path}
               aria-current={(item.path === "/" ? pathname === "/" : pathname === item.path || pathname.startsWith(item.path + "/")) ? "page" : undefined}>
               {item.label}
             </Link>
@@ -198,13 +195,14 @@ const PublicSiteShell = ({ children, artistName = SITE_NAME }: PublicSiteShellPr
   );
 
   return (
+    <PublicNavigationContext value={navigate}>
     <PublicMotionInputContext value={motionInputRef}>
     <div ref={shellRef} className={styles.shell}>
       <div inert={mobileMenuOpen || undefined} className={styles.document}>
         <a href="#main-content" className={styles.skipLink}>{skipLinkLabel}</a>
         <header className={styles.header}>
           <span className={styles.scrollProgress} data-scroll-progress aria-hidden="true" />
-          <Link ref={brandRef} href="/" onNavigate={() => handleNavClick("/")} className={styles.brand}>{artistName}</Link>
+          <Link ref={brandRef} href="/" className={styles.brand}>{artistName}</Link>
           <div className={styles.desktopNav}>{navigation(mainNavigationLabel)}{languageControls}</div>
           <button ref={mobileMenuButtonRef} type="button" className={styles.menuButton}
             onClick={(event) => { motionInputRef.current = event.detail === 0 ? 'keyboard' : 'pointer'; setMobileMenuPath(pathname); }} aria-label={t("nav_open_menu")}
@@ -212,14 +210,17 @@ const PublicSiteShell = ({ children, artistName = SITE_NAME }: PublicSiteShellPr
             {language === "ko" ? "메뉴" : "Menu"}<span aria-hidden="true">+</span>
           </button>
         </header>
-        <main ref={mainRef} id="main-content" tabIndex={-1} aria-busy={isNavigating} className={styles.main}>{children}</main>
-        <footer className={styles.footer}>
+        <main ref={mainRef} id="main-content" tabIndex={-1} aria-busy={isNavigating} className={styles.main}>
+          <div inert={isNavigating || undefined}>{children}</div>
+        </main>
+        <footer inert={isNavigating || undefined} className={styles.footer}>
           <SignalNet />
           <div className={styles.externalLinks}>
             <a href={HUB_URL} target="_blank" rel="noopener noreferrer">HUB <span aria-hidden="true">↗</span><span className="sr-only">{language === "ko" ? " (새 창)" : " (opens in a new tab)"}</span></a>
             <a href={TERMINAL_URL} target="_blank" rel="noopener noreferrer">TERMINAL <span aria-hidden="true">↗</span><span className="sr-only">{language === "ko" ? " (새 창)" : " (opens in a new tab)"}</span></a>
           </div>
         </footer>
+        {isNavigating && <PublicPageLoading overlay />}
       </div>
       {mobileMenuOpen && (
         <div className={styles.menuLayer}>
@@ -237,6 +238,7 @@ const PublicSiteShell = ({ children, artistName = SITE_NAME }: PublicSiteShellPr
       )}
     </div>
     </PublicMotionInputContext>
+    </PublicNavigationContext>
   );
 };
 

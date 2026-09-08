@@ -3,7 +3,7 @@
 import { getPublicImageUrl } from '@/capabilities/media/media';
 
 import { useState } from 'react';
-import Link from 'next/link';
+import Link from '../feature/PublicLink';
 import { useTranslation } from 'react-i18next';
 import PageLayout from '@/components/feature/PageLayout';
 import { useLanguage } from '@/contexts/LanguageContext';

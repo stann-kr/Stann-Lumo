@@ -1,8 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
+import Link, { usePublicNavigation } from '../feature/PublicLink';
 import { useTranslation } from 'react-i18next';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getPublicImageUrl, type GalleryPhoto } from '@/capabilities/media/media';
@@ -20,7 +19,7 @@ interface ArchiveDetailPageClientProps {
 export default function ArchiveDetailPageClient({ photo, previous, next, index, total }: ArchiveDetailPageClientProps) {
   const pageRef = useRef<HTMLElement>(null);
   useContentMotion(pageRef, photo.id);
-  const router = useRouter();
+  const navigate = usePublicNavigation();
   const { t } = useTranslation();
   const { language } = useLanguage();
   const isKorean = language === 'ko';
@@ -28,14 +27,15 @@ export default function ArchiveDetailPageClient({ photo, previous, next, index, 
   const previousLabel = isKorean ? '이전 아카이브 항목' : 'Previous archive item';
   const nextLabel = isKorean ? '다음 아카이브 항목' : 'Next archive item';
   const handleKeyDown = useCallback((event: KeyboardEvent) => {
+    if (pageRef.current?.closest('[inert]')) return;
     if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
     // Player controls, text entry and an open navigation dialog own their own keys.
     if (event.target instanceof Element && event.target.closest('input, textarea, select, video, audio, iframe, [contenteditable]:not([contenteditable="false"]), [role="dialog"], [role="slider"]')) return;
     const href = event.key === 'ArrowLeft' && previous ? `/archive/${previous.id}`
       : event.key === 'ArrowRight' && next ? `/archive/${next.id}`
       : event.key === 'Escape' ? '/archive' : null;
-    if (href) { event.preventDefault(); router.push(href); }
-  }, [next, previous, router]);
+    if (href) { event.preventDefault(); navigate(href); }
+  }, [next, previous, navigate]);
 
   useEffect(() => {
     window.addEventListener('keydown', handleKeyDown);

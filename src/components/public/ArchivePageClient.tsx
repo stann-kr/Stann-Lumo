@@ -2,7 +2,7 @@
 
 import { getPublicImageUrl } from '@/capabilities/media/media';
 
-import Link from 'next/link';
+import Link from '../feature/PublicLink';
 import { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import PageLayout from '@/components/feature/PageLayout';

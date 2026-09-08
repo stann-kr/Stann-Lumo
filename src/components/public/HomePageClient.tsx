@@ -1,7 +1,7 @@
 "use client";
 
 import { useId, useRef, useState } from "react";
-import Link from "next/link";
+import Link from "../feature/PublicLink";
 import { useTranslation } from "react-i18next";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useMotionPreference } from "@/hooks/useMotionPreference";

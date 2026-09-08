@@ -1,6 +1,6 @@
 'use client';
 
-import Link from 'next/link';
+import Link from '@/components/feature/PublicLink';
 import { useLanguage } from '@/contexts/LanguageContext';
 import styles from '@/components/public/PublicFallback.module.css';
 

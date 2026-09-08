@@ -125,6 +125,11 @@ describe('GalleryPhotoPage', () => {
     }
     fireEvent.keyDown(window, { key: 'ArrowRight', altKey: true });
     expect(push).not.toHaveBeenCalled();
+    const article = screen.getByRole('article');
+    article.setAttribute('inert', '');
+    fireEvent.keyDown(window, { key: 'ArrowRight' });
+    expect(push).not.toHaveBeenCalled();
+    article.removeAttribute('inert');
     fireEvent.keyDown(window, { key: 'ArrowRight' });
     expect(push).toHaveBeenCalledWith('/archive/last');
   });

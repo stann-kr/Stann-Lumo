@@ -3,23 +3,41 @@ import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { gsap } from 'gsap';
+import { Suspense, useEffect, useState } from 'react';
 import PublicSiteShell from './PublicSiteShell';
+import PublicLink from './PublicLink';
+import PublicPageLoading from './PublicPageLoading';
 import HomePageClient from '../public/HomePageClient';
 
 const mocks = vi.hoisted(() => ({
   language: 'en' as 'en' | 'ko',
   pathname: '/archive',
   setLanguage: vi.fn(),
+  router: { push: vi.fn(), replace: vi.fn() },
 }));
 
 vi.mock('next/navigation', () => ({
   usePathname: () => mocks.pathname,
+  useRouter: () => mocks.router,
 }));
 
 vi.mock('next/link', () => ({
-  default: ({ children, href, onNavigate, ...props }: React.ComponentProps<'a'> & { onNavigate?: unknown }) => (
-    <a href={href} {...props} onClick={() => { if (typeof onNavigate === 'function') onNavigate(); }}>{children}</a>
-  ),
+  default: ({ children, href, onNavigate, ...props }: React.ComponentProps<'a'> & { onNavigate?: (event: { preventDefault: () => void }) => void; replace?: boolean; scroll?: boolean }) => {
+    delete props.replace;
+    delete props.scroll;
+    return (
+    <a href={href} {...props} onClick={(event) => {
+      props.onClick?.(event);
+      if (event.defaultPrevented) return;
+      if (event.metaKey || event.ctrlKey || event.altKey || event.shiftKey || props.target === '_blank' || props.download || !href?.startsWith('/')) {
+        event.preventDefault();
+        return;
+      }
+      event.preventDefault();
+      onNavigate?.({ preventDefault: () => {} });
+    }}>{children}</a>
+    );
+  },
 }));
 
 vi.mock('react-i18next', () => ({
@@ -94,11 +112,29 @@ function installMotionPreference() {
   return changePreference;
 }
 
+function renderPendingNavigation() {
+  let ready = false;
+  let resolve!: () => void;
+  const response = new Promise<void>((done) => { resolve = () => { ready = true; done(); }; });
+  function Content({ href }: { href: string }) {
+    if (href === '/music' && !ready) throw response;
+    return <><h1>{href}</h1><PublicLink href="/music">Open music from content</PublicLink></>;
+  }
+  function NavigationFixture() {
+    const [href, setHref] = useState('/archive');
+    useEffect(() => { mocks.router.push.mockImplementation(setHref); }, []);
+    return <PublicSiteShell><Content href={href} /></PublicSiteShell>;
+  }
+  return { ...render(<Suspense fallback="Initial loading"><NavigationFixture /></Suspense>), resolve };
+}
+
 describe('PublicSiteShell public navigation', () => {
   beforeEach(() => {
     mocks.language = 'en';
     mocks.pathname = '/archive';
     mocks.setLanguage.mockReset();
+    mocks.router.push.mockReset();
+    mocks.router.replace.mockReset();
     desktopBreakpointListeners.clear();
     matchMedia.mockClear();
     vi.stubGlobal('matchMedia', matchMedia);
@@ -163,6 +199,53 @@ describe('PublicSiteShell public navigation', () => {
     rerender(<PublicSiteShell><h1>Music</h1></PublicSiteShell>);
 
     await waitFor(() => expect(screen.getByRole('main')).toHaveFocus());
+  });
+
+  it('shows loading immediately after a mobile link closes and releases it when the route is ready', async () => {
+    const user = userEvent.setup();
+    const { resolve } = renderPendingNavigation();
+    await user.click(screen.getByRole('button', { name: 'Open menu' }));
+    await user.click(within(screen.getByRole('dialog')).getByRole('link', { name: 'MUSIC' }));
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent('Loading page');
+    expect(screen.getByRole('main')).toHaveAttribute('aria-busy', 'true');
+    expect(screen.getByRole('heading', { name: '/archive' }).closest('[inert]')).not.toBeNull();
+    expect(document.documentElement.style.overflow).toBe('hidden');
+
+    await act(async () => { resolve(); });
+    expect(await screen.findByRole('heading', { name: '/music' })).toBeVisible();
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    expect(screen.getByRole('main')).toHaveAttribute('aria-busy', 'false');
+    expect(document.documentElement.style.overflow).toBe('');
+  });
+
+  it('allows a newer destination to replace a pending content link without a stale loading screen', async () => {
+    const user = userEvent.setup();
+    const { resolve } = renderPendingNavigation();
+    await user.click(screen.getByRole('link', { name: 'Open music from content' }));
+    expect(screen.getByRole('status')).toHaveTextContent('Loading page');
+    await user.click(screen.getByRole('link', { name: 'ABOUT' }));
+    expect(await screen.findByRole('heading', { name: '/about' })).toBeVisible();
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    await act(async () => { resolve(); });
+    expect(screen.getByRole('heading', { name: '/about' })).toBeVisible();
+  });
+
+  it('preserves modified, external, and cancelled link navigation and localizes the route fallback', async () => {
+    const { rerender } = render(<PublicSiteShell>
+      <PublicLink href="/music" onNavigate={(event) => event.preventDefault()}>Cancelled</PublicLink>
+      <PublicLink href="https://example.com" target="_blank">External</PublicLink>
+    </PublicSiteShell>);
+    fireEvent.click(screen.getByRole('link', { name: 'MUSIC' }), { ctrlKey: true });
+    fireEvent.click(screen.getByRole('link', { name: 'External' }));
+    fireEvent.click(screen.getByRole('link', { name: 'Cancelled' }));
+    expect(mocks.router.push).not.toHaveBeenCalled();
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+
+    mocks.language = 'ko';
+    rerender(<PublicSiteShell><PublicPageLoading /></PublicSiteShell>);
+    expect(screen.getByRole('status')).toHaveTextContent('페이지 불러오는 중');
   });
 
   it('keeps background content inert and locks document scrolling only while the mobile dialog is open', async () => {

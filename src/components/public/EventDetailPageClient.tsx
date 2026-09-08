@@ -1,6 +1,6 @@
 'use client';
 
-import Link from 'next/link';
+import Link from '../feature/PublicLink';
 import { useTranslation } from 'react-i18next';
 import { useLanguage } from '@/contexts/LanguageContext';
 import PageLayout from '@/components/feature/PageLayout';
