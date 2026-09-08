@@ -53,3 +53,15 @@
   .secondary a:last-child { border-bottom: 0; }
   .fields { grid-template-columns: 1fr; }
 }
+
+.trackPreview, .eventPreview, .photoPreview, .artistPreview { margin-top: 2rem; }
+.trackPreview li { padding-block: .75rem; border-top: 1px solid var(--color-muted); }
+.trackPreview strong, .eventPreview strong { display: block; line-height: 1.35; overflow-wrap: anywhere; }
+.trackPreview span, .eventPreview span, .eventPreview time, .artistPreview dt { display: block; font: .75rem/1.6 'JetBrains Mono', monospace; color: var(--color-secondary); margin-top: .35rem; }
+.eventPreview { display: grid; gap: 1.25rem; }
+.eventPreview a { display: flex; align-items: center; gap: 1rem; min-height: 44px; }
+.eventPreview img { width: 3.5rem; height: 4.5rem; object-fit: contain; flex-shrink: 0; }
+.photoPreview { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .75rem; }
+.photoPreview img { width: 100%; height: 10rem; object-fit: contain; }
+.artistPreview { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+.artistPreview dd { overflow-wrap: anywhere; }

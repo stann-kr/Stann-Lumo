@@ -6,8 +6,9 @@ import { useTranslation } from "react-i18next";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useMotionPreference } from "@/hooks/useMotionPreference";
 import { SITE_NAME } from "@/constants/site";
-import type { ArtistInfoItem, HomePageMeta, HomeSection } from "@/capabilities/content/content";
+import type { ArtistInfoItem, HomePageMeta, HomeSection, HomePreviews } from "@/capabilities/content/content";
 import type { TerminalInfo } from "@/capabilities/terminal/terminalConfig";
+import { getPublicImageUrl } from "@/capabilities/media/media";
 import styles from "./HomePageClient.module.css";
 
 interface HomePageClientProps {
@@ -15,9 +16,10 @@ interface HomePageClientProps {
   homeMeta: HomePageMeta;
   homeSections: HomeSection[];
   terminalInfo: TerminalInfo;
+  previews?: HomePreviews;
 }
 
-export default function HomePageClient({ artistInfo, homeMeta, homeSections, terminalInfo }: HomePageClientProps) {
+export default function HomePageClient({ artistInfo, homeMeta, homeSections, terminalInfo, previews }: HomePageClientProps) {
   const { t } = useTranslation();
   const { language } = useLanguage();
   const { isResolved, prefersReducedMotion } = useMotionPreference();
@@ -49,6 +51,21 @@ export default function HomePageClient({ artistInfo, homeMeta, homeSections, ter
               </h2>
               <div id={contentId} hidden={!isExpanded} className={styles.panelContent}>
                 <p>{section.description}</p>
+                {section.path === '/music' && !!previews?.tracks.length && <ul className={styles.trackPreview}>
+                  {previews.tracks.map((track) => <li key={track.id}><strong>{track.title}</strong><span>{track.type} / {track.year}</span></li>)}
+                </ul>}
+                {section.path === '/events' && !!previews?.events.length && <div className={styles.eventPreview}>
+                  {previews.events.map((event) => <Link key={event.id} href={`/events/${event.id}`}>
+                    {event.posterImageId && <img src={getPublicImageUrl(event.posterImageId)} alt="" loading="lazy" />}
+                    <div><time dateTime={event.date.replace(/\./g, '-')}>{event.date}</time><strong>{event.title}</strong><span>{event.venue} / {event.status}</span></div>
+                  </Link>)}
+                </div>}
+                {section.path === '/archive' && !!previews?.photos.length && <div className={styles.photoPreview}>
+                  {previews.photos.map((photo) => <Link key={photo.id} href={`/archive/${photo.id}`} aria-label={photo.caption || photo.altText || (language === 'ko' ? '이미지 보기' : 'View image')}><img src={getPublicImageUrl(photo.id)} alt={photo.altText || photo.caption} loading="lazy" /></Link>)}
+                </div>}
+                {section.path === '/about' && artistInfo.length > 0 && <dl className={styles.artistPreview}>
+                  {artistInfo.map((info) => <div key={info.id}><dt>{info.key}</dt><dd>{info.value}</dd></div>)}
+                </dl>}
                 <Link href={section.path} className={styles.visit}>
                   {language === "ko" ? `${section.title} 보기` : `Explore ${section.title}`}<span aria-hidden="true">↗</span>
                 </Link>

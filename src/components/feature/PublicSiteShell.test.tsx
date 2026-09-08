@@ -145,16 +145,19 @@ const sections = ['About', 'Music', 'Events', 'Archive', 'Contact', 'Link'].map(
 describe('Home panels', () => {
   it('keeps CMS order and separates keyboard expansion from route links', async () => {
     const user = userEvent.setup();
-    render(<HomePageClient artistInfo={[]} homeMeta={{ navTitle: 'Explore' }} homeSections={sections} terminalInfo={{ url: '', description: '' }} />);
+    render(<HomePageClient artistInfo={[]} homeMeta={{ navTitle: 'Explore' }} homeSections={sections} previews={{ tracks: [{ id: 'track', title: 'Real track', type: 'Original', year: '2026' }], events: [], photos: [{ id: 'poster', caption: 'Real poster', altText: 'Poster' }] }} terminalInfo={{ url: '', description: '' }} />);
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('STANN LUMO');
     expect(screen.getAllByRole('button').map((button) => button.textContent?.replace(/[+−]/g, ''))).toEqual(['About', 'Music', 'Events', 'Archive']);
     expect(screen.getByRole('link', { name: /Explore Music/ })).toHaveAttribute('href', '/music');
+    expect(screen.getByText('Real track')).toBeVisible();
     expect(screen.queryByRole('link', { name: /Explore Archive/ })).not.toBeInTheDocument();
     const archive = screen.getByRole('button', { name: 'Archive' });
     archive.focus();
     await user.keyboard('{Enter}');
     expect(archive).toHaveAttribute('aria-expanded', 'true');
     expect(screen.getByRole('link', { name: /Explore Archive/ })).toHaveAttribute('href', '/archive');
+    expect(screen.getByRole('link', { name: 'Real poster' })).toHaveAttribute('href', '/archive/poster');
+    expect(screen.getByRole('img', { name: 'Poster' })).toHaveAttribute('src', '/api/media/poster?v=2');
     expect(screen.queryByRole('link', { name: /Explore Music/ })).not.toBeInTheDocument();
     await user.keyboard(' ');
     expect(archive).toHaveAttribute('aria-expanded', 'false');

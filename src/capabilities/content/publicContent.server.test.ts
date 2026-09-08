@@ -24,6 +24,7 @@ function createPublicDatabase() {
         async all() {
           if (sql.includes('FROM artist_info')) return { results: [{ id: 'artist-1', key: 'Name', value: 'STANN LUMO' }], success: true, meta: {} };
           if (sql.includes('FROM page_meta')) return { results: [{ page: 'home', key: 'navTitle', value: 'ARCHIVE INDEX' }], success: true, meta: {} };
+          if (sql.includes('FROM tracks')) return { results: [{ id: 'track', title: 'Track', type: 'Original', year: '2026' }], success: true, meta: {} };
           if (sql.includes('FROM home_sections')) return { results: [{ title: 'MUSIC', description: 'Releases', path: '/music', icon: 'ri-music-2-line' }], success: true, meta: {} };
           if (sql.includes('FROM terminal_custom_fields')) return { results: [], success: true, meta: {} };
           if (sql.includes('FROM gallery_photos')) return { results: [], success: true, meta: {} };
@@ -94,4 +95,23 @@ describe('public server content projections', () => {
       close();
     }
   });
+  it('bounds home previews and uses the existing English fallback without leaking unused fields', async () => {
+    const { db, sqlite, close } = createSqliteD1();
+    vi.mocked(getDB).mockReturnValue(db);
+    try {
+      for (let index = 0; index < 5; index++) {
+        sqlite.prepare("INSERT INTO tracks (id, lang, title, type, duration, year, platform, sort_order) VALUES (?, 'en', ?, 'Original', '0:00', '2026', 'Bandcamp', ?)").run(`track-${index}`, `Track ${index}`, index);
+        sqlite.prepare("INSERT INTO performances (id, title, date, venue) VALUES (?, ?, ?, 'Venue')").run(`event-${index}`, `Event ${index}`, `2026-09-0${index + 1}`);
+        sqlite.prepare("INSERT INTO gallery_photos (id, filename, caption, sort_order) VALUES (?, ?, ?, ?)").run(`photo-${index}`, `photo-${index}.jpg`, `Photo ${index}`, index);
+      }
+      const { previews } = await getHomeProjection('ko');
+      expect(previews.tracks.map((track) => track.id)).toEqual(['track-0', 'track-1', 'track-2']);
+      expect(previews.events.map((event) => event.id)).toEqual(['event-4', 'event-3']);
+      expect(previews.photos.map((photo) => photo.id)).toEqual(['photo-0', 'photo-1', 'photo-2']);
+      expect(previews.tracks[0]).toEqual({ id: 'track-0', title: 'Track 0', type: 'Original', year: '2026' });
+      expect(previews.photos[0]).toEqual({ id: 'photo-0', caption: 'Photo 0', altText: '' });
+      expect(() => assertPublicPayloadSafe(previews)).not.toThrow();
+    } finally { close(); }
+  });
+
 });

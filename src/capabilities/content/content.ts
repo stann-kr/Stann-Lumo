@@ -68,6 +68,12 @@ export interface PageMeta {
   link: LinkPageMeta;
 }
 
+export interface HomePreviews {
+  tracks: Pick<Track, 'id' | 'title' | 'type' | 'year'>[];
+  events: Pick<Performance, 'id' | 'title' | 'date' | 'venue' | 'status' | 'posterImageId'>[];
+  photos: { id: string; caption: string; altText: string }[];
+}
+
 export interface HomeSection {
   title: string;
   description: string;

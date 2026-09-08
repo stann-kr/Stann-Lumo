@@ -10,6 +10,7 @@ import type {
   DynamicSection,
   DynamicSectionType,
   HomeSection,
+  HomePreviews,
   LinkPlatform,
   PageMeta,
   PhilosophyItem,
@@ -324,6 +325,7 @@ export const getPublicShellProjection = cache(async (locale: PublicLocale): Prom
 });
 
 export interface HomeProjection {
+  previews: HomePreviews;
   artistInfo: ArtistInfoItem[];
   pageMeta: Pick<PageMeta, 'home'>;
   homeSections: HomeSection[];
@@ -333,17 +335,25 @@ export interface HomeProjection {
 export const getHomeProjection = cache(async (locale: PublicLocale): Promise<HomeProjection> => {
   const db = getPublicDB();
 
-  const [artistRows, metaRows, homeRows, terminalInfo] = await Promise.all([
+  const [artistRows, metaRows, homeRows, terminalInfo, trackRows, eventRows, photoRows] = await Promise.all([
     localizedRows<ArtistInfoRow>(db, 'SELECT id, key, value FROM artist_info WHERE lang = ? ORDER BY sort_order', locale),
     localizedMetaRows(db, locale),
     localizedRows<HomeSectionRow>(db, 'SELECT title, description, path, icon FROM home_sections WHERE lang = ? ORDER BY sort_order', locale),
     getTerminalInfo(db),
+    localizedRows<TrackRow>(db, 'SELECT id, title, type, year FROM tracks WHERE lang = ? ORDER BY sort_order LIMIT 3', locale),
+    rows<PerformanceRow>(db, 'SELECT id, title, date, venue, status, poster_image_id FROM performances ORDER BY date DESC, sort_order LIMIT 2'),
+    rows<GalleryPhotoRow>(db, "SELECT id, caption, alt_text FROM gallery_photos WHERE media_type = 'image' ORDER BY sort_order ASC, created_at DESC LIMIT 3"),
   ]);
   const projection = {
     artistInfo: mapArtistInfo(artistRows),
     pageMeta: { home: buildPageMeta(metaRows).home },
     homeSections: homeRows,
     terminalInfo,
+    previews: {
+      tracks: trackRows.map(({ id, title, type, year }) => ({ id, title, type, year })),
+      events: eventRows.map(({ id, title, date, venue, status, poster_image_id }) => ({ id, title, date, venue, status: status as Performance['status'], ...(poster_image_id && { posterImageId: poster_image_id }) })),
+      photos: photoRows.map(({ id, caption, alt_text }) => ({ id, caption, altText: alt_text })),
+    },
   };
   assertPublicPayloadSafe(projection);
   return projection;
