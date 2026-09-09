@@ -9,6 +9,30 @@ import styles from "./MusicPageClient.module.css";
 
 interface MusicPageClientProps { musicMeta: MusicPageMeta; tracks: Track[]; }
 
+function TrackRow({ track, featured }: { track: Track; featured: boolean }) {
+  const { t } = useTranslation();
+  const { language } = useLanguage();
+  const newTabLabel = language === 'ko' ? ' (새 창)' : ' (opens in a new tab)';
+  const content = <>
+    <div className={styles.year}>{track.year}</div>
+    <div className={styles.record}>
+      <h2 data-hover-label>{track.title}</h2>
+      {track.link && <span className={styles.listen}>{t('music_listen_on', { platform: track.platform })}</span>}
+    </div>
+    <div className={styles.meta}><span>{track.type}</span>{track.duration && <span className={styles.duration}>{track.duration}</span>}</div>
+    {track.link && <>
+      <span className={styles.arrow} data-hover-arrow aria-hidden="true">↗</span>
+      <i className={styles.rowRule} data-hover-rule aria-hidden="true" />
+    </>}
+  </>;
+
+  return track.link ? (
+    <a href={track.link} target="_blank" rel="noopener noreferrer" className={styles.row} data-featured={featured} data-hover aria-label={`${track.title} — ${t('music_listen_on', { platform: track.platform })}${newTabLabel}`}>
+      {content}
+    </a>
+  ) : <div className={styles.row} data-featured={featured}>{content}</div>;
+}
+
 export default function MusicPageClient({ musicMeta, tracks }: MusicPageClientProps) {
   const { t } = useTranslation();
   const { language } = useLanguage();
@@ -18,14 +42,7 @@ export default function MusicPageClient({ musicMeta, tracks }: MusicPageClientPr
     <PageLayout title={musicMeta.title || t("music_title")} subtitle={musicMeta.subtitle}>
       {tracks.length ? <ul className={styles.tracks}>
         {tracks.map((track, index) => (
-          <li key={track.id} data-featured={index === 0}>
-            <h2 data-hover-label>{track.title}</h2>
-            <div className={styles.meta}><span>{track.type}</span><span>{track.year}</span>{track.duration && <span>{track.duration}</span>}</div>
-            {track.link && <a href={track.link} target="_blank" rel="noopener noreferrer" data-hover aria-label={`${track.title} — ${t('music_listen_on', { platform: track.platform })}${newTabLabel}`}>
-              {t('music_listen_on', { platform: track.platform })}<span data-hover-arrow aria-hidden="true">↗</span>
-              <i className={styles.rowRule} data-hover-rule aria-hidden="true" />
-            </a>}
-          </li>
+          <li key={track.id}><TrackRow track={track} featured={index === 0} /></li>
         ))}
       </ul> : <p className={styles.empty}>{isKorean ? '등록된 음악이 없습니다.' : 'No music has been added yet.'}</p>}
       <footer className={styles.footer}>

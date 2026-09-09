@@ -18,17 +18,17 @@ export default function EventDetailPageClient({ event, posterPhoto }: { event: P
   return (
     <PageLayout title={event.title} titleSize="display">
       <Link href="/events" className={styles.back}><span aria-hidden="true">←</span> {t('events_title')}</Link>
-      <div className={styles.detail} data-has-poster={!!posterPhoto}>
+      <div className={styles.detail}>
         <aside className={styles.facts} aria-label={isKorean ? '공연 정보' : 'Event information'}>
           <dl>
             <div><dt>{isKorean ? '일시' : 'Date'}</dt><dd><time dateTime={performanceDate(event.date)}>{performanceDate(event.date)}</time>{event.time && <span>{event.time}</span>}</dd></div>
             <div><dt>{isKorean ? '장소' : 'Venue'}</dt><dd>{event.venue}{location && <span>{location}</span>}</dd></div>
             {showStatus && <div><dt>{isKorean ? '상태' : 'Status'}</dt><dd>{event.status}</dd></div>}
+            {event.lineup && <div><dt>{isKorean ? '라인업' : 'Lineup'}</dt><dd className={styles.lineup}>{event.lineup}</dd></div>}
           </dl>
           {event.raEventLink && <a href={event.raEventLink} target="_blank" rel="noopener noreferrer" className={styles.external}>{isKorean ? 'Resident Advisor에서 보기' : 'View on Resident Advisor'} <span aria-hidden="true">↗</span><span className="sr-only">{isKorean ? ' (새 창)' : ' (opens in a new tab)'}</span></a>}
         </aside>
         {posterPhoto && <div className={styles.poster}><img src={getPublicImageUrl(posterPhoto.id)} alt={posterPhoto.altText || event.title} /></div>}
-        {event.lineup && <section className={styles.lineup}><h2>{isKorean ? '라인업' : 'Lineup'}</h2><p>{event.lineup}</p></section>}
       </div>
     </PageLayout>
   );
