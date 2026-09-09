@@ -14,9 +14,10 @@ vi.mock('next/navigation', async () => {
 });
 
 vi.mock('next/link', () => ({
-  default: ({ href, children, onNavigate, ...props }: ComponentProps<'a'> & { href: string; onNavigate?: (event: { preventDefault: () => void }) => void }) => (
-    <a href={href} {...props} onClick={(event) => { event.preventDefault(); onNavigate?.({ preventDefault: () => {} }); }}>{children}</a>
-  ),
+  default: ({ href, children, onNavigate, ...props }: ComponentProps<'a'> & { href: string; prefetch?: boolean; onNavigate?: (event: { preventDefault: () => void }) => void }) => {
+    delete props.prefetch;
+    return <a href={href} {...props} onClick={(event) => { event.preventDefault(); onNavigate?.({ preventDefault: () => {} }); }}>{children}</a>;
+  },
 }));
 
 vi.mock('@/contexts/LanguageContext', () => ({ useLanguage: () => ({ language: 'en' }) }));
@@ -65,14 +66,14 @@ const photos: GalleryPhoto[] = [
 
 describe('GalleryPage', () => {
   beforeEach(() => {
-    window.history.replaceState(null, '', '/archive');
+    window.history.replaceState({ __NA: true }, '', '/archive');
     sessionStorage.clear();
     vi.stubGlobal('scrollTo', vi.fn());
     const replace = window.history.replaceState.bind(window.history);
-    // Next publishes native History updates through useSearchParams.
+    // Next publishes external History updates, but skips its own internal __NA calls.
     vi.spyOn(window.history, 'replaceState').mockImplementation((data, title, url) => {
-      replace(data, title, url);
-      window.dispatchEvent(new PopStateEvent('popstate'));
+      replace({ ...data, __NA: true }, title, url);
+      if (!data?.__NA) window.dispatchEvent(new PopStateEvent('popstate'));
     });
   });
   afterEach(() => { vi.restoreAllMocks(); vi.unstubAllGlobals(); });
@@ -113,38 +114,38 @@ describe('GalleryPage', () => {
     expect(items.map(item => item.id)).toEqual(['older-event', 'newer-event', 'photo']);
   });
 
-  it('paginates without losing items and keeps a random order stable across pages', () => {
+  it('appends without replacing tiles, keeps random order stable, and resets the loaded count on sort', () => {
     const items = Array.from({ length: 53 }, (_, index) => ({
       ...photos[0]!, id: `item-${index}`, caption: `Item ${index}`,
       eventDate: new Date(Date.UTC(2024, 0, index + 1)).toISOString().slice(0, 10),
     }));
     const { rerender } = render(<ArchivePageClient photos={items} />);
-    const links = () => within(screen.getByRole('list')).getAllByRole('link').map(link => link.getAttribute('href'));
+    const links = () => within(screen.getByRole('list')).getAllByRole('link');
     expect(links()).toHaveLength(24);
-    expect(links()[0]).toBe('/archive/item-52');
-    expect(screen.getByRole('button', { name: 'gallery_previous' })).toBeDisabled();
-    fireEvent.click(screen.getByRole('button', { name: 'gallery_next' }));
-    expect(links()).toHaveLength(24);
-    expect(screen.getByRole('list')).toHaveFocus();
+    expect(links()[0]).toHaveAttribute('href', '/archive/item-52');
+    const original = links()[0];
+    fireEvent.click(screen.getByRole('button', { name: 'list_load_more' }));
+    expect(links()).toHaveLength(48);
+    expect(links()[0]).toBe(original);
+    expect(links()[24]).toHaveFocus();
     fireEvent.click(screen.getByRole('radio', { name: 'gallery_sort_random' }));
     expect(screen.getByRole('radio', { name: 'gallery_sort_random' })).toBeChecked();
-    expect(screen.getByRole('button', { name: 'gallery_previous' })).toBeDisabled();
-    const first = links();
-    fireEvent.click(screen.getByRole('button', { name: 'gallery_next' }));
-    const second = links();
-    fireEvent.click(screen.getByRole('button', { name: 'gallery_next' }));
-    const last = links();
-    expect(last).toHaveLength(5);
-    expect(screen.getByRole('button', { name: 'gallery_next' })).toBeDisabled();
-    expect(new Set([...first, ...second, ...last]).size).toBe(53);
-    fireEvent.click(screen.getByRole('button', { name: 'gallery_previous' }));
-    fireEvent.click(screen.getByRole('button', { name: 'gallery_previous' }));
-    expect(links()).toEqual(first);
+    expect(links()).toHaveLength(24);
+    const first = links().map(link => link.id);
+    fireEvent.click(screen.getByRole('button', { name: 'list_load_more' }));
+    expect(links()).toHaveLength(48);
+    fireEvent.click(screen.getByRole('button', { name: 'list_load_more' }));
+    expect(links()).toHaveLength(53);
+    expect(screen.queryByRole('button', { name: 'list_load_more' })).not.toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent('list_complete_count');
+    const complete = links().map(link => link.id);
+    expect(new Set(complete).size).toBe(53);
+    expect(complete.slice(0, 24)).toEqual(first);
     rerender(<ArchivePageClient photos={[...items]} />);
-    expect(links()).toEqual(first);
+    expect(links().map(link => link.id)).toEqual(complete);
     fireEvent.click(screen.getByRole('radio', { name: 'gallery_sort_oldest' }));
-    expect(links()[0]).toBe('/archive/item-0?sort=oldest');
-    expect(screen.getByRole('button', { name: 'gallery_previous' })).toBeDisabled();
+    expect(links()).toHaveLength(24);
+    expect(links()[0]).toHaveAttribute('href', '/archive/item-0?sort=oldest');
   });
 
   it('shuffles reproducibly without mutation and keeps undated items last', () => {
@@ -173,7 +174,7 @@ describe('GalleryPage', () => {
     vi.stubGlobal('scrollY', 780);
     const view = render(<ArchivePageClient photos={items} />);
     const links = within(screen.getByRole('list')).getAllByRole('link');
-    const selected = links[3]!;
+    const selected = links[27]!;
     const href = selected.getAttribute('href');
     fireEvent.click(selected);
     expect(window.location.hash).toMatch(/^#archive-item-/);
@@ -182,7 +183,21 @@ describe('GalleryPage', () => {
     expect(screen.getByRole('radio', { name: 'gallery_sort_random' })).toBeChecked();
     expect(document.activeElement).toHaveAttribute('href', href);
     expect(window.scrollTo).toHaveBeenLastCalledWith({ top: 780, behavior: 'instant' });
-    expect(within(screen.getByRole('list')).getAllByRole('link')).toHaveLength(24);
+    expect(within(screen.getByRole('list')).getAllByRole('link')).toHaveLength(48);
+  });
+
+  it('retains every loaded batch even when returning from an earlier tile and clamps stale page URLs', () => {
+    const items = Array.from({ length: 53 }, (_, index) => ({ ...photos[0]!, id: `item-${index}` }));
+    const browse = archiveBrowseState(new URLSearchParams('sort=random&seed=42&page=3'));
+    const first = sortArchivePhotos(items, browse.sort, browse.seed)[0]!;
+    const detail = archiveDetailContext(items, first.id, browse)!;
+    expect(detail.browse.page).toBe(3);
+    expect(archiveDetailContext(items, detail.next!.id, detail.browse)!.browse).toEqual(detail.browse);
+    window.history.replaceState(null, '', archiveReturnHref({ ...detail.browse, page: 999 }));
+    render(<ArchivePageClient photos={items} />);
+    expect(within(screen.getByRole('list')).getAllByRole('link')).toHaveLength(53);
+    expect(document.activeElement).toHaveAttribute('id', `archive-item-${first.id}`);
+    expect(screen.queryByRole('button', { name: 'list_load_more' })).not.toBeInTheDocument();
   });
 
   it('uses the grid order for detail numbering and neighbours, retaining the original return item', () => {

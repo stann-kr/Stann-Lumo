@@ -15,7 +15,7 @@
   display: flex; align-items: center; justify-content: space-between; gap: 1rem;
   min-height: calc(4.5rem + env(safe-area-inset-top, 0px));
   padding: env(safe-area-inset-top, 0px) var(--page-gutter) 0;
-  border-bottom: 1px solid var(--color-muted); background: var(--color-bg);
+  border-bottom: 2px solid var(--color-accent); background: var(--color-bg);
 }
 .brand { font-size: 1.15rem; font-weight: 900; letter-spacing: -.045em; overflow-wrap: anywhere; }
 .desktopNav { display: flex; align-items: center; gap: 2rem; }
@@ -46,8 +46,6 @@
   .desktopNav .navList a:not([aria-current]):hover::after { transform: scaleX(1); }
 }
 .desktopNav .navList a:focus-visible::after { transform: scaleX(1); transition: none; }
-.scrollProgress { position: absolute; bottom: -1px; left: 0; width: 100%; height: 2px; background: var(--color-accent); transform: scaleX(0); transform-origin: left; pointer-events: none; }
 .dialog .navList { counter-reset: navigation; }
 .dialog .navList a { justify-content: space-between; gap: 1.5rem; padding-block: .85rem; }
 .dialog .navList a::after { counter-increment: navigation; content: counter(navigation, decimal-leading-zero) / ''; font: .65rem 'JetBrains Mono', monospace; color: var(--color-secondary); }
-@media (prefers-reduced-motion: reduce) { .scrollProgress { display: none; } }

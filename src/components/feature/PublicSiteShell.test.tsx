@@ -289,7 +289,7 @@ describe('PublicSiteShell public navigation', () => {
     const unrelated = ScrollTrigger.create({ trigger: document.body });
     try {
       expect(screen.getByRole('heading', { level: 1, name: 'STANN LUMO' })).toBeInTheDocument();
-      expect(ScrollTrigger.getAll().length).toBeGreaterThan(1);
+      expect(ScrollTrigger.getAll()).toEqual([unrelated]);
       const intro = screen.getByText('Explore');
       act(() => { gsap.getTweensOf(intro)[0]?.pause(0); });
       fireEvent.keyDown(screen.getByRole('link', { name: 'STANN LUMO' }), { key: 'PageDown' });
@@ -310,7 +310,7 @@ describe('PublicSiteShell public navigation', () => {
       }
 
       await changePreference(false);
-      await waitFor(() => expect(ScrollTrigger.getAll().length).toBeGreaterThan(1));
+      await waitFor(() => expect(ScrollTrigger.getAll()).toEqual([unrelated]));
       unmount();
       expect(ScrollTrigger.getAll()).toEqual([unrelated]);
     } finally {

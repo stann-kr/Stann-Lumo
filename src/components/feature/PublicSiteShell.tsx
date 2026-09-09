@@ -205,7 +205,6 @@ const PublicSiteShell = ({ children, artistName = SITE_NAME }: PublicSiteShellPr
       <div inert={mobileMenuOpen || undefined} className={styles.document}>
         <a href="#main-content" className={styles.skipLink}>{skipLinkLabel}</a>
         <header className={styles.header}>
-          <span className={styles.scrollProgress} data-scroll-progress aria-hidden="true" />
           <Link ref={brandRef} href="/" className={styles.brand}>{artistName}</Link>
           <div className={styles.desktopNav}>{navigation(mainNavigationLabel)}{languageControls}</div>
           <button ref={mobileMenuButtonRef} type="button" className={styles.menuButton}

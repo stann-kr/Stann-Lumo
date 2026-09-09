@@ -52,7 +52,8 @@ export function archiveDetailContext(photos: readonly GalleryPhoto[], id: string
   return {
     photo: ordered[index]!, previous: ordered[index - 1] ?? null, next: ordered[index + 1] ?? null,
     index, total: ordered.length,
-    browse: { ...browse, from: ordered[returnIndex]!.id, page: Math.floor(returnIndex / ARCHIVE_PAGE_SIZE) + 1 },
+    browse: { ...browse, from: ordered[returnIndex]!.id,
+      page: Math.min(Math.ceil(ordered.length / ARCHIVE_PAGE_SIZE), Math.max(browse.page, Math.floor(returnIndex / ARCHIVE_PAGE_SIZE) + 1)) },
   };
 }
 

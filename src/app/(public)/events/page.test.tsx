@@ -6,7 +6,10 @@ import type { Performance } from '@/capabilities/events/events';
 import { performanceSchedule, performanceToday } from '@/capabilities/events/events';
 import type { GalleryPhoto } from '@/capabilities/media/media';
 
-vi.mock('next/link', () => ({ default: (props: React.ComponentProps<'a'>) => <a {...props} /> }));
+vi.mock('next/link', () => ({ default: ({ ...props }: React.ComponentProps<'a'> & { prefetch?: boolean }) => {
+  delete props.prefetch;
+  return <a {...props} />;
+} }));
 vi.mock('react-i18next', () => ({ useTranslation: () => ({ t: (key: string) => key }) }));
 vi.mock('@/contexts/LanguageContext', () => ({ useLanguage: () => ({ language: 'en' }) }));
 
@@ -46,9 +49,10 @@ describe('public events', () => {
     expect(within(upcoming).queryByRole('img')).not.toBeInTheDocument();
     const pastRegion = screen.getByRole('region', { name: 'Past 11' });
     expect(within(pastRegion).getAllByRole('link')).toHaveLength(10);
-    fireEvent.click(screen.getByRole('button', { name: 'events_load_more' }));
+    fireEvent.click(screen.getByRole('button', { name: 'list_load_more' }));
     expect(within(pastRegion).getAllByRole('link')).toHaveLength(11);
-    expect(screen.queryByRole('button', { name: 'events_load_more' })).not.toBeInTheDocument();
+    expect(within(pastRegion).getAllByRole('link')[10]).toHaveFocus();
+    expect(screen.queryByRole('button', { name: 'list_load_more' })).not.toBeInTheDocument();
   });
 
   it('keeps essential event facts and the real external URL with or without a poster', () => {
@@ -61,5 +65,17 @@ describe('public events', () => {
     rerender(<EventDetailPageClient event={event} posterPhoto={{ id: 'poster', altText: 'Event poster' } as GalleryPhoto} />);
     expect(screen.getByRole('img', { name: 'Event poster' })).toHaveAttribute('src', '/api/media/poster?v=2');
     expect(screen.getByText('STANN LUMO')).toBeVisible();
+  });
+
+  it('extends upcoming and past lists independently', () => {
+    const records = (future: boolean) => Array.from({ length: 11 }, (_, index) => ({ ...event, id: `${future}-${index}`, date: future ? '2999-01-01' : '2020-01-01' }));
+    render(<EventsPageClient eventsMeta={meta} performances={[...records(true), ...records(false)]} />);
+    const upcoming = screen.getByRole('region', { name: 'Upcoming 11' });
+    const past = screen.getByRole('region', { name: 'Past 11' });
+    fireEvent.click(within(upcoming).getByRole('button', { name: 'list_load_more' }));
+    expect(within(upcoming).getAllByRole('link')).toHaveLength(11);
+    expect(within(past).getAllByRole('link')).toHaveLength(10);
+    fireEvent.click(within(past).getByRole('button', { name: 'list_load_more' }));
+    expect(within(past).getAllByRole('link')).toHaveLength(11);
   });
 });

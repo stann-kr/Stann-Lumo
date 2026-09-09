@@ -2,7 +2,6 @@
 
 import type { RefObject } from 'react';
 import { gsap } from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { useGSAP } from '@gsap/react';
 import { PUBLIC_MOTION, type MotionInput } from './publicMotion';
 
@@ -26,19 +25,4 @@ export function useShellMotion(rootRef: RefObject<HTMLDivElement | null>, pathna
     }, rootRef);
     return () => media.revert();
   }, { scope: rootRef, dependencies: [pathname, isMenuOpen], revertOnUpdate: true });
-
-  useGSAP(() => {
-    const root = rootRef.current;
-    if (!root || !window.matchMedia) return;
-    gsap.registerPlugin(ScrollTrigger);
-    const media = gsap.matchMedia();
-    media.add('(prefers-reduced-motion: no-preference)', () => {
-      const progress = root.querySelector('[data-scroll-progress]');
-      if (progress) gsap.fromTo(progress, { scaleX: 0 }, {
-        scaleX: 1, ease: 'none',
-        scrollTrigger: { trigger: root, start: 'top top', end: 'bottom bottom', scrub: true },
-      });
-    }, rootRef);
-    return () => media.revert();
-  }, { scope: rootRef, dependencies: [pathname], revertOnUpdate: true });
 }

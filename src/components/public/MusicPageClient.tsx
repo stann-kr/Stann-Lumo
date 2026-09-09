@@ -3,6 +3,7 @@
 import { useTranslation } from "react-i18next";
 import { useLanguage } from "@/contexts/LanguageContext";
 import PageLayout from "@/components/feature/PageLayout";
+import InfiniteList from "@/components/feature/InfiniteList";
 import Link from '../feature/PublicLink';
 import type { MusicPageMeta, Track } from "@/capabilities/content/content";
 import styles from "./MusicPageClient.module.css";
@@ -21,13 +22,13 @@ function TrackRow({ track, featured }: { track: Track; featured: boolean }) {
     </div>
     <div className={styles.meta}><span>{track.type}</span>{track.duration && <span className={styles.duration}>{track.duration}</span>}</div>
     {track.link && <>
-      <span className={styles.arrow} data-hover-arrow aria-hidden="true">↗</span>
-      <i className={styles.rowRule} data-hover-rule aria-hidden="true" />
+      <span className={styles.arrow} aria-hidden="true">↗</span>
+      <i className={styles.rowRule} aria-hidden="true" />
     </>}
   </>;
 
   return track.link ? (
-    <a href={track.link} target="_blank" rel="noopener noreferrer" className={styles.row} data-featured={featured} data-hover aria-label={`${track.title} — ${t('music_listen_on', { platform: track.platform })}${newTabLabel}`}>
+    <a href={track.link} target="_blank" rel="noopener noreferrer" className={styles.row} data-featured={featured} aria-label={`${track.title} — ${t('music_listen_on', { platform: track.platform })}${newTabLabel}`}>
       {content}
     </a>
   ) : <div className={styles.row} data-featured={featured}>{content}</div>;
@@ -40,11 +41,9 @@ export default function MusicPageClient({ musicMeta, tracks }: MusicPageClientPr
   const newTabLabel = isKorean ? ' (새 창)' : ' (opens in a new tab)';
   return (
     <PageLayout title={musicMeta.title || t("music_title")} subtitle={musicMeta.subtitle}>
-      {tracks.length ? <ul className={styles.tracks}>
-        {tracks.map((track, index) => (
-          <li key={track.id}><TrackRow track={track} featured={index === 0} /></li>
-        ))}
-      </ul> : <p className={styles.empty}>{isKorean ? '등록된 음악이 없습니다.' : 'No music has been added yet.'}</p>}
+      {tracks.length ? <InfiniteList key={language} items={tracks} pageSize={10} className={styles.tracks} label={musicMeta.title || t('music_title')}
+        renderItem={(track, index) => <TrackRow track={track} featured={index === 0} />} />
+        : <p className={styles.empty}>{isKorean ? '등록된 음악이 없습니다.' : 'No music has been added yet.'}</p>}
       <footer className={styles.footer}>
         <Link href="/contact">{t('music_licensing')}</Link>
         <div>

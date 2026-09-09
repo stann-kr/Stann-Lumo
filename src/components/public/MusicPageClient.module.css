@@ -15,6 +15,12 @@
 @media (hover: hover) and (pointer: fine) {
   a.row:hover h2, a.row:hover .listen, a.row:hover .arrow { color: var(--color-accent); }
 }
+@media (prefers-reduced-motion: no-preference) and (hover: hover) and (pointer: fine) {
+  .rowRule, .arrow { transition: transform 160ms var(--motion-ease-out, ease-out); }
+  a.row:hover:not(:focus-visible) .rowRule { transform: scaleX(1); }
+  a.row:hover:not(:focus-visible) .arrow { transform: translate(2px, -2px); }
+  .row:focus-visible .rowRule, .row:focus-visible .arrow { transition: none; }
+}
 .footer { display: flex; flex-wrap: wrap; gap: 2rem 4rem; justify-content: space-between; margin-top: 3rem; color: var(--color-secondary); }
 .footer p { max-width: 60ch; }
 .footer div { display: flex; flex-wrap: wrap; gap: 1.5rem; }
