@@ -10,6 +10,7 @@ import SignalNet from "../base/SignalNet";
 import styles from "./PublicSiteShell.module.css";
 import { useShellMotion } from './useShellMotion';
 import { PublicMotionInputContext, type MotionInput } from './publicMotion';
+import PublicAmbientBackground from './ambient/PublicAmbientBackground';
 
 interface PublicSiteShellProps {
   children: ReactNode;
@@ -202,6 +203,7 @@ const PublicSiteShell = ({ children, artistName = SITE_NAME }: PublicSiteShellPr
     <PublicNavigationContext value={navigate}>
     <PublicMotionInputContext value={motionInputRef}>
     <div ref={shellRef} className={styles.shell}>
+      <PublicAmbientBackground paused={mobileMenuOpen || isNavigating} />
       <div inert={mobileMenuOpen || undefined} className={styles.document}>
         <a href="#main-content" className={styles.skipLink}>{skipLinkLabel}</a>
         <header className={styles.header}>

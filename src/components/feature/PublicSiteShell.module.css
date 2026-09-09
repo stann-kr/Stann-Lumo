@@ -3,13 +3,15 @@
   --page-gutter: clamp(1.25rem, 4vw, 5rem);
   --motion-ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   min-height: 100svh;
+  position: relative;
+  isolation: isolate;
   background: var(--color-bg);
   color: var(--color-primary);
   font-family: var(--font-display);
   line-height: 1.6;
 }
 .shell :global(.font-sans) { font-family: var(--font-display); }
-.document { min-height: 100svh; display: flex; flex-direction: column; }
+.document { position: relative; z-index: 1; min-height: 100svh; display: flex; flex-direction: column; }
 .header {
   position: sticky; top: 0; z-index: 40;
   display: flex; align-items: center; justify-content: space-between; gap: 1rem;
@@ -46,6 +48,10 @@
   .desktopNav .navList a:not([aria-current]):hover::after { transform: scaleX(1); }
 }
 .desktopNav .navList a:focus-visible::after { transform: scaleX(1); transition: none; }
+@media (hover: hover) and (pointer: fine) {
+  .shell, .shell :is(a, button, label, input[type='radio'], input[type='checkbox']) { cursor: crosshair; }
+  .shell :is(button, input):disabled { cursor: not-allowed; }
+}
 .dialog .navList { counter-reset: navigation; }
 .dialog .navList a { justify-content: space-between; gap: 1.5rem; padding-block: .85rem; }
 .dialog .navList a::after { counter-increment: navigation; content: counter(navigation, decimal-leading-zero) / ''; font: .65rem 'JetBrains Mono', monospace; color: var(--color-secondary); }
