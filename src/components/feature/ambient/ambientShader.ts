@@ -49,19 +49,20 @@ void main() {
   float n2 = snoise(st * 2.0 - uTime * 0.15 + n1);
   vec2 warped = st + vec2(n1, n2) * 0.4;
 
-  vec3 ink = vec3(0.02, 0.016, 0.024);
-  vec3 charcoal = vec3(0.09, 0.08, 0.095);
-  vec3 wine = vec3(0.18, 0.016, 0.05);
-  vec3 ember = vec3(0.36, 0.055, 0.115);
-  vec3 crimson = vec3(0.27, 0.025, 0.08);
+  // Distinct warm and cool regions reveal the moving field as their hues blend.
+  vec3 signalRed = vec3(92.0, 14.0, 29.0) / 255.0;
+  vec3 burgundy = vec3(74.0, 20.0, 52.0) / 255.0;
+  vec3 violet = vec3(52.0, 32.0, 82.0) / 255.0;
+  vec3 slate = vec3(18.0, 43.0, 64.0) / 255.0;
+  vec3 copper = vec3(67.0, 32.0, 22.0) / 255.0;
   float d1 = length(warped - vec2(0.2, 0.8));
   float d2 = length(warped - vec2(0.8, 0.2));
   float d3 = length(warped - vec2(0.5, 0.5));
-  vec3 color = mix(ember, wine, smoothstep(0.0, 1.2, d1));
-  color = mix(color, charcoal, smoothstep(0.2, 1.5, d3));
-  color = mix(color, ink, smoothstep(0.4, 2.0, d2));
+  vec3 color = mix(signalRed, burgundy, smoothstep(0.0, 1.2, d1));
+  color = mix(color, violet, smoothstep(0.2, 1.5, d3));
+  color = mix(color, slate, smoothstep(0.4, 2.0, d2));
   float accentField = snoise(st * 3.0 + uTime * 0.05);
-  color = mix(color, crimson, smoothstep(0.5, 1.0, accentField) * 0.5);
+  color = mix(color, copper, smoothstep(0.5, 1.0, accentField) * 0.5);
 
   // Grain changes at 12 Hz independently of the slow color drift.
   vec2 grainPosition = gl_FragCoord.xy + floor(uTime * 12.0) * vec2(31.7, 15.1);
