@@ -50,7 +50,7 @@ test('public preview blocks writes, private routes and encoded bypasses before i
   const preview = createPublicPreview({ async fetch(request) { forwarded.push(request.url); return new Response('public content'); } });
   assert.equal('scheduled' in preview, false);
   for (const [method, pathname] of [
-    ['POST', '/'], ['PUT', '/api/archive'], ['DELETE', '/api/media/photo'],
+    ['POST', '/'], ['PUT', '/api/archive'], ['POST', '/api/events?section=past&offset=0'], ['DELETE', '/api/media/photo'],
     ['GET', '/admin'], ['GET', '/api/auth/session'], ['GET', '/api/admin/tracks'],
     ['GET', '/%61dmin'], ['GET', '/api%2fauth/session'], ['GET', '/api%5cadmin/tracks'],
     ['GET', '/about/%2e%2e/admin'], ['GET', '/%2561dmin'],
@@ -59,11 +59,11 @@ test('public preview blocks writes, private routes and encoded bypasses before i
     assert.equal(response.status, 403, `${method} ${pathname}`);
   }
   assert.equal(forwarded.length, 0);
-  for (const pathname of ['/', '/music', '/archive/photo?sort=random&seed=42', '/api/content/ko', '/api/media/photo', '/_next/static/chunks/app.js']) {
+  for (const pathname of ['/', '/music', '/archive/photo?sort=random&seed=42', '/api/content/ko', '/api/media/photo', '/_next/static/chunks/app.js', '/api/events?section=past&today=2026-09-10&offset=0', '/api/archive?offset=0']) {
     const response = await preview.fetch(new Request(`https://preview.test${pathname}`));
     assert.equal(response.status, 200);
     assert.equal(response.headers.get('X-Robots-Tag'), 'noindex, nofollow');
   }
-  assert.equal(forwarded.length, 6);
+  assert.equal(forwarded.length, 8);
   assert.equal((await preview.fetch(new Request('https://preview.test/%'))).status, 400);
 });

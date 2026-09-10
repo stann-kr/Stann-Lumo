@@ -8,6 +8,7 @@ import { getPublicImageUrl, type GalleryPhoto } from '@/capabilities/media/media
 import type { Performance } from '@/capabilities/events/events';
 import { performanceDate, performanceLocation, performanceToday } from '@/capabilities/events/events';
 import styles from './EventDetailPageClient.module.css';
+import LoadingImage from '@/capabilities/media/LoadingImage';
 
 export default function EventDetailPageClient({ event, posterPhoto }: { event: Performance; posterPhoto?: GalleryPhoto }) {
   const { t } = useTranslation();
@@ -28,7 +29,7 @@ export default function EventDetailPageClient({ event, posterPhoto }: { event: P
           </dl>
           {event.raEventLink && <a href={event.raEventLink} target="_blank" rel="noopener noreferrer" className={styles.external}>{isKorean ? 'Resident Advisor에서 보기' : 'View on Resident Advisor'} <span aria-hidden="true">↗</span><span className="sr-only">{isKorean ? ' (새 창)' : ' (opens in a new tab)'}</span></a>}
         </aside>
-        {posterPhoto && <div className={styles.poster}><img src={getPublicImageUrl(posterPhoto.id)} alt={posterPhoto.altText || event.title} /></div>}
+        {posterPhoto && <div className={styles.poster}><LoadingImage src={getPublicImageUrl(posterPhoto.id)} alt={posterPhoto.altText || event.title} loading="eager" natural /></div>}
       </div>
     </PageLayout>
   );

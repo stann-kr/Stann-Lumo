@@ -33,7 +33,9 @@ export function archiveReturnHref(browse: ArchiveBrowseState): string {
   return `${archiveHref(browse)}${browse.from ? `#${encodeURIComponent(archiveItemAnchor(browse.from))}` : ''}`;
 }
 
-function archiveDate(photo: GalleryPhoto): number | null {
+type ArchiveOrderItem = Pick<GalleryPhoto, 'id' | 'eventDate' | 'createdAt' | 'sortOrder'>;
+
+function archiveDate(photo: ArchiveOrderItem): number | null {
   const eventDate = Date.parse(photo.eventDate?.replace(/\./g, '-') ?? '');
   if (Number.isFinite(eventDate)) return eventDate;
   const createdAt = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(photo.createdAt)
@@ -57,11 +59,11 @@ export function archiveDetailContext(photos: readonly GalleryPhoto[], id: string
   };
 }
 
-export function sortArchivePhotos(
-  photos: readonly GalleryPhoto[],
+export function sortArchivePhotos<T extends ArchiveOrderItem>(
+  photos: readonly T[],
   sort: ArchiveSort,
   seed: number,
-): GalleryPhoto[] {
+): T[] {
   const sorted = [...photos];
   if (sort === 'random') {
     // A seeded shuffle stays fixed while moving between pages.

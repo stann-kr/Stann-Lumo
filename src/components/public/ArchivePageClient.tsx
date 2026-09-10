@@ -3,15 +3,17 @@
 import { getPublicImageUrl } from '@/capabilities/media/media';
 
 import Link from '../feature/PublicLink';
-import { useLayoutEffect, useMemo, useRef } from 'react';
+import { useCallback, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import PageLayout from '@/components/feature/PageLayout';
-import InfiniteList from '@/components/feature/InfiniteList';
+import PagedList from '@/components/feature/PagedList';
+import LoadingImage from '@/capabilities/media/LoadingImage';
+import { fetchPublicPage } from '@/capabilities/content/publicPagination';
 import { useLanguage } from '@/contexts/LanguageContext';
 import styles from './ArchivePageClient.module.css';
 import type { GalleryPhoto } from '@/capabilities/media/media';
-import { ARCHIVE_PAGE_SIZE, archiveBrowseState, archiveHref, archiveItemAnchor, archiveReturnHref, sortArchivePhotos, type ArchiveBrowseState } from '@/capabilities/media/archiveBrowsing';
+import { ARCHIVE_PAGE_SIZE, archiveBrowseState, archiveHref, archiveItemAnchor, archiveReturnHref, type ArchiveBrowseState } from '@/capabilities/media/archiveBrowsing';
 
 const RETURN_POSITION_KEY = 'lumo:archive:return-position';
 
@@ -26,9 +28,9 @@ function GridItem({ photo, browse }: { photo: GalleryPhoto; browse: ArchiveBrows
         window.history.replaceState(null, '', href);
       }}>
         <div className={styles.media} data-video={photo.mediaType !== 'image'}>
-          {photo.mediaType === 'video_youtube' ? <img src={photo.videoThumbnailUrl || undefined} alt={photo.altText || photo.filename} loading="lazy" data-hover-image />
+          {photo.mediaType === 'video_youtube' ? <LoadingImage src={photo.videoThumbnailUrl || undefined} alt={photo.altText || photo.filename} data-hover-image />
             : photo.mediaType === 'video_file' ? <video src={`/api/media/${photo.id}`} preload="none" muted playsInline aria-hidden="true" />
-            : <img src={getPublicImageUrl(photo.id)} alt={photo.altText || photo.filename} loading="lazy" data-hover-image />}
+            : <LoadingImage src={getPublicImageUrl(photo.id)} alt={photo.altText || photo.filename} data-hover-image />}
         </div>
         {photo.caption && <p className={styles.caption}>{photo.caption}</p>}
       </Link>
@@ -37,21 +39,27 @@ function GridItem({ photo, browse }: { photo: GalleryPhoto; browse: ArchiveBrows
   );
 }
 
-export default function ArchivePageClient({ photos }: { photos: GalleryPhoto[] }) {
+export default function ArchivePageClient({ total }: { total: number }) {
   const { t } = useTranslation();
   const searchParams = useSearchParams();
   const { sort, seed, page } = archiveBrowseState(searchParams);
   const listRef = useRef<HTMLUListElement>(null);
-  const sortedPhotos = useMemo(() => sortArchivePhotos(photos, sort, seed), [photos, sort, seed]);
-  const totalPages = Math.max(1, Math.ceil(sortedPhotos.length / ARCHIVE_PAGE_SIZE));
+  const restoredHref = useRef('');
+  const totalPages = Math.max(1, Math.ceil(total / ARCHIVE_PAGE_SIZE));
   const currentPage = Math.min(page, totalPages);
   const browse = { sort, seed, page: currentPage, from: '' };
-  useLayoutEffect(() => {
+  const loadPage = useCallback((offset: number, signal: AbortSignal) => fetchPublicPage<GalleryPhoto>(`/api/archive?sort=${sort}&seed=${seed}&offset=${offset}`, signal), [sort, seed]);
+  const restorePosition = useCallback(() => {
+    const href = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+    if (restoredHref.current === href) return;
     let id: string;
     try { id = decodeURIComponent(window.location.hash.slice(1)); } catch { return; }
     if (!id.startsWith('archive-item-')) return;
     const target = document.getElementById(id);
     if (!target || !listRef.current?.contains(target)) return;
+    // Wait until the previous list depth exists before restoring its scroll geometry.
+    if ((listRef.current?.querySelectorAll('a').length ?? 0) < Math.min(total, currentPage * ARCHIVE_PAGE_SIZE)) return;
+    restoredHref.current = href;
     target.focus({ preventScroll: true });
     try {
       const position = JSON.parse(sessionStorage.getItem(RETURN_POSITION_KEY) || 'null');
@@ -61,12 +69,12 @@ export default function ArchivePageClient({ photos }: { photos: GalleryPhoto[] }
       }
     } catch { /* A direct link can restore the item without a saved scroll position. */ }
     target.scrollIntoView?.({ block: 'center', behavior: 'instant' });
-  }, [sort, seed, currentPage]);
+  }, [total, currentPage]);
   return (
     <PageLayout title={t('gallery_title')} motionRevision={`${sort}:${seed}:${currentPage}`} animateEntry={false}>
-      {photos.length === 0 ? <div className={styles.empty}><p className="text-[var(--color-text-muted)] text-sm font-mono tracking-widest">{t('gallery_empty')}</p></div> : <div className="space-y-6">
+      {total === 0 ? <div className={styles.empty}><p className="text-[var(--color-text-muted)] text-sm font-mono tracking-widest">{t('gallery_empty')}</p></div> : <div className="space-y-6">
         <div className="flex flex-col gap-3 border-b border-[var(--color-muted)] pb-4 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-xs font-mono text-[var(--color-text-muted)]">{t('gallery_total', { total: photos.length })}</p>
+          <p className="text-xs font-mono text-[var(--color-text-muted)]">{t('gallery_total', { total })}</p>
           <fieldset className="min-w-0">
             <legend className="sr-only">{t('gallery_sort')}</legend>
             <div className="flex items-center gap-1">
@@ -81,7 +89,8 @@ export default function ArchivePageClient({ photos }: { photos: GalleryPhoto[] }
             </div>
           </fieldset>
         </div>
-        <InfiniteList key={`${sort}:${seed}:${currentPage}`} items={sortedPhotos} pageSize={ARCHIVE_PAGE_SIZE} initialCount={currentPage * ARCHIVE_PAGE_SIZE}
+        <PagedList key={`${sort}:${seed}`} total={total} loadPage={loadPage} restoreCount={currentPage * ARCHIVE_PAGE_SIZE} restoreFromHash={currentPage === 1}
+          onItemsRendered={restorePosition} skeleton={<div className={styles.skeleton}><div /><span /></div>}
           listRef={listRef} label={t('gallery_items')} className={styles.grid}
           renderItem={(photo, _index, visibleCount) => <GridItem photo={photo} browse={{ ...browse, page: Math.ceil(visibleCount / ARCHIVE_PAGE_SIZE) }} />} />
       </div>}

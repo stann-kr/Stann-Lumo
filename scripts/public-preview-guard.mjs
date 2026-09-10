@@ -1,5 +1,5 @@
 const PUBLIC_PAGE = /^\/(?:about|music|contact|link|events(?:\/[^/]+)?|archive(?:\/[^/]+)?)?\/?$/;
-const PUBLIC_API = /^\/api\/(?:content\/(?:en|ko)|archive|events\/[^/]+|media\/[^/]+)\/?$/;
+const PUBLIC_API = /^\/api\/(?:content\/(?:en|ko)|archive|events(?:\/[^/]+)?|media\/[^/]+)\/?$/;
 const PUBLIC_ASSET = /^\/(?:_next\/(?:static\/.+|image)|(?:apple-)?icon\.png|favicon\.ico|robots\.txt|sitemap\.xml)$/;
 
 export function createPublicPreview(handler) {

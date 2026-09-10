@@ -2,7 +2,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { D1Database, D1PreparedStatement } from '@/lib/db';
 import { getDB } from '@/lib/db';
 import { assertPublicPayloadSafe } from '@/lib/security/publicPayload';
-import { getArchiveDetail, getArchivePhotos, getHomeProjection, getMusicProjection, getPublicShellProjection } from './publicContent.server';
+import { getArchiveDetail, getArchivePhotos, getArchivePage, getEventsProjection, getEventsPage, getHomeProjection, getMusicProjection, getPublicShellProjection } from './publicContent.server';
+import { sortArchivePhotos } from '@/capabilities/media/archiveBrowsing';
+import { GET as archiveGET } from '@/app/api/archive/route';
+import { GET as eventsGET } from '@/app/api/events/route';
 import { createSqliteD1 } from '@/test/sqliteD1';
 
 vi.mock('@/lib/db', () => ({ getDB: vi.fn() }));
@@ -45,6 +48,67 @@ function createPublicDatabase() {
 describe('public server content projections', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  it('sends only bounded archive pages with the same order as detail navigation', async () => {
+    const { db, sqlite, close } = createSqliteD1();
+    vi.mocked(getDB).mockReturnValue(db);
+    try {
+      for (let i = 0; i < 11; i++) {
+        sqlite.prepare('INSERT INTO performances (id, date, venue, title) VALUES (?, ?, ?, ?)').run(`e${i}`, `2020.01.${String(i + 1).padStart(2, '0')}`, 'Venue', 'Event');
+        sqlite.prepare('INSERT INTO gallery_photos (id, filename, linked_event_id) VALUES (?, ?, ?)').run(`p${i}`, `${i}.jpg`, `e${i}`);
+      }
+      const all = await getArchivePhotos();
+      for (const sort of ['newest', 'oldest', 'random'] as const) {
+        const ids: string[] = [];
+        let offset: number | null = 0;
+        while (offset !== null) {
+          const result = await getArchivePage({ sort, seed: 42 }, offset);
+          expect(result.items.length).toBeLessThanOrEqual(4);
+          expect(result.total).toBe(11);
+          expect(() => assertPublicPayloadSafe(result)).not.toThrow();
+          ids.push(...result.items.map(item => item.id));
+          offset = result.nextOffset;
+        }
+        expect(ids).toEqual(sortArchivePhotos(all, sort, 42).map(item => item.id));
+      }
+      expect(await getArchivePage({ sort: 'newest', seed: 1 }, 999)).toEqual({ items: [], total: 11, nextOffset: null });
+      const response = await archiveGET(new Request('http://localhost/api/archive?offset=4'));
+      expect(response.status).toBe(200);
+      expect((await response.json()).data.items).toHaveLength(4);
+    } finally { close(); }
+  });
+
+  it('loads event counts without embedding the full list and pages each schedule independently', async () => {
+    const { db, sqlite, close } = createSqliteD1();
+    vi.mocked(getDB).mockReturnValue(db);
+    try {
+      for (let i = 1; i <= 7; i++) {
+        for (const year of [2000, 2999]) sqlite.prepare('INSERT INTO performances (id, date, venue, title, lineup) VALUES (?, ?, ?, ?, ?)').run(`${year}-${i}`, `${year}.01.0${i}`, 'Venue', `Event ${i}`, 'Detailed lineup');
+      }
+      const projection = await getEventsProjection('en');
+      expect(projection.schedule).toMatchObject({ upcoming: 7, past: 7 });
+      expect(projection).not.toHaveProperty('performances');
+      const first = await getEventsPage('upcoming', projection.schedule.today, 0);
+      const next = await getEventsPage('upcoming', projection.schedule.today, first.nextOffset!);
+      expect([...first.items, ...next.items].map(item => item.id)).toEqual(Array.from({ length: 7 }, (_, i) => `2999-${i + 1}`));
+      expect(first.items[0]).not.toHaveProperty('lineup');
+      expect((await getEventsPage('past', projection.schedule.today, 0)).items.map(item => item.id)).toEqual(['2000-7', '2000-6', '2000-5', '2000-4']);
+      expect(next.nextOffset).toBeNull();
+      expect(() => assertPublicPayloadSafe(first)).not.toThrow();
+    } finally { close(); }
+  });
+
+  it('rejects invalid paging parameters before querying and reports unavailable data as an error', async () => {
+    for (const offset of ['-1', 'NaN', '1.5', '9007199254740992']) {
+      expect((await archiveGET(new Request(`http://localhost/api/archive?offset=${offset}`))).status).toBe(400);
+      expect((await eventsGET(new Request(`http://localhost/api/events?section=past&today=2026-09-10&offset=${offset}`))).status).toBe(400);
+    }
+    expect((await eventsGET(new Request('http://localhost/api/events?section=all&today=bad&offset=0'))).status).toBe(400);
+    expect(getDB).not.toHaveBeenCalled();
+    vi.mocked(getDB).mockReturnValue(null);
+    expect((await archiveGET(new Request('http://localhost/api/archive?offset=0'))).status).toBe(500);
+    expect((await eventsGET(new Request('http://localhost/api/events?section=past&today=2026-09-10&offset=0'))).status).toBe(500);
   });
 
   it('loads a single requested locale projection and never queries administrator credentials', async () => {

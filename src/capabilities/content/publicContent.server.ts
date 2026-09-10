@@ -18,6 +18,9 @@ import type {
 } from './content';
 import type { EventsInfo, Performance } from '@/capabilities/events/events';
 import type { GalleryPhoto } from '@/capabilities/media/media';
+import { sortArchivePhotos, type ArchiveBrowseState } from '@/capabilities/media/archiveBrowsing';
+import { performanceToday } from '@/capabilities/events/events';
+import { PUBLIC_BATCH_SIZE, type PublicPage } from './publicPagination';
 import type { TerminalCustomField, TerminalInfo } from '@/capabilities/terminal/terminalConfig';
 
 export type PublicLocale = 'en' | 'ko';
@@ -395,19 +398,37 @@ export const getMusicProjection = cache(async (locale: PublicLocale): Promise<Mu
 
 export interface EventsProjection {
   pageMeta: Pick<PageMeta, 'events'>;
-  performances: Performance[];
+  schedule: { today: string; upcoming: number; past: number };
 }
 
 export const getEventsProjection = cache(async (locale: PublicLocale): Promise<EventsProjection> => {
   const db = getPublicDB();
-  const [metaRows, performanceRows] = await Promise.all([
+  const today = performanceToday();
+  const [metaRows, counts] = await Promise.all([
     localizedMetaRows(db, locale),
-    rows<PerformanceRow>(db, 'SELECT * FROM performances ORDER BY date DESC, sort_order'),
+    db.prepare(`SELECT COUNT(CASE WHEN SUBSTR(REPLACE(date, '.', '-'), 1, 10) >= ? THEN 1 END) AS upcoming,
+      COUNT(CASE WHEN SUBSTR(REPLACE(date, '.', '-'), 1, 10) < ? THEN 1 END) AS past FROM performances`).bind(today, today).first<{ upcoming: number; past: number }>(),
   ]);
-  const projection = { pageMeta: { events: buildPageMeta(metaRows).events }, performances: mapPerformances(performanceRows) };
+  const projection = { pageMeta: { events: buildPageMeta(metaRows).events }, schedule: { today, upcoming: counts?.upcoming ?? 0, past: counts?.past ?? 0 } };
   assertPublicPayloadSafe(projection);
   return projection;
 });
+
+export async function getEventsPage(section: 'upcoming' | 'past', today: string, offset: number): Promise<PublicPage<Performance>> {
+  const db = getPublicDB();
+  const condition = `SUBSTR(REPLACE(date, '.', '-'), 1, 10) ${section === 'upcoming' ? '>=' : '<'} ?`;
+  const [count, records] = await Promise.all([
+    db.prepare(`SELECT COUNT(*) AS total FROM performances WHERE ${condition}`).bind(today).first<{ total: number }>(),
+    rows<PerformanceRow>(db, `SELECT id, date, venue, location, time, title, status, poster_image_id,
+      NULL AS lineup, NULL AS ra_event_link, NULL AS ra_event_id FROM performances WHERE ${condition}
+      ORDER BY SUBSTR(REPLACE(date, '.', '-'), 1, 10) ${section === 'upcoming' ? 'ASC' : 'DESC'}, sort_order, id LIMIT ? OFFSET ?`, today, PUBLIC_BATCH_SIZE, offset),
+  ]);
+  const total = count?.total ?? 0;
+  const items = mapPerformances(records);
+  const page = { items, total, nextOffset: offset + items.length < total ? offset + items.length : null };
+  assertPublicPayloadSafe(page);
+  return page;
+}
 
 export interface ContactProjection {
   pageMeta: Pick<PageMeta, 'contact'>;
@@ -461,11 +482,34 @@ export const getArchivePhotos = cache(async (): Promise<GalleryPhoto[]> => {
   const photoRows = await rows<GalleryPhotoRow>(db,
     `SELECT g.*, p.date AS event_date FROM gallery_photos g
      LEFT JOIN performances p ON p.id = g.linked_event_id
-     ORDER BY g.sort_order ASC, g.created_at DESC`);
+     ORDER BY g.sort_order ASC, g.created_at DESC, g.id`);
   const photos = photoRows.map(mapGalleryPhoto);
   assertPublicPayloadSafe(photos);
   return photos;
 });
+
+export const getArchiveCount = cache(async (): Promise<number> => {
+  const count = await getPublicDB().prepare('SELECT COUNT(*) AS total FROM gallery_photos').first<{ total: number }>();
+  return count?.total ?? 0;
+});
+
+export async function getArchivePage(browse: Pick<ArchiveBrowseState, 'sort' | 'seed'>, offset: number): Promise<PublicPage<GalleryPhoto>> {
+  const db = getPublicDB();
+  // Only ordering keys are read for the seeded shuffle; full records are fetched for this batch alone.
+  const index = await rows<Pick<GalleryPhoto, 'id' | 'sortOrder' | 'createdAt' | 'eventDate'>>(db,
+    `SELECT g.id, g.sort_order AS sortOrder, g.created_at AS createdAt, p.date AS eventDate FROM gallery_photos g
+     LEFT JOIN performances p ON p.id = g.linked_event_id ORDER BY g.sort_order ASC, g.created_at DESC, g.id`);
+  const selected = sortArchivePhotos(index, browse.sort, browse.seed).slice(offset, offset + PUBLIC_BATCH_SIZE);
+  const records = selected.length ? await rows<GalleryPhotoRow>(db,
+    `SELECT g.*, p.date AS event_date FROM gallery_photos g LEFT JOIN performances p ON p.id = g.linked_event_id
+     WHERE g.id IN (${selected.map(() => '?').join(',')})`, ...selected.map(item => item.id)) : [];
+  const byId = new Map(records.map(row => [row.id, mapGalleryPhoto(row)]));
+  const items = selected.flatMap(item => { const photo = byId.get(item.id); return photo ? [photo] : []; });
+  const nextOffset = offset + selected.length;
+  const page = { items, total: index.length, nextOffset: nextOffset < index.length ? nextOffset : null };
+  assertPublicPayloadSafe(page);
+  return page;
+}
 
 export const getEventDetail = cache(async (id: string): Promise<{ event: Performance; posterPhoto?: GalleryPhoto } | null> => {
   const db = getPublicDB();

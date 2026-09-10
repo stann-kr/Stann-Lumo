@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getPublicImageUrl, type GalleryPhoto } from '@/capabilities/media/media';
 import styles from './ArchiveDetailPageClient.module.css';
+import LoadingImage from '@/capabilities/media/LoadingImage';
 import { useContentMotion } from '../feature/useContentMotion';
 import { archiveHref, archiveReturnHref, type ArchiveBrowseState } from '@/capabilities/media/archiveBrowsing';
 
@@ -57,7 +58,7 @@ export default function ArchiveDetailPageClient({ photo, previous, next, index, 
         <div className={styles.media}>
           {photo.mediaType === 'video_youtube' && photo.videoYoutubeId ? <iframe src={`https://www.youtube.com/embed/${photo.videoYoutubeId}`} allow="encrypted-media; fullscreen" allowFullScreen title={photo.altText || photo.filename} />
             : photo.mediaType === 'video_file' ? <video src={`/api/media/${photo.id}`} controls preload="metadata" aria-label={itemLabel} />
-            : <img src={getPublicImageUrl(photo.id)} alt={photo.altText || photo.filename} />}
+            : <LoadingImage src={getPublicImageUrl(photo.id)} alt={photo.altText || photo.filename} loading="eager" natural />}
         </div>
         <div className={styles.info}>
           <p className={styles.type}>{photo.mediaType === 'video_youtube' ? 'YouTube' : photo.mediaType === 'video_file' ? (isKorean ? '영상' : 'Video') : (isKorean ? '이미지' : 'Image')}</p>
