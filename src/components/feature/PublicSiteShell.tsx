@@ -203,7 +203,7 @@ const PublicSiteShell = ({ children, artistName = SITE_NAME }: PublicSiteShellPr
     <PublicNavigationContext value={navigate}>
     <PublicMotionInputContext value={motionInputRef}>
     <div ref={shellRef} className={styles.shell}>
-      <PublicAmbientBackground paused={mobileMenuOpen || isNavigating} />
+      <PublicAmbientBackground paused={mobileMenuOpen} />
       <div inert={mobileMenuOpen || undefined} className={styles.document}>
         <a href="#main-content" className={styles.skipLink}>{skipLinkLabel}</a>
         <header className={styles.header}>
@@ -216,9 +216,9 @@ const PublicSiteShell = ({ children, artistName = SITE_NAME }: PublicSiteShellPr
           </button>
         </header>
         <main ref={mainRef} id="main-content" tabIndex={-1} aria-busy={isNavigating} className={styles.main}>
-          <div inert={isNavigating || undefined}>{children}</div>
+          <div inert={isNavigating || undefined} className={isNavigating ? styles.pendingContent : undefined}>{children}</div>
         </main>
-        <footer inert={isNavigating || undefined} className={styles.footer}>
+        <footer inert={isNavigating || undefined} className={`${styles.footer} ${isNavigating ? styles.pendingContent : ''}`}>
           <SignalNet />
           <div className={styles.externalLinks}>
             <a href={HUB_URL} target="_blank" rel="noopener noreferrer">HUB <span aria-hidden="true">↗</span><span className="sr-only">{language === "ko" ? " (새 창)" : " (opens in a new tab)"}</span></a>

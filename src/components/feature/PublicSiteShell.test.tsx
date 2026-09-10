@@ -7,6 +7,7 @@ import { Suspense, useEffect, useState } from 'react';
 import PublicSiteShell from './PublicSiteShell';
 import PublicLink from './PublicLink';
 import PublicPageLoading from './PublicPageLoading';
+import { createAmbientRenderer, type AmbientRenderer } from './ambient/ambientRenderer';
 import HomePageClient from '../public/HomePageClient';
 
 const mocks = vi.hoisted(() => ({
@@ -65,6 +66,7 @@ vi.mock('@/contexts/LanguageContext', () => ({
 }));
 
 vi.mock('../base/SignalNet', () => ({ default: () => null }));
+vi.mock('./ambient/ambientRenderer', () => ({ createAmbientRenderer: vi.fn(() => null) }));
 
 const desktopBreakpointListeners = new Set<(event: MediaQueryListEvent) => void>();
 const matchMedia = vi.fn(() => ({
@@ -135,6 +137,7 @@ describe('PublicSiteShell public navigation', () => {
     mocks.setLanguage.mockReset();
     mocks.router.push.mockReset();
     mocks.router.replace.mockReset();
+    vi.mocked(createAmbientRenderer).mockReset().mockReturnValue(null);
     desktopBreakpointListeners.clear();
     matchMedia.mockClear();
     vi.stubGlobal('matchMedia', matchMedia);
@@ -214,9 +217,14 @@ describe('PublicSiteShell public navigation', () => {
     window.history.replaceState(null, '', '/');
   });
 
-  it('shows loading immediately after a mobile link closes and releases it when the route is ready', async () => {
+  it('keeps the ambient renderer running through loading after a mobile link closes', async () => {
     const user = userEvent.setup();
-    const { resolve } = renderPendingNavigation();
+    const renderer = { resize: vi.fn(), render: vi.fn<AmbientRenderer['render']>(), dispose: vi.fn() };
+    vi.mocked(createAmbientRenderer).mockReturnValue(renderer);
+    const { container, resolve } = renderPendingNavigation();
+    const canvas = container.querySelector('canvas');
+    await waitFor(() => expect(renderer.render).toHaveBeenCalled());
+    const initialTime = renderer.render.mock.lastCall![0];
     await user.click(screen.getByRole('button', { name: 'Open menu' }));
     await user.click(within(screen.getByRole('dialog')).getByRole('link', { name: 'MUSIC' }));
 
@@ -225,12 +233,17 @@ describe('PublicSiteShell public navigation', () => {
     expect(screen.getByRole('main')).toHaveAttribute('aria-busy', 'true');
     expect(screen.getByRole('heading', { name: '/archive' }).closest('[inert]')).not.toBeNull();
     expect(document.documentElement.style.overflow).toBe('hidden');
+    renderer.render.mockClear();
+    await waitFor(() => expect(renderer.render.mock.lastCall?.[0]).toBeGreaterThan(initialTime));
+    expect(renderer.dispose).not.toHaveBeenCalled();
 
     await act(async () => { resolve(); });
     expect(await screen.findByRole('heading', { name: '/music' })).toBeVisible();
     expect(screen.queryByRole('status')).not.toBeInTheDocument();
     expect(screen.getByRole('main')).toHaveAttribute('aria-busy', 'false');
     expect(document.documentElement.style.overflow).toBe('');
+    expect(container.querySelector('canvas')).toBe(canvas);
+    expect(createAmbientRenderer).toHaveBeenCalledTimes(1);
   });
 
   it('allows a newer destination to replace a pending content link without a stale loading screen', async () => {

@@ -3,7 +3,6 @@
   display: grid;
   place-items: center;
   padding: 2rem var(--page-gutter, 1.25rem);
-  background: var(--color-bg);
   color: var(--color-primary);
 }
 .overlay {
