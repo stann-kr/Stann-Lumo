@@ -189,7 +189,7 @@ describe('GalleryPage', () => {
     vi.stubGlobal('scrollY', 780);
     mockPages(items);
     const view = render(<ArchivePageClient total={items.length} />);
-    await waitFor(() => expect(within(screen.getByRole('list')).getAllByRole('link')).toHaveLength(48));
+    await waitFor(() => expect(screen.getByRole('list').querySelectorAll('a[href]')).toHaveLength(48));
     const links = within(screen.getByRole('list')).getAllByRole('link');
     const selected = links[27]!;
     const href = selected.getAttribute('href');
@@ -197,7 +197,7 @@ describe('GalleryPage', () => {
     expect(window.location.hash).toMatch(/^#archive-item-/);
     view.unmount();
     render(<ArchivePageClient total={items.length} />);
-    await waitFor(() => expect(within(screen.getByRole('list')).getAllByRole('link')).toHaveLength(48));
+    await waitFor(() => expect(screen.getByRole('list').querySelectorAll('a[href]')).toHaveLength(48));
     expect(screen.getByRole('radio', { name: 'gallery_sort_random' })).toBeChecked();
     expect(document.activeElement).toHaveAttribute('href', href);
     expect(window.scrollTo).toHaveBeenLastCalledWith({ top: 780, behavior: 'instant' });
@@ -214,7 +214,7 @@ describe('GalleryPage', () => {
     window.history.replaceState(null, '', archiveReturnHref({ ...detail.browse, page: 999 }));
     mockPages(items);
     render(<ArchivePageClient total={items.length} />);
-    await waitFor(() => expect(within(screen.getByRole('list')).getAllByRole('link')).toHaveLength(53));
+    await waitFor(() => expect(screen.getByRole('list').querySelectorAll('a[href]')).toHaveLength(53));
     expect(within(screen.getByRole('list')).getAllByRole('link')).toHaveLength(53);
     expect(document.activeElement).toHaveAttribute('id', `archive-item-${first.id}`);
     expect(screen.queryByRole('button', { name: 'list_load_more' })).not.toBeInTheDocument();
