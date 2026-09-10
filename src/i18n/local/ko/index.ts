@@ -42,14 +42,15 @@ export default {
   home_section_events_title: 'EVENTS',
   home_section_events_desc: '공연 일정 & 정보',
   home_section_contact_title: 'CONTACT',
-  home_section_contact_desc: '방명록 & 메시지',
+  home_section_contact_desc: '연락 및 부킹',
   home_section_link_title: 'LINK',
   home_section_link_desc: '외부 연결',
   home_terminal_side_project: '사이드 프로젝트',
   home_terminal_enter: '입장',
   
   // About page
-  about_title: '아티스트 프로필',
+  about_title: '소개',
+  about_work_links: '음악과 공연',
   about_label_name: '이름',
   about_label_genre: '장르',
   about_label_location: '위치',
@@ -60,6 +61,8 @@ export default {
   
   // Music page
   music_title: '음악',
+  music_listen_on: '{{platform}}에서 듣기',
+  music_licensing: '라이선스 문의 →',
   music_subtitle: '트랙 & 믹스',
   music_note: '모든 트랙은 SoundCloud 및 Mixcloud에서 스트리밍할 수 있습니다. 라이선스 문의는 Booking 섹션을 방문해주세요.',
   music_col_id: 'ID',
@@ -99,7 +102,7 @@ export default {
   
   // Contact page
   contact_title: '연락',
-  contact_subtitle: '방명록 & 직접 연락',
+  contact_subtitle: '연락 및 부킹',
   contact_guestbook: '방명록',
   contact_direct: '직접 연락',
   contact_booking_info: '예약 정보',
@@ -210,6 +213,14 @@ export default {
   gallery_previous: '이전',
   gallery_next: '다음',
   gallery_range: '{{start}}–{{end}} / {{total}}개',
+  gallery_total: '전체 {{total}}개',
+  list_visible_count: '{{count}} / {{total}}개',
+  list_complete_count: '전체 {{total}}개를 표시했습니다',
+  list_load_more: '더 보기',
+  list_loading: '불러오는 중…',
+  list_load_error: '항목을 불러오지 못했습니다.',
+  list_retry: '다시 시도',
+  image_load_error: '이미지를 불러오지 못했습니다',
   gallery_lightbox_close: '닫기',
   gallery_back: '아카이브로 돌아가기',
   gallery_load_error: '아카이브를 불러오지 못했습니다. 다시 시도해주세요.',

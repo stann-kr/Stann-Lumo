@@ -42,14 +42,15 @@ export default {
   home_section_events_title: 'EVENTS',
   home_section_events_desc: 'Performance schedule & info',
   home_section_contact_title: 'CONTACT',
-  home_section_contact_desc: 'Guestbook & messages',
+  home_section_contact_desc: 'Contact & booking',
   home_section_link_title: 'LINK',
   home_section_link_desc: 'External connections',
   home_terminal_side_project: 'SIDE PROJECT',
   home_terminal_enter: 'ENTER',
   
   // About page
-  about_title: 'ARTIST PROFILE',
+  about_title: 'ABOUT',
+  about_work_links: 'Recordings and performances',
   about_label_name: 'NAME',
   about_label_genre: 'GENRE',
   about_label_location: 'LOCATION',
@@ -60,6 +61,8 @@ export default {
   
   // Music page
   music_title: 'MUSIC',
+  music_listen_on: 'Listen on {{platform}}',
+  music_licensing: 'Licensing enquiries →',
   music_subtitle: 'TRACKS & MIXES',
   music_note: 'All tracks are available for streaming on Multiple Platforms. For licensing inquiries, please visit the Booking section.',
   music_col_id: 'ID',
@@ -99,7 +102,7 @@ export default {
   
   // Contact page
   contact_title: 'CONTACT',
-  contact_subtitle: 'GUESTBOOK & DIRECT CONTACT',
+  contact_subtitle: 'CONTACT & BOOKING',
   contact_guestbook: 'GUESTBOOK',
   contact_direct: 'DIRECT CONTACT',
   contact_booking_info: 'BOOKING INFO',
@@ -210,6 +213,14 @@ export default {
   gallery_previous: 'Previous',
   gallery_next: 'Next',
   gallery_range: '{{start}}–{{end}} of {{total}} items',
+  gallery_total: '{{total}} items',
+  list_visible_count: '{{count}} of {{total}} items',
+  list_complete_count: 'All {{total}} items shown',
+  list_load_more: 'Load more',
+  list_loading: 'Loading…',
+  list_load_error: 'Unable to load more items.',
+  list_retry: 'Try again',
+  image_load_error: 'Image unavailable',
   gallery_lightbox_close: 'to close',
   gallery_back: 'BACK TO ARCHIVE',
   gallery_load_error: 'Failed to load archive. Please try again.',

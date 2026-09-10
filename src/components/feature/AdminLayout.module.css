@@ -1,0 +1,8 @@
+.admin { composes: root from '../../styles/designV2.module.css'; min-height: 100svh; display: flex; }
+.admin h1, .admin h2, .admin h3 { font-family: var(--font-display); letter-spacing: -.025em; }
+.admin input, .admin textarea, .admin select { font-family: var(--font-display); font-size: 1rem; line-height: 1.5; }
+.admin input:not([type='checkbox']):not([type='radio']), .admin select { min-height: 44px; }
+.admin :global(.tracking-widest), .admin :global(.tracking-wider) { letter-spacing: .01em; }
+.admin :global(.font-mono) { font-family: 'JetBrains Mono', monospace; }
+.admin > aside { overflow-y: auto; }
+.admin > main { min-width: 0; }

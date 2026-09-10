@@ -84,7 +84,7 @@ const AdminLinkPage = () => {
         platform: 'New Platform',
         url: 'https://',
         icon: 'ri-link-line',
-        description: 'Platform description',
+        description: '',
       },
     ]);
   };
